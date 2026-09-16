@@ -5,68 +5,173 @@ const sb = createClient(
   SHOP_CONFIG.SUPABASE_PUBLISHABLE_KEY
 );
 
-const loginPanel = document.getElementById('loginPanel');
-const dashboard = document.getElementById('dashboard');
-const logoutBtn = document.getElementById('logoutBtn');
-const productList = document.getElementById('productList');
-const editor = document.getElementById('editor');
-const variantsEl = document.getElementById('variants');
-const ordersList = document.getElementById('ordersList');
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const loginPanel =
+  document.getElementById('loginPanel');
+
+const dashboard =
+  document.getElementById('dashboard');
+
+const logoutBtn =
+  document.getElementById('logoutBtn');
+
+const productList =
+  document.getElementById('productList');
+
+const editor =
+  document.getElementById('editor');
+
+const variantsEl =
+  document.getElementById('variants');
+
+const ordersList =
+  document.getElementById('ordersList');
+
+const productsPage =
+  document.getElementById('productsPage');
+
+const ordersPage =
+  document.getElementById('ordersPage');
+
+const productsTab =
+  document.getElementById('productsTab');
+
+const ordersTab =
+  document.getElementById('ordersTab');
+
+const orderBadge =
+  document.getElementById('orderBadge');
+
+
+/* =========================
+   HELPERS
+========================= */
 
 function money(v) {
   return `৳${Number(v || 0).toLocaleString('en-BD')}`;
 }
 
+
 function esc(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  }[c]));
+  return String(s ?? '').replace(
+    /[&<>"']/g,
+    c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[c])
+  );
 }
 
 
 /* =========================
-   ADMIN AUTH
+   PAGE TABS
+========================= */
+
+function showProductsPage() {
+
+  productsPage.classList.remove('hidden');
+
+  ordersPage.classList.add('hidden');
+
+  productsTab.classList.add('active');
+
+  ordersTab.classList.remove('active');
+
+}
+
+
+function showOrdersPage() {
+
+  productsPage.classList.add('hidden');
+
+  ordersPage.classList.remove('hidden');
+
+  productsTab.classList.remove('active');
+
+  ordersTab.classList.add('active');
+
+  loadOrders();
+
+}
+
+
+productsTab.onclick =
+  showProductsPage;
+
+
+ordersTab.onclick =
+  showOrdersPage;
+
+
+/* =========================
+   AUTH
 ========================= */
 
 async function isAdmin() {
+
   const {
     data: { user }
   } = await sb.auth.getUser();
 
   if (!user) return false;
 
-  const { data, error } = await sb
+
+  const {
+    data,
+    error
+  } = await sb
     .from('admin_users')
     .select('user_id')
     .eq('user_id', user.id)
     .maybeSingle();
+
 
   return !error && !!data;
 }
 
 
 async function refreshAuth() {
+
   const {
     data: { session }
   } = await sb.auth.getSession();
 
-  if (session && await isAdmin()) {
+
+  if (
+    session &&
+    await isAdmin()
+  ) {
+
     loginPanel.classList.add('hidden');
+
     dashboard.classList.remove('hidden');
+
     logoutBtn.classList.remove('hidden');
 
+
     await loadProducts();
+
     await loadOrders();
 
+    showProductsPage();
+
   } else {
+
     loginPanel.classList.remove('hidden');
+
     dashboard.classList.add('hidden');
+
     logoutBtn.classList.add('hidden');
+
   }
+
 }
 
 
@@ -76,40 +181,83 @@ async function refreshAuth() {
 
 document
   .getElementById('loginForm')
-  .addEventListener('submit', async e => {
+  .addEventListener(
+    'submit',
+    async e => {
 
-    e.preventDefault();
+      e.preventDefault();
 
-    const msg = document.getElementById('loginMessage');
 
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
+      const msg =
+        document.getElementById(
+          'loginMessage'
+        );
 
-    const { error } = await sb.auth.signInWithPassword({
-      email: emailInput.value.trim(),
-      password: passwordInput.value
-    });
 
-    if (error) {
-      msg.textContent = error.message;
-      return;
+      const email =
+        document
+          .getElementById('email')
+          .value
+          .trim();
+
+
+      const password =
+        document
+          .getElementById('password')
+          .value;
+
+
+      msg.textContent =
+        'Login হচ্ছে...';
+
+
+      const { error } =
+        await sb.auth.signInWithPassword({
+          email,
+          password
+        });
+
+
+      if (error) {
+
+        msg.textContent =
+          error.message;
+
+        return;
+      }
+
+
+      if (!await isAdmin()) {
+
+        await sb.auth.signOut();
+
+        msg.textContent =
+          'এই account admin নয়।';
+
+        return;
+      }
+
+
+      msg.textContent = '';
+
+      await refreshAuth();
+
     }
+  );
 
-    if (!await isAdmin()) {
-      await sb.auth.signOut();
-      msg.textContent = 'এই account admin নয়।';
-      return;
-    }
 
-    msg.textContent = '';
+/* =========================
+   LOGOUT
+========================= */
+
+logoutBtn.onclick =
+  async () => {
+
+    await sb.auth.signOut();
+
     await refreshAuth();
-  });
 
-
-logoutBtn.onclick = async () => {
-  await sb.auth.signOut();
-  await refreshAuth();
-};
+  };
 
 
 /* =========================
@@ -118,88 +266,164 @@ logoutBtn.onclick = async () => {
 
 async function loadProducts() {
 
+  productList.innerHTML = `
+    <div class="loading">
+      Product লোড হচ্ছে...
+    </div>
+  `;
+
+
   const {
     data: products,
     error
   } = await sb
     .from('products')
     .select('*')
-    .order('created_at', {
-      ascending: false
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false
+      }
+    );
+
 
   if (error) {
-    productList.textContent = error.message;
+
+    productList.innerHTML = `
+      <p class="message">
+        ${esc(error.message)}
+      </p>
+    `;
+
     return;
   }
 
-  productList.innerHTML = products.length
-    ? products.map(p => `
-      <div class="product-row">
 
-        <img
-          class="thumb"
-          src="${esc(
-            p.main_image_url ||
-            'https://placehold.co/100x100?text=Product'
-          )}"
-          alt=""
-        >
+  if (!products.length) {
 
-        <div class="grow">
-          <b>${esc(p.name)}</b>
+    productList.innerHTML = `
+      <div class="empty-state">
+        <div>🛍️</div>
+        <h3>কোনো Product নেই</h3>
+        <p>উপরে থেকে নতুন Product যোগ করুন।</p>
+      </div>
+    `;
 
-          <div class="muted">
-            ${p.active ? 'Active' : 'Hidden'}
+    return;
+  }
+
+
+  productList.innerHTML =
+    products
+      .map(p => `
+
+        <div class="product-row">
+
+          <img
+            class="thumb"
+            src="${esc(
+              p.main_image_url ||
+              'https://placehold.co/100x100?text=Product'
+            )}"
+            alt=""
+          >
+
+
+          <div class="grow">
+
+            <strong>
+              ${esc(p.name)}
+            </strong>
+
+            <div class="muted">
+              ${p.active
+                ? '● Active'
+                : '○ Hidden'}
+            </div>
+
           </div>
+
+
+          <button
+            class="secondary edit"
+            data-id="${p.id}">
+
+            Edit
+
+          </button>
+
+
+          <button
+            class="danger delete"
+            data-id="${p.id}">
+
+            Delete
+
+          </button>
+
         </div>
 
-        <button
-          class="secondary edit"
-          data-id="${p.id}"
-        >
-          Edit
-        </button>
-
-        <button
-          class="danger delete"
-          data-id="${p.id}"
-        >
-          Delete
-        </button>
-
-      </div>
-    `).join('')
-    : 'কোনো product নেই।';
+      `)
+      .join('');
 
 
   productList
     .querySelectorAll('.edit')
     .forEach(button => {
-      button.onclick = () =>
-        editProduct(Number(button.dataset.id));
+
+      button.onclick =
+        () =>
+          editProduct(
+            Number(button.dataset.id)
+          );
+
     });
 
 
   productList
     .querySelectorAll('.delete')
     .forEach(button => {
-      button.onclick = () =>
-        deleteProduct(Number(button.dataset.id));
+
+      button.onclick =
+        () =>
+          deleteProduct(
+            Number(button.dataset.id)
+          );
+
     });
+
 }
 
 
+/* =========================
+   NEW PRODUCT
+========================= */
+
 document
   .getElementById('newProductBtn')
-  .onclick = () => openEditor();
+  .onclick = () => {
 
+    openEditor();
+
+  };
+
+
+/* =========================
+   CANCEL EDIT
+========================= */
 
 document
   .getElementById('cancelEdit')
-  .onclick = () =>
+  .onclick = () => {
+
     editor.classList.add('hidden');
 
+  };
+
+
+/* =========================
+   ADD VARIANT
+========================= */
 
 document
   .getElementById('addVariantBtn')
@@ -208,105 +432,211 @@ document
 
 
 /* =========================
-   VARIANTS / SIZES
+   VARIANT
 ========================= */
 
 function addVariant(data = {}) {
 
-  const tpl = document
-    .getElementById('variantTemplate')
-    .content
-    .cloneNode(true);
+  const tpl =
+    document
+      .getElementById('variantTemplate')
+      .content
+      .cloneNode(true);
 
-  const box = tpl.querySelector('.variant-box');
 
-  box.querySelector('.v-name').value =
+  const box =
+    tpl.querySelector(
+      '.variant-box'
+    );
+
+
+  box.querySelector(
+    '.v-name'
+  ).value =
     data.name || '';
 
-  box.querySelector('.remove-variant').onclick =
+
+  box.querySelector(
+    '.remove-variant'
+  ).onclick =
     () => box.remove();
 
-  box.querySelector('.add-size').onclick =
-    () => addSize(box);
+
+  box.querySelector(
+    '.add-size'
+  ).onclick =
+    () =>
+      addSize(box);
+
 
   if (data.image_url) {
-    box.dataset.existingImage = data.image_url;
+
+    box.dataset.existingImage =
+      data.image_url;
+
   }
+
 
   variantsEl.appendChild(box);
 
-  (data.sizes || []).forEach(size => {
-    addSize(box, size);
-  });
+
+  (data.sizes || [])
+    .forEach(size =>
+      addSize(
+        box,
+        size
+      )
+    );
+
 }
 
 
-function addSize(box, data = {}) {
+/* =========================
+   ADD SIZE
+========================= */
 
-  const tpl = document
-    .getElementById('sizeTemplate')
-    .content
-    .cloneNode(true);
+function addSize(
+  box,
+  data = {}
+) {
 
-  const row = tpl.querySelector('.size-row');
+  const tpl =
+    document
+      .getElementById('sizeTemplate')
+      .content
+      .cloneNode(true);
 
-  row.querySelector('.s-name').value =
+
+  const row =
+    tpl.querySelector(
+      '.size-row'
+    );
+
+
+  row.querySelector(
+    '.s-name'
+  ).value =
     data.size || '';
 
-  row.querySelector('.s-price').value =
+
+  row.querySelector(
+    '.s-price'
+  ).value =
     data.price ?? '';
 
-  row.querySelector('.s-stock').value =
+
+  row.querySelector(
+    '.s-stock'
+  ).value =
     data.stock ?? 0;
 
-  row.querySelector('.remove-size').onclick =
+
+  row.querySelector(
+    '.remove-size'
+  ).onclick =
     () => row.remove();
 
+
   if (data.id) {
-    row.dataset.id = data.id;
+
+    row.dataset.id =
+      data.id;
+
   }
+
 
   box
     .querySelector('.sizes')
     .appendChild(row);
+
 }
 
 
-function openEditor(product = null, loadedVariants = []) {
+/* =========================
+   OPEN EDITOR
+========================= */
 
-  editor.classList.remove('hidden');
+function openEditor(
+  product = null,
+  loadedVariants = []
+) {
 
-  document.getElementById('editorTitle').textContent =
-    product ? 'Edit Product' : 'নতুন Product';
+  editor.classList.remove(
+    'hidden'
+  );
 
-  document.getElementById('editProductId').value =
-    product?.id || '';
 
-  document.getElementById('pName').value =
-    product?.name || '';
+  document
+    .getElementById(
+      'editorTitle'
+    )
+    .textContent =
+      product
+        ? 'Edit Product'
+        : 'নতুন Product';
 
-  document.getElementById('pDescription').value =
-    product?.description || '';
 
-  document.getElementById('mainPreview').innerHTML =
-    product?.main_image_url
-      ? `<img class="thumb" src="${esc(product.main_image_url)}">`
-      : '';
+  document
+    .getElementById(
+      'editProductId'
+    )
+    .value =
+      product?.id || '';
+
+
+  document
+    .getElementById(
+      'pName'
+    )
+    .value =
+      product?.name || '';
+
+
+  document
+    .getElementById(
+      'pDescription'
+    )
+    .value =
+      product?.description || '';
+
+
+  document
+    .getElementById(
+      'mainPreview'
+    )
+    .innerHTML =
+      product?.main_image_url
+        ? `
+          <img
+            src="${esc(
+              product.main_image_url
+            )}"
+            alt="">
+        `
+        : '';
+
 
   variantsEl.innerHTML = '';
 
-  loadedVariants.forEach(v => {
-    addVariant(v);
-  });
+
+  loadedVariants.forEach(
+    v =>
+      addVariant(v)
+  );
+
 
   if (!loadedVariants.length) {
+
     addVariant();
+
   }
 
-  window.scrollTo({
-    top: document.body.scrollHeight,
-    behavior: 'smooth'
+
+  editor.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
   });
+
 }
 
 
@@ -325,44 +655,69 @@ async function editProduct(id) {
     .eq('id', id)
     .single();
 
+
   if (error) {
+
     alert(error.message);
+
     return;
   }
+
 
   const {
     data: variants
   } = await sb
     .from('product_variants')
     .select('*')
-    .eq('product_id', id)
+    .eq(
+      'product_id',
+      id
+    )
     .order('created_at');
 
+
   const variantIds =
-    (variants || []).map(v => v.id);
+    (variants || [])
+      .map(v => v.id);
+
 
   let sizes = [];
 
+
   if (variantIds.length) {
 
-    const result = await sb
-      .from('variant_sizes')
-      .select('*')
-      .in('variant_id', variantIds)
-      .order('created_at');
+    const result =
+      await sb
+        .from('variant_sizes')
+        .select('*')
+        .in(
+          'variant_id',
+          variantIds
+        )
+        .order('created_at');
 
-    sizes = result.data || [];
+
+    sizes =
+      result.data || [];
+
   }
+
 
   openEditor(
     product,
-    (variants || []).map(v => ({
-      ...v,
-      sizes: sizes.filter(
-        s => s.variant_id === v.id
-      )
-    }))
+
+    (variants || [])
+      .map(v => ({
+        ...v,
+
+        sizes:
+          sizes.filter(
+            s =>
+              s.variant_id === v.id
+          )
+      }))
   );
+
 }
 
 
@@ -370,20 +725,32 @@ async function editProduct(id) {
    IMAGE UPLOAD
 ========================= */
 
-async function uploadImage(file, prefix) {
+async function uploadImage(
+  file,
+  prefix
+) {
 
   if (!file) return null;
 
+
   const ext =
-    (file.name.split('.').pop() || 'jpg')
-      .toLowerCase();
+    (
+      file.name
+        .split('.')
+        .pop() ||
+      'jpg'
+    ).toLowerCase();
+
 
   const path =
     `${prefix}-${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}.${ext}`;
 
-  const { error } = await sb
+
+  const {
+    error
+  } = await sb
     .storage
     .from('product-images')
     .upload(
@@ -394,9 +761,13 @@ async function uploadImage(file, prefix) {
       }
     );
 
+
   if (error) {
+
     throw error;
+
   }
+
 
   return sb
     .storage
@@ -404,6 +775,7 @@ async function uploadImage(file, prefix) {
     .getPublicUrl(path)
     .data
     .publicUrl;
+
 }
 
 
@@ -413,250 +785,374 @@ async function uploadImage(file, prefix) {
 
 document
   .getElementById('productForm')
-  .addEventListener('submit', async e => {
+  .addEventListener(
+    'submit',
+    async e => {
 
-    e.preventDefault();
-
-    const msg =
-      document.getElementById('saveMessage');
-
-    msg.textContent = 'Saving...';
-
-    try {
-
-      const id =
-        Number(
-          document
-            .getElementById('editProductId')
-            .value
-        ) || null;
+      e.preventDefault();
 
 
-      let mainUrl = null;
-
-      const mainFile =
+      const msg =
         document
-          .getElementById('mainImage')
-          .files[0];
-
-      if (mainFile) {
-        mainUrl =
-          await uploadImage(
-            mainFile,
-            'main'
+          .getElementById(
+            'saveMessage'
           );
-      }
 
 
-      let product;
+      msg.textContent =
+        'Saving...';
 
 
-      /* CREATE / UPDATE PRODUCT */
+      try {
 
-      if (id) {
-
-        const patch = {
-          name:
+        const id =
+          Number(
             document
-              .getElementById('pName')
+              .getElementById(
+                'editProductId'
+              )
               .value
-              .trim(),
-
-          description:
-            document
-              .getElementById('pDescription')
-              .value
-              .trim()
-        };
-
-        if (mainUrl) {
-          patch.main_image_url = mainUrl;
-        }
-
-        const result =
-          await sb
-            .from('products')
-            .update(patch)
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (result.error) {
-          throw result.error;
-        }
-
-        product = result.data;
-
-      } else {
-
-        const result =
-          await sb
-            .from('products')
-            .insert({
-              name:
-                document
-                  .getElementById('pName')
-                  .value
-                  .trim(),
-
-              description:
-                document
-                  .getElementById('pDescription')
-                  .value
-                  .trim(),
-
-              main_image_url:
-                mainUrl
-            })
-            .select()
-            .single();
-
-        if (result.error) {
-          throw result.error;
-        }
-
-        product = result.data;
-      }
+          ) || null;
 
 
-      /* =========================
-         REPLACE VARIANTS / SIZES
-      ========================= */
-
-      if (id) {
-
-        const {
-          data: oldVariants
-        } = await sb
-          .from('product_variants')
-          .select('id')
-          .eq('product_id', id);
-
-        const oldIds =
-          (oldVariants || []).map(v => v.id);
-
-        if (oldIds.length) {
-
-          await sb
-            .from('variant_sizes')
-            .delete()
-            .in('variant_id', oldIds);
-        }
-
-        await sb
-          .from('product_variants')
-          .delete()
-          .eq('product_id', id);
-      }
+        let mainUrl = null;
 
 
-      /* CREATE VARIANTS */
-
-      for (
-        const box of
-        variantsEl.querySelectorAll('.variant-box')
-      ) {
-
-        const vFile =
-          box
-            .querySelector('.v-image')
+        const mainFile =
+          document
+            .getElementById(
+              'mainImage'
+            )
             .files[0];
 
-        const vUrl =
-          vFile
-            ? await uploadImage(
-                vFile,
-                `variant-${product.id}`
-              )
-            : null;
 
+        if (mainFile) {
 
-        const variantResult =
-          await sb
-            .from('product_variants')
-            .insert({
-              product_id: product.id,
+          mainUrl =
+            await uploadImage(
+              mainFile,
+              'main'
+            );
 
-              name:
-                box
-                  .querySelector('.v-name')
-                  .value
-                  .trim(),
-
-              image_url:
-                vUrl ||
-                box.dataset.existingImage ||
-                product.main_image_url
-            })
-            .select()
-            .single();
-
-
-        if (variantResult.error) {
-          throw variantResult.error;
         }
 
 
-        const rows = [
-          ...box.querySelectorAll('.size-row')
-        ];
+        let product;
 
 
-        if (rows.length) {
+        /* CREATE / UPDATE */
 
-          const payload =
-            rows.map(row => ({
-              variant_id:
-                variantResult.data.id,
+        if (id) {
 
-              size:
-                row
-                  .querySelector('.s-name')
-                  .value
-                  .trim(),
+          const patch = {
 
-              price:
-                Number(
-                  row
-                    .querySelector('.s-price')
-                    .value
-                ),
+            name:
+              document
+                .getElementById(
+                  'pName'
+                )
+                .value
+                .trim(),
 
-              stock:
-                Number(
-                  row
-                    .querySelector('.s-stock')
-                    .value
-                ),
+            description:
+              document
+                .getElementById(
+                  'pDescription'
+                )
+                .value
+                .trim()
 
-              active: true
-            }));
+          };
 
 
-          const sizeResult =
-            await sb
-              .from('variant_sizes')
-              .insert(payload);
+          if (mainUrl) {
 
+            patch.main_image_url =
+              mainUrl;
 
-          if (sizeResult.error) {
-            throw sizeResult.error;
           }
+
+
+          const result =
+            await sb
+              .from('products')
+              .update(patch)
+              .eq('id', id)
+              .select()
+              .single();
+
+
+          if (result.error) {
+
+            throw result.error;
+
+          }
+
+
+          product =
+            result.data;
+
+        } else {
+
+          const result =
+            await sb
+              .from('products')
+              .insert({
+
+                name:
+                  document
+                    .getElementById(
+                      'pName'
+                    )
+                    .value
+                    .trim(),
+
+                description:
+                  document
+                    .getElementById(
+                      'pDescription'
+                    )
+                    .value
+                    .trim(),
+
+                main_image_url:
+                  mainUrl
+
+              })
+              .select()
+              .single();
+
+
+          if (result.error) {
+
+            throw result.error;
+
+          }
+
+
+          product =
+            result.data;
+
         }
+
+
+        /* =====================
+           REPLACE OLD VARIANTS
+        ===================== */
+
+        if (id) {
+
+          const {
+            data: oldVariants
+          } = await sb
+            .from(
+              'product_variants'
+            )
+            .select('id')
+            .eq(
+              'product_id',
+              id
+            );
+
+
+          const oldIds =
+            (oldVariants || [])
+              .map(v => v.id);
+
+
+          if (oldIds.length) {
+
+            await sb
+              .from(
+                'variant_sizes'
+              )
+              .delete()
+              .in(
+                'variant_id',
+                oldIds
+              );
+
+          }
+
+
+          await sb
+            .from(
+              'product_variants'
+            )
+            .delete()
+            .eq(
+              'product_id',
+              id
+            );
+
+        }
+
+
+        /* =====================
+           CREATE VARIANTS
+        ===================== */
+
+        for (
+          const box of
+          variantsEl.querySelectorAll(
+            '.variant-box'
+          )
+        ) {
+
+          const vFile =
+            box
+              .querySelector(
+                '.v-image'
+              )
+              .files[0];
+
+
+          const vUrl =
+            vFile
+              ? await uploadImage(
+                  vFile,
+                  `variant-${product.id}`
+                )
+              : null;
+
+
+          const variantResult =
+            await sb
+              .from(
+                'product_variants'
+              )
+              .insert({
+
+                product_id:
+                  product.id,
+
+                name:
+                  box
+                    .querySelector(
+                      '.v-name'
+                    )
+                    .value
+                    .trim(),
+
+                image_url:
+                  vUrl ||
+                  box.dataset
+                    .existingImage ||
+                  product.main_image_url
+
+              })
+              .select()
+              .single();
+
+
+          if (
+            variantResult.error
+          ) {
+
+            throw variantResult.error;
+
+          }
+
+
+          const rows = [
+            ...box.querySelectorAll(
+              '.size-row'
+            )
+          ];
+
+
+          if (rows.length) {
+
+            const payload =
+              rows.map(row => ({
+
+                variant_id:
+                  variantResult
+                    .data
+                    .id,
+
+                size:
+                  row
+                    .querySelector(
+                      '.s-name'
+                    )
+                    .value
+                    .trim(),
+
+                price:
+                  Number(
+                    row
+                      .querySelector(
+                        '.s-price'
+                      )
+                      .value
+                  ),
+
+                stock:
+                  Number(
+                    row
+                      .querySelector(
+                        '.s-stock'
+                      )
+                      .value
+                  ),
+
+                active:
+                  true
+
+              }));
+
+
+            const sizeResult =
+              await sb
+                .from(
+                  'variant_sizes'
+                )
+                .insert(
+                  payload
+                );
+
+
+            if (
+              sizeResult.error
+            ) {
+
+              throw sizeResult.error;
+
+            }
+
+          }
+
+        }
+
+
+        msg.textContent =
+          '✓ Product saved successfully.';
+
+
+        await loadProducts();
+
+
+        setTimeout(
+          () => {
+            editor.classList.add(
+              'hidden'
+            );
+          },
+          700
+        );
+
+
+      } catch (err) {
+
+        msg.textContent =
+          'Error: ' +
+          err.message;
+
       }
 
-
-      msg.textContent =
-        'Product saved successfully.';
-
-      await loadProducts();
-
-    } catch (err) {
-
-      msg.textContent =
-        'Error: ' + err.message;
     }
-  });
+  );
 
 
 /* =========================
@@ -670,21 +1166,31 @@ async function deleteProduct(id) {
       'এই product এবং এর varieties/sizes delete করবেন?'
     )
   ) {
+
     return;
+
   }
 
-  const { error } =
-    await sb
-      .from('products')
-      .delete()
-      .eq('id', id);
+
+  const {
+    error
+  } = await sb
+    .from('products')
+    .delete()
+    .eq('id', id);
+
 
   if (error) {
+
     alert(error.message);
+
     return;
+
   }
 
+
   await loadProducts();
+
 }
 
 
@@ -694,13 +1200,14 @@ async function deleteProduct(id) {
 
 async function loadOrders() {
 
-  if (!ordersList) {
-    console.error('ordersList element not found.');
-    return;
-  }
+  if (!ordersList) return;
 
-  ordersList.innerHTML =
-    '<p>অর্ডার লোড হচ্ছে...</p>';
+
+  ordersList.innerHTML = `
+    <div class="panel loading">
+      অর্ডার লোড হচ্ছে...
+    </div>
+  `;
 
 
   const {
@@ -709,171 +1216,311 @@ async function loadOrders() {
   } = await sb
     .from('orders')
     .select('*')
-    .order('created_at', {
-      ascending: false
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false
+      }
+    );
 
 
   if (error) {
 
-    console.error('Orders load error:', error);
-
     ordersList.innerHTML = `
-      <p class="message">
-        Orders load error: ${esc(error.message)}
-      </p>
+      <div class="panel">
+        <p class="message">
+          Orders load error:
+          ${esc(error.message)}
+        </p>
+      </div>
     `;
 
     return;
   }
 
 
-  if (!orders || orders.length === 0) {
+  /* ORDER BADGE */
 
-    ordersList.innerHTML =
-      '<p>এখনো কোনো order নেই।</p>';
+  const pendingCount =
+    (orders || [])
+      .filter(
+        o =>
+          String(
+            o.status || 'pending'
+          ).toLowerCase() ===
+          'pending'
+      )
+      .length;
+
+
+  if (pendingCount > 0) {
+
+    orderBadge.textContent =
+      pendingCount;
+
+    orderBadge.classList.remove(
+      'hidden'
+    );
+
+  } else {
+
+    orderBadge.classList.add(
+      'hidden'
+    );
+
+  }
+
+
+  if (
+    !orders ||
+    orders.length === 0
+  ) {
+
+    ordersList.innerHTML = `
+      <div class="panel empty-state">
+
+        <div>📦</div>
+
+        <h3>
+          এখনো কোনো Order নেই
+        </h3>
+
+        <p>
+          Customer order করলে এখানে দেখা যাবে।
+        </p>
+
+      </div>
+    `;
 
     return;
+
   }
 
 
   ordersList.innerHTML =
-    orders.map(order => {
+    orders
+      .map(order => {
 
-      const date =
-        order.created_at
-          ? new Date(
-              order.created_at
-            ).toLocaleString(
-              'bn-BD',
-              {
-                dateStyle: 'medium',
-                timeStyle: 'short'
-              }
-            )
-          : '—';
-
-
-      const status =
-        String(
-          order.status || 'pending'
-        ).toLowerCase();
+        const date =
+          order.created_at
+            ? new Date(
+                order.created_at
+              ).toLocaleString(
+                'bn-BD',
+                {
+                  dateStyle:
+                    'medium',
+                  timeStyle:
+                    'short'
+                }
+              )
+            : '—';
 
 
-      return `
-        <div class="order-card">
+        const status =
+          String(
+            order.status ||
+            'pending'
+          ).toLowerCase();
 
-          <div class="order-head">
 
-            <div>
-              <strong>
-                Order #${esc(order.id)}
-              </strong>
+        return `
 
-              <div class="muted">
-                ${esc(date)}
+          <div class="order-card">
+
+            <div class="order-head">
+
+              <div>
+
+                <div class="order-number">
+                  Order #${esc(
+                    order.id
+                  )}
+                </div>
+
+                <div class="muted">
+                  ${esc(date)}
+                </div>
+
               </div>
+
+
+              <select
+                class="order-status
+                  ${status}"
+                data-id="${esc(
+                  order.id
+                )}">
+
+                <option
+                  value="pending"
+                  ${
+                    status ===
+                    'pending'
+                      ? 'selected'
+                      : ''
+                  }>
+
+                  Pending
+
+                </option>
+
+
+                <option
+                  value="completed"
+                  ${
+                    status ===
+                    'completed'
+                      ? 'selected'
+                      : ''
+                  }>
+
+                  Completed
+
+                </option>
+
+              </select>
+
             </div>
 
 
-            <select
-              class="order-status"
-              data-id="${esc(order.id)}"
-            >
+            <div class="order-info">
 
-              <option
-                value="pending"
-                ${status === 'pending' ? 'selected' : ''}
-              >
-                Pending
-              </option>
+              <div class="info-item">
+                <span>Customer</span>
+                <b>
+                  ${esc(
+                    order.customer_name
+                  )}
+                </b>
+              </div>
 
-              <option
-                value="completed"
-                ${status === 'completed' ? 'selected' : ''}
-              >
-                Completed
-              </option>
 
-            </select>
+              <div class="info-item">
+                <span>Phone</span>
+                <b>
+                  ${esc(
+                    order.phone
+                  )}
+                </b>
+              </div>
+
+
+              <div class="info-item full">
+                <span>Address</span>
+                <b>
+                  ${esc(
+                    order.address
+                  )}
+                </b>
+              </div>
+
+
+              <div class="info-item">
+                <span>District</span>
+                <b>
+                  ${esc(
+                    order.district
+                  )}
+                </b>
+              </div>
+
+
+              <div class="info-item">
+                <span>Upazila</span>
+                <b>
+                  ${esc(
+                    order.upazila
+                  )}
+                </b>
+              </div>
+
+
+              <div class="info-item">
+                <span>Product</span>
+                <b>
+                  ${esc(
+                    order.product_name
+                  )}
+                </b>
+              </div>
+
+
+              <div class="info-item">
+                <span>Variety</span>
+                <b>
+                  ${esc(
+                    order.variety
+                  )}
+                </b>
+              </div>
+
+
+              <div class="info-item">
+                <span>Size</span>
+                <b>
+                  ${esc(
+                    order.size
+                  )}
+                </b>
+              </div>
+
+
+              <div class="info-item">
+                <span>Quantity</span>
+                <b>
+                  ${esc(
+                    order.quantity
+                  )}
+                </b>
+              </div>
+
+            </div>
+
+
+            <div class="order-bottom">
+
+              <div>
+                Product:
+                <b>
+                  ${money(
+                    order.product_price
+                  )}
+                </b>
+              </div>
+
+              <div>
+                Delivery:
+                <b>
+                  ${money(
+                    order.delivery_charge
+                  )}
+                </b>
+              </div>
+
+              <div class="grand-total">
+                Total:
+                ${money(
+                  order.total_price
+                )}
+              </div>
+
+            </div>
 
           </div>
 
+        `;
 
-          <div class="order-info">
-
-            <p>
-              <b>👤 Customer:</b>
-              ${esc(order.customer_name)}
-            </p>
-
-            <p>
-              <b>📞 Phone:</b>
-              ${esc(order.phone)}
-            </p>
-
-            <p>
-              <b>📍 Address:</b>
-              ${esc(order.address)}
-            </p>
-
-            <p>
-              <b>District:</b>
-              ${esc(order.district)}
-              &nbsp; | &nbsp;
-              <b>Upazila:</b>
-              ${esc(order.upazila)}
-            </p>
-
-            <hr>
-
-            <p>
-              <b>📦 Product:</b>
-              ${esc(order.product_name)}
-            </p>
-
-            <p>
-              <b>🎨 Variety:</b>
-              ${esc(order.variety)}
-              &nbsp; | &nbsp;
-              <b>📏 Size:</b>
-              ${esc(order.size)}
-            </p>
-
-            <p>
-              <b>🔢 Quantity:</b>
-              ${esc(order.quantity)}
-            </p>
-
-            <hr>
-
-            <p>
-              <b>Product Price:</b>
-              ${money(order.product_price)}
-            </p>
-
-            <p>
-              <b>Delivery Charge:</b>
-              ${money(order.delivery_charge)}
-            </p>
-
-            <p class="order-total">
-              <b>Total:</b>
-              ${money(order.total_price)}
-            </p>
-
-          </div>
-
-        </div>
-      `;
-
-    }).join('');
+      })
+      .join('');
 
 
   /* STATUS CHANGE */
 
   ordersList
-    .querySelectorAll('.order-status')
+    .querySelectorAll(
+      '.order-status'
+    )
     .forEach(select => {
 
       select.addEventListener(
@@ -881,7 +1528,9 @@ async function loadOrders() {
         async () => {
 
           await updateOrderStatus(
-            Number(select.dataset.id),
+            Number(
+              select.dataset.id
+            ),
             select.value
           );
 
@@ -889,6 +1538,7 @@ async function loadOrders() {
       );
 
     });
+
 }
 
 
@@ -896,15 +1546,22 @@ async function loadOrders() {
    UPDATE ORDER STATUS
 ========================= */
 
-async function updateOrderStatus(id, status) {
+async function updateOrderStatus(
+  id,
+  status
+) {
 
-  const { error } =
-    await sb
-      .from('orders')
-      .update({
-        status: status
-      })
-      .eq('id', id);
+  const {
+    error
+  } = await sb
+    .from('orders')
+    .update({
+      status
+    })
+    .eq(
+      'id',
+      id
+    );
 
 
   if (error) {
@@ -915,7 +1572,11 @@ async function updateOrderStatus(id, status) {
     );
 
     return;
+
   }
+
+
+  await loadOrders();
 
 }
 
@@ -925,12 +1586,16 @@ async function updateOrderStatus(id, status) {
 ========================= */
 
 const refreshOrdersBtn =
-  document.getElementById('refreshOrdersBtn');
+  document.getElementById(
+    'refreshOrdersBtn'
+  );
+
 
 if (refreshOrdersBtn) {
 
   refreshOrdersBtn.onclick =
     () => loadOrders();
+
 }
 
 
@@ -938,4 +1603,4 @@ if (refreshOrdersBtn) {
    START
 ========================= */
 
-refreshAuth(); 
+refreshAuth();
