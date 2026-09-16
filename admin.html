@@ -15,69 +15,162 @@
   </header>
 
   <main class="wrap admin">
+
+    <!-- LOGIN -->
     <section id="loginPanel" class="panel">
       <h1>Admin Login</h1>
       <p>শুধু আপনার Supabase admin account দিয়ে login করুন।</p>
+
       <form id="loginForm">
-        <label>Email<input id="email" type="email" required></label>
-        <label>Password<input id="password" type="password" required></label>
+        <label>Email
+          <input id="email" type="email" required>
+        </label>
+
+        <label>Password
+          <input id="password" type="password" required>
+        </label>
+
         <button class="primary">Login</button>
         <p id="loginMessage" class="message"></p>
       </form>
     </section>
 
+    <!-- DASHBOARD -->
     <section id="dashboard" class="hidden">
+
+      <!-- PRODUCTS -->
       <div class="admin-head">
         <div>
           <h1>Product Dashboard</h1>
           <p>এখান থেকে product, variety, size, price ও stock manage করুন।</p>
         </div>
-        <button id="newProductBtn" class="primary">+ নতুন Product</button>
+
+        <button id="newProductBtn" class="primary">
+          + নতুন Product
+        </button>
       </div>
 
-      <div id="productList" class="panel">লোড হচ্ছে...</div>
+      <div id="productList" class="panel">
+        লোড হচ্ছে...
+      </div>
 
+      <!-- PRODUCT EDITOR -->
       <section id="editor" class="panel hidden">
         <h2 id="editorTitle">নতুন Product</h2>
+
         <form id="productForm">
           <input type="hidden" id="editProductId">
-          <label>Product Name<input id="pName" required></label>
-          <label>Description<textarea id="pDescription"></textarea></label>
-          <label>Main Image<input id="mainImage" type="file" accept="image/*"></label>
+
+          <label>Product Name
+            <input id="pName" required>
+          </label>
+
+          <label>Description
+            <textarea id="pDescription"></textarea>
+          </label>
+
+          <label>Main Image
+            <input id="mainImage" type="file" accept="image/*">
+          </label>
+
           <div id="mainPreview"></div>
 
           <h3>Varieties</h3>
+
           <div id="variants"></div>
-          <button type="button" id="addVariantBtn" class="secondary">+ Variety যোগ করুন</button>
+
+          <button type="button" id="addVariantBtn" class="secondary">
+            + Variety যোগ করুন
+          </button>
 
           <div class="actions">
-            <button type="submit" class="primary">Save Product</button>
-            <button type="button" id="cancelEdit" class="secondary">Cancel</button>
+            <button type="submit" class="primary">
+              Save Product
+            </button>
+
+            <button type="button" id="cancelEdit" class="secondary">
+              Cancel
+            </button>
           </div>
+
           <p id="saveMessage" class="message"></p>
         </form>
       </section>
+
+      <!-- ORDERS -->
+      <section class="panel orders-panel">
+        <div class="admin-head">
+          <div>
+            <h2>🛒 Orders</h2>
+            <p>Customer-এর অর্ডারগুলো এখানে দেখা যাবে।</p>
+          </div>
+
+          <button id="refreshOrdersBtn" class="secondary">
+            ↻ Refresh
+          </button>
+        </div>
+
+        <div id="ordersList">
+          অর্ডার লোড হচ্ছে...
+        </div>
+      </section>
+
     </section>
   </main>
 
+  <!-- VARIANT TEMPLATE -->
   <template id="variantTemplate">
     <div class="variant-box">
+
       <div class="row">
-        <label>Variety Name<input class="v-name" required></label>
-        <button type="button" class="danger remove-variant">Remove</button>
+        <label>Variety Name
+          <input class="v-name" required>
+        </label>
+
+        <button type="button" class="danger remove-variant">
+          Remove
+        </button>
       </div>
-      <label>Variety Image<input class="v-image" type="file" accept="image/*"></label>
+
+      <label>Variety Image
+        <input class="v-image" type="file" accept="image/*">
+      </label>
+
       <div class="sizes"></div>
-      <button type="button" class="secondary add-size">+ Size</button>
+
+      <button type="button" class="secondary add-size">
+        + Size
+      </button>
+
     </div>
   </template>
 
+  <!-- SIZE TEMPLATE -->
   <template id="sizeTemplate">
     <div class="size-row">
       <input class="s-name" placeholder="Size (যেমন M)" required>
-      <input class="s-price" type="number" min="0" step="0.01" placeholder="Price" required>
-      <input class="s-stock" type="number" min="0" step="1" placeholder="Stock" required>
-      <button type="button" class="danger remove-size">×</button>
+
+      <input
+        class="s-price"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Price"
+        required
+      >
+
+      <input
+        class="s-stock"
+        type="number"
+        min="0"
+        step="1"
+        placeholder="Stock"
+        required
+      >
+
+      <button type="button" class="danger remove-size">
+        ×
+      </button>
     </div>
   </template>
 
