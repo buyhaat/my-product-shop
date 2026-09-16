@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Product Shop</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap nav">
+      <a class="brand" href="./">My Product Shop</a>
+      <a class="admin-link" href="admin.html">Admin</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>আমাদের পণ্য</h1>
+      <p>পছন্দের পণ্য বেছে নিয়ে অর্ডার করুন।</p>
+    </section>
+
+    <section id="products" class="grid">
+      <div class="loading">পণ্য লোড হচ্ছে...</div>
+    </section>
+  </main>
+
+  <div id="orderModal" class="modal hidden">
+    <div class="modal-card">
+      <button class="close" id="closeModal">×</button>
+      <h2>অর্ডার করুন</h2>
+      <div id="selectedProduct" class="selected"></div>
+
+      <form id="orderForm">
+        <input type="hidden" id="productName">
+        <input type="hidden" id="variantName">
+        <input type="hidden" id="sizeName">
+        <input type="hidden" id="unitPrice">
+
+        <label>আপনার নাম
+          <input id="customerName" required>
+        </label>
+        <label>মোবাইল নম্বর
+          <input id="phone" inputmode="tel" required>
+        </label>
+        <label>জেলা
+          <input id="district">
+        </label>
+        <label>উপজেলা
+          <input id="upazila">
+        </label>
+        <label>সম্পূর্ণ ঠিকানা
+          <textarea id="address" required></textarea>
+        </label>
+        <label>পরিমাণ
+          <input id="quantity" type="number" min="1" value="1" required>
+        </label>
+
+        <div id="orderTotal" class="total"></div>
+        <button class="primary" type="submit">অর্ডার কনফার্ম করুন</button>
+        <p id="orderMessage" class="message"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
