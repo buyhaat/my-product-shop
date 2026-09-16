@@ -39,10 +39,7 @@ async function isAdmin() {
 
   if (!user) return false;
 
-  const {
-    data,
-    error
-  } = await sb
+  const { data, error } = await sb
     .from('admin_users')
     .select('user_id')
     .eq('user_id', user.id)
@@ -58,20 +55,17 @@ async function refreshAuth() {
   } = await sb.auth.getSession();
 
   if (session && await isAdmin()) {
-
     loginPanel.classList.add('hidden');
     dashboard.classList.remove('hidden');
     logoutBtn.classList.remove('hidden');
 
-    loadProducts();
-    loadOrders();
+    await loadProducts();
+    await loadOrders();
 
   } else {
-
     loginPanel.classList.remove('hidden');
     dashboard.classList.add('hidden');
     logoutBtn.classList.add('hidden');
-
   }
 }
 
@@ -88,11 +82,12 @@ document
 
     const msg = document.getElementById('loginMessage');
 
-    const {
-      error
-    } = await sb.auth.signInWithPassword({
-      email: email.value.trim(),
-      password: password.value
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    const { error } = await sb.auth.signInWithPassword({
+      email: emailInput.value.trim(),
+      password: passwordInput.value
     });
 
     if (error) {
@@ -101,23 +96,20 @@ document
     }
 
     if (!await isAdmin()) {
-
       await sb.auth.signOut();
-
       msg.textContent = 'এই account admin নয়।';
-
       return;
     }
 
     msg.textContent = '';
-
-    refreshAuth();
-
+    await refreshAuth();
   });
 
 
-logoutBtn.onclick = () =>
-  sb.auth.signOut().then(refreshAuth);
+logoutBtn.onclick = async () => {
+  await sb.auth.signOut();
+  await refreshAuth();
+};
 
 
 /* =========================
@@ -137,15 +129,12 @@ async function loadProducts() {
     });
 
   if (error) {
-
     productList.textContent = error.message;
-
     return;
   }
 
   productList.innerHTML = products.length
     ? products.map(p => `
-
       <div class="product-row">
 
         <img
@@ -158,13 +147,11 @@ async function loadProducts() {
         >
 
         <div class="grow">
-
           <b>${esc(p.name)}</b>
 
           <div class="muted">
             ${p.active ? 'Active' : 'Hidden'}
           </div>
-
         </div>
 
         <button
@@ -182,26 +169,24 @@ async function loadProducts() {
         </button>
 
       </div>
-
     `).join('')
     : 'কোনো product নেই।';
 
 
   productList
     .querySelectorAll('.edit')
-    .forEach(b =>
-      b.onclick = () =>
-        editProduct(Number(b.dataset.id))
-    );
+    .forEach(button => {
+      button.onclick = () =>
+        editProduct(Number(button.dataset.id));
+    });
 
 
   productList
     .querySelectorAll('.delete')
-    .forEach(b =>
-      b.onclick = () =>
-        deleteProduct(Number(b.dataset.id))
-    );
-
+    .forEach(button => {
+      button.onclick = () =>
+        deleteProduct(Number(button.dataset.id));
+    });
 }
 
 
@@ -228,14 +213,12 @@ document
 
 function addVariant(data = {}) {
 
-  const tpl =
-    document
-      .getElementById('variantTemplate')
-      .content
-      .cloneNode(true);
+  const tpl = document
+    .getElementById('variantTemplate')
+    .content
+    .cloneNode(true);
 
-  const box =
-    tpl.querySelector('.variant-box');
+  const box = tpl.querySelector('.variant-box');
 
   box.querySelector('.v-name').value =
     data.name || '';
@@ -246,28 +229,26 @@ function addVariant(data = {}) {
   box.querySelector('.add-size').onclick =
     () => addSize(box);
 
-  if (data.image_url)
+  if (data.image_url) {
     box.dataset.existingImage = data.image_url;
+  }
 
   variantsEl.appendChild(box);
 
-  (data.sizes || [])
-    .forEach(s =>
-      addSize(box, s)
-    );
+  (data.sizes || []).forEach(size => {
+    addSize(box, size);
+  });
 }
 
 
 function addSize(box, data = {}) {
 
-  const tpl =
-    document
-      .getElementById('sizeTemplate')
-      .content
-      .cloneNode(true);
+  const tpl = document
+    .getElementById('sizeTemplate')
+    .content
+    .cloneNode(true);
 
-  const row =
-    tpl.querySelector('.size-row');
+  const row = tpl.querySelector('.size-row');
 
   row.querySelector('.s-name').value =
     data.size || '';
@@ -281,8 +262,9 @@ function addSize(box, data = {}) {
   row.querySelector('.remove-size').onclick =
     () => row.remove();
 
-  if (data.id)
+  if (data.id) {
     row.dataset.id = data.id;
+  }
 
   box
     .querySelector('.sizes')
@@ -313,12 +295,13 @@ function openEditor(product = null, loadedVariants = []) {
 
   variantsEl.innerHTML = '';
 
-  loadedVariants.forEach(v =>
-    addVariant(v)
-  );
+  loadedVariants.forEach(v => {
+    addVariant(v);
+  });
 
-  if (!loadedVariants.length)
+  if (!loadedVariants.length) {
     addVariant();
+  }
 
   window.scrollTo({
     top: document.body.scrollHeight,
@@ -334,7 +317,7 @@ function openEditor(product = null, loadedVariants = []) {
 async function editProduct(id) {
 
   const {
-    data: p,
+    data: product,
     error
   } = await sb
     .from('products')
@@ -343,44 +326,37 @@ async function editProduct(id) {
     .single();
 
   if (error) {
-
     alert(error.message);
-
     return;
   }
 
-
   const {
-    data: vs
+    data: variants
   } = await sb
     .from('product_variants')
     .select('*')
     .eq('product_id', id)
     .order('created_at');
 
-
-  const vids =
-    (vs || []).map(v => v.id);
+  const variantIds =
+    (variants || []).map(v => v.id);
 
   let sizes = [];
 
+  if (variantIds.length) {
 
-  if (vids.length) {
+    const result = await sb
+      .from('variant_sizes')
+      .select('*')
+      .in('variant_id', variantIds)
+      .order('created_at');
 
-    const r =
-      await sb
-        .from('variant_sizes')
-        .select('*')
-        .in('variant_id', vids)
-        .order('created_at');
-
-    sizes = r.data || [];
+    sizes = result.data || [];
   }
 
-
   openEditor(
-    p,
-    (vs || []).map(v => ({
+    product,
+    (variants || []).map(v => ({
       ...v,
       sizes: sizes.filter(
         s => s.variant_id === v.id
@@ -396,8 +372,7 @@ async function editProduct(id) {
 
 async function uploadImage(file, prefix) {
 
-  if (!file)
-    return null;
+  if (!file) return null;
 
   const ext =
     (file.name.split('.').pop() || 'jpg')
@@ -408,10 +383,7 @@ async function uploadImage(file, prefix) {
       .toString(36)
       .slice(2)}.${ext}`;
 
-
-  const {
-    error
-  } = await sb
+  const { error } = await sb
     .storage
     .from('product-images')
     .upload(
@@ -422,10 +394,9 @@ async function uploadImage(file, prefix) {
       }
     );
 
-
-  if (error)
+  if (error) {
     throw error;
-
+  }
 
   return sb
     .storage
@@ -451,7 +422,6 @@ document
 
     msg.textContent = 'Saving...';
 
-
     try {
 
       const id =
@@ -469,17 +439,19 @@ document
           .getElementById('mainImage')
           .files[0];
 
-
-      if (mainFile)
+      if (mainFile) {
         mainUrl =
           await uploadImage(
             mainFile,
             'main'
           );
+      }
 
 
-      let p;
+      let product;
 
+
+      /* CREATE / UPDATE PRODUCT */
 
       if (id) {
 
@@ -497,13 +469,11 @@ document
               .trim()
         };
 
+        if (mainUrl) {
+          patch.main_image_url = mainUrl;
+        }
 
-        if (mainUrl)
-          patch.main_image_url =
-            mainUrl;
-
-
-        const r =
+        const result =
           await sb
             .from('products')
             .update(patch)
@@ -511,16 +481,15 @@ document
             .select()
             .single();
 
+        if (result.error) {
+          throw result.error;
+        }
 
-        if (r.error)
-          throw r.error;
-
-        p = r.data;
-
+        product = result.data;
 
       } else {
 
-        const r =
+        const result =
           await sb
             .from('products')
             .insert({
@@ -542,36 +511,37 @@ document
             .select()
             .single();
 
+        if (result.error) {
+          throw result.error;
+        }
 
-        if (r.error)
-          throw r.error;
-
-        p = r.data;
+        product = result.data;
       }
 
 
-      /* Replace variants/sizes */
+      /* =========================
+         REPLACE VARIANTS / SIZES
+      ========================= */
 
       if (id) {
 
         const {
-          data: oldV
+          data: oldVariants
         } = await sb
           .from('product_variants')
           .select('id')
           .eq('product_id', id);
 
-
         const oldIds =
-          (oldV || []).map(v => v.id);
+          (oldVariants || []).map(v => v.id);
 
+        if (oldIds.length) {
 
-        if (oldIds.length)
           await sb
             .from('variant_sizes')
             .delete()
             .in('variant_id', oldIds);
-
+        }
 
         await sb
           .from('product_variants')
@@ -579,6 +549,8 @@ document
           .eq('product_id', id);
       }
 
+
+      /* CREATE VARIANTS */
 
       for (
         const box of
@@ -590,21 +562,20 @@ document
             .querySelector('.v-image')
             .files[0];
 
-
         const vUrl =
           vFile
             ? await uploadImage(
                 vFile,
-                `variant-${p.id}`
+                `variant-${product.id}`
               )
             : null;
 
 
-        const vr =
+        const variantResult =
           await sb
             .from('product_variants')
             .insert({
-              product_id: p.id,
+              product_id: product.id,
 
               name:
                 box
@@ -615,47 +586,45 @@ document
               image_url:
                 vUrl ||
                 box.dataset.existingImage ||
-                p.main_image_url
+                product.main_image_url
             })
             .select()
             .single();
 
 
-        if (vr.error)
-          throw vr.error;
+        if (variantResult.error) {
+          throw variantResult.error;
+        }
 
 
-        const rows =
-          [
-            ...box.querySelectorAll(
-              '.size-row'
-            )
-          ];
+        const rows = [
+          ...box.querySelectorAll('.size-row')
+        ];
 
 
         if (rows.length) {
 
           const payload =
-            rows.map(r => ({
+            rows.map(row => ({
               variant_id:
-                vr.data.id,
+                variantResult.data.id,
 
               size:
-                r
+                row
                   .querySelector('.s-name')
                   .value
                   .trim(),
 
               price:
                 Number(
-                  r
+                  row
                     .querySelector('.s-price')
                     .value
                 ),
 
               stock:
                 Number(
-                  r
+                  row
                     .querySelector('.s-stock')
                     .value
                 ),
@@ -664,14 +633,15 @@ document
             }));
 
 
-          const sr =
+          const sizeResult =
             await sb
               .from('variant_sizes')
               .insert(payload);
 
 
-          if (sr.error)
-            throw sr.error;
+          if (sizeResult.error) {
+            throw sizeResult.error;
+          }
         }
       }
 
@@ -686,7 +656,6 @@ document
       msg.textContent =
         'Error: ' + err.message;
     }
-
   });
 
 
@@ -700,27 +669,22 @@ async function deleteProduct(id) {
     !confirm(
       'এই product এবং এর varieties/sizes delete করবেন?'
     )
-  )
-    return;
-
-
-  const {
-    error
-  } = await sb
-    .from('products')
-    .delete()
-    .eq('id', id);
-
-
-  if (error) {
-
-    alert(error.message);
-
+  ) {
     return;
   }
 
+  const { error } =
+    await sb
+      .from('products')
+      .delete()
+      .eq('id', id);
 
-  loadProducts();
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadProducts();
 }
 
 
@@ -730,8 +694,13 @@ async function deleteProduct(id) {
 
 async function loadOrders() {
 
+  if (!ordersList) {
+    console.error('ordersList element not found.');
+    return;
+  }
+
   ordersList.innerHTML =
-    'অর্ডার লোড হচ্ছে...';
+    '<p>অর্ডার লোড হচ্ছে...</p>';
 
 
   const {
@@ -747,16 +716,19 @@ async function loadOrders() {
 
   if (error) {
 
-    ordersList.innerHTML =
-      `<p class="message">
+    console.error('Orders load error:', error);
+
+    ordersList.innerHTML = `
+      <p class="message">
         Orders load error: ${esc(error.message)}
-      </p>`;
+      </p>
+    `;
 
     return;
   }
 
 
-  if (!orders || !orders.length) {
+  if (!orders || orders.length === 0) {
 
     ordersList.innerHTML =
       '<p>এখনো কোনো order নেই।</p>';
@@ -789,7 +761,6 @@ async function loadOrders() {
 
 
       return `
-
         <div class="order-card">
 
           <div class="order-head">
@@ -854,9 +825,7 @@ async function loadOrders() {
               ${esc(order.upazila)}
             </p>
 
-
             <hr>
-
 
             <p>
               <b>📦 Product:</b>
@@ -876,9 +845,7 @@ async function loadOrders() {
               ${esc(order.quantity)}
             </p>
 
-
             <hr>
-
 
             <p>
               <b>Product Price:</b>
@@ -898,13 +865,12 @@ async function loadOrders() {
           </div>
 
         </div>
-
       `;
 
     }).join('');
 
 
-  /* Status change */
+  /* STATUS CHANGE */
 
   ordersList
     .querySelectorAll('.order-status')
@@ -912,11 +878,14 @@ async function loadOrders() {
 
       select.addEventListener(
         'change',
-        () =>
-          updateOrderStatus(
+        async () => {
+
+          await updateOrderStatus(
             Number(select.dataset.id),
             select.value
-          )
+          );
+
+        }
       );
 
     });
@@ -927,19 +896,15 @@ async function loadOrders() {
    UPDATE ORDER STATUS
 ========================= */
 
-async function updateOrderStatus(
-  id,
-  status
-) {
+async function updateOrderStatus(id, status) {
 
-  const {
-    error
-  } = await sb
-    .from('orders')
-    .update({
-      status
-    })
-    .eq('id', id);
+  const { error } =
+    await sb
+      .from('orders')
+      .update({
+        status: status
+      })
+      .eq('id', id);
 
 
   if (error) {
@@ -959,14 +924,18 @@ async function updateOrderStatus(
    REFRESH ORDERS
 ========================= */
 
-document
-  .getElementById('refreshOrdersBtn')
-  .onclick = () =>
-    loadOrders();
+const refreshOrdersBtn =
+  document.getElementById('refreshOrdersBtn');
+
+if (refreshOrdersBtn) {
+
+  refreshOrdersBtn.onclick =
+    () => loadOrders();
+}
 
 
 /* =========================
    START
 ========================= */
 
-refreshAuth();
+refreshAuth(); 
