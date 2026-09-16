@@ -1,636 +1,529 @@
-const { createClient } = window.supabase;
+const { createClient } = supabase;
+
 const sb = createClient(
-  SHOP_CONFIG.SUPABASE_URL,
-  SHOP_CONFIG.SUPABASE_PUBLISHABLE_KEY
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
 );
 
-const productsEl = document.getElementById('products');
-const modal = document.getElementById('orderModal');
-const orderForm = document.getElementById('orderForm');
-
-let catalog = [];
-
-function money(v) {
-  return `৳${Number(v).toLocaleString('en-BD')}`;
-}
+let productsData = [];
 
 /* =========================
    LOAD PRODUCTS
 ========================= */
 
 async function loadProducts() {
-  const { data: products, error } = await sb
-    .from('products')
-    .select('*')
-    .eq('active', true)
-    .order('created_at', { ascending: false });
+  const productsContainer = document.getElementById("products");
+
+  productsContainer.innerHTML = `
+    <div class="loading">পণ্য লোড হচ্ছে...</div>
+  `;
+
+  const { data, error } = await sb
+    .from("products")
+    .select(`
+      id,
+      name,
+      description,
+      main_image_url,
+      base_price,
+      active,
+      product_variants (
+        id,
+        name,
+        image_url,
+        active,
+        variant_sizes (
+          id,
+          size,
+          price,
+          stock,
+          active
+        )
+      )
+    `)
+    .eq("active", true)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    productsEl.innerHTML =
-      `<div class="panel">Product load error: ${escapeHtml(error.message)}</div>`;
+    console.error(error);
+
+    productsContainer.innerHTML = `
+      <div class="empty-products">
+        পণ্য লোড করা যায়নি।
+      </div>
+    `;
+
     return;
   }
 
-  const ids = products.map(p => p.id);
+  productsData = data || [];
 
-  let variants = [];
-  let sizes = [];
-
-  if (ids.length) {
-    const vr = await sb
-      .from('product_variants')
-      .select('*')
-      .in('product_id', ids)
-      .eq('active', true)
-      .order('created_at');
-
-    if (vr.error) {
-      productsEl.innerHTML =
-        `<div class="panel">Variant load error: ${escapeHtml(vr.error.message)}</div>`;
-      return;
-    }
-
-    variants = vr.data || [];
-
-    const variantIds = variants.map(v => v.id);
-
-    if (variantIds.length) {
-      const sr = await sb
-        .from('variant_sizes')
-        .select('*')
-        .in('variant_id', variantIds)
-        .eq('active', true)
-        .order('created_at');
-
-      if (sr.error) {
-        productsEl.innerHTML =
-          `<div class="panel">Size load error: ${escapeHtml(sr.error.message)}</div>`;
-        return;
-      }
-
-      sizes = sr.data || [];
-    }
-  }
-
-  catalog = products.map(p => ({
-    ...p,
-
-    variants: variants
-      .filter(v => v.product_id === p.id)
-      .map(v => ({
-        ...v,
-        sizes: sizes.filter(s => s.variant_id === v.id)
-      }))
-  }));
-
-  renderProducts();
+  renderProducts(productsData);
 }
 
 /* =========================
    RENDER PRODUCTS
 ========================= */
 
-function renderProducts() {
-  if (!catalog.length) {
-    productsEl.innerHTML =
-      '<div class="panel">এখনো কোনো product যোগ করা হয়নি।</div>';
+function renderProducts(products) {
+  const container = document.getElementById("products");
+
+  if (!products.length) {
+    container.innerHTML = `
+      <div class="empty-products">
+        এখন কোনো পণ্য পাওয়া যায়নি।
+      </div>
+    `;
     return;
   }
 
-  productsEl.innerHTML = catalog.map(p => {
+  container.innerHTML = products.map(product => {
 
-    const variants = p.variants.length
-      ? p.variants
-      : [{
-          id: null,
-          name: 'Default',
-          image_url: p.main_image_url,
-          sizes: []
-        }];
+    const variants = (product.product_variants || [])
+      .filter(v => v.active);
+
+    let variantHTML = "";
+
+    variants.forEach(variant => {
+
+      const sizes = (variant.variant_sizes || [])
+        .filter(s => s.active);
+
+      if (!sizes.length) return;
+
+      const sizeHTML = sizes.map(size => {
+
+        const stock = Number(size.stock || 0);
+        const price = Number(size.price || product.base_price || 0);
+
+        if (stock <= 0) {
+          return `
+            <button
+              class="size-option out-of-stock"
+              disabled
+              type="button"
+            >
+              ${escapeHTML(size.size)}
+              <span class="stock-text">Stock শেষ</span>
+            </button>
+          `;
+        }
+
+        return `
+          <button
+            class="size-option"
+            type="button"
+            onclick="openOrderModal(
+              ${product.id},
+              ${variant.id},
+              ${size.id}
+            )"
+          >
+            ${escapeHTML(size.size)}
+            <span class="stock-text">
+              ৳${price} · ${stock} টি
+            </span>
+          </button>
+        `;
+      }).join("");
+
+      variantHTML += `
+        <div class="variant-item">
+          <div class="variant-name">
+            ${escapeHTML(variant.name)}
+          </div>
+
+          <div class="size-list">
+            ${sizeHTML}
+          </div>
+        </div>
+      `;
+    });
+
+    const firstImage =
+      product.main_image_url ||
+      (
+        variants.length
+          ? variants.find(v => v.image_url)?.image_url
+          : ""
+      ) ||
+      "https://via.placeholder.com/600x400?text=No+Image";
 
     return `
-      <article class="card">
+      <article class="product-card">
 
         <img
-          src="${escapeAttr(
-            p.main_image_url ||
-            'https://placehold.co/600x600?text=Product'
-          )}"
-          alt=""
+          class="product-image"
+          src="${escapeAttribute(firstImage)}"
+          alt="${escapeAttribute(product.name)}"
+          loading="lazy"
+          onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'"
         >
 
-        <h3>${escapeHtml(p.name)}</h3>
+        <div class="product-content">
 
-        <p>${escapeHtml(p.description || '')}</p>
+          <h3>
+            ${escapeHTML(product.name)}
+          </h3>
 
-        <select
-          class="select variant-select"
-          data-p="${p.id}"
-        >
-          ${variants.map(v => `
-            <option value="${v.id}">
-              ${escapeHtml(v.name)}
-            </option>
-          `).join('')}
-        </select>
+          ${
+            product.description
+              ? `
+                <p class="product-description">
+                  ${escapeHTML(product.description)}
+                </p>
+              `
+              : ""
+          }
 
-        <select
-          class="select size-select"
-          data-p="${p.id}"
-        ></select>
+          <div class="variant-list">
+            ${variantHTML}
+          </div>
 
-        <div
-          class="price"
-          id="price-${p.id}"
-        ></div>
-
-        <button
-          class="primary order-btn"
-          data-p="${p.id}"
-        >
-          Order Now
-        </button>
+        </div>
 
       </article>
     `;
-  }).join('');
-
-  catalog.forEach(p => updateVariantUI(p.id));
-
-  productsEl
-    .querySelectorAll('.variant-select')
-    .forEach(el => {
-      el.addEventListener('change', () => {
-        updateVariantUI(Number(el.dataset.p));
-      });
-    });
-
-  productsEl
-    .querySelectorAll('.size-select')
-    .forEach(el => {
-      el.addEventListener('change', () => {
-        updatePrice(Number(el.dataset.p));
-      });
-    });
-
-  productsEl
-    .querySelectorAll('.order-btn')
-    .forEach(el => {
-      el.addEventListener('click', () => {
-        openOrder(Number(el.dataset.p));
-      });
-    });
-}
-
-/* =========================
-   SELECTED VARIANT
-========================= */
-
-function selectedVariant(p) {
-  const variantEl =
-    document.querySelector(
-      `.variant-select[data-p="${p.id}"]`
-    );
-
-  if (!variantEl) return null;
-
-  const vId = variantEl.value;
-
-  return (
-    p.variants.find(
-      v => String(v.id) === String(vId)
-    ) || p.variants[0]
-  );
-}
-
-/* =========================
-   UPDATE VARIANT UI
-========================= */
-
-function updateVariantUI(pid) {
-  const p = catalog.find(x => x.id === pid);
-
-  if (!p) return;
-
-  const v = selectedVariant(p);
-
-  const sizeEl =
-    document.querySelector(
-      `.size-select[data-p="${pid}"]`
-    );
-
-  if (!sizeEl) return;
-
-  const sizes = v?.sizes || [];
-
-  if (!sizes.length) {
-    sizeEl.innerHTML =
-      `<option value="">No size available</option>`;
-
-    updatePrice(pid);
-    updateOrderButton(pid, false);
-
-    return;
-  }
-
-  sizeEl.innerHTML = sizes.map(s => {
-
-    const stock = Number(s.stock || 0);
-
-    return `
-      <option
-        value="${s.id}"
-        ${stock <= 0 ? 'disabled' : ''}
-      >
-        ${escapeHtml(s.size)}
-        — ${money(s.price)}
-        ${stock > 0 ? `(${stock} left)` : '(Out of Stock)'}
-      </option>
-    `;
-
-  }).join('');
-
-  /* প্রথম available size select করা */
-  const firstAvailable =
-    sizes.find(s => Number(s.stock) > 0);
-
-  if (firstAvailable) {
-    sizeEl.value = firstAvailable.id;
-  }
-
-  updatePrice(pid);
-}
-
-/* =========================
-   UPDATE PRICE
-========================= */
-
-function updatePrice(pid) {
-  const p = catalog.find(x => x.id === pid);
-
-  if (!p) return;
-
-  const v = selectedVariant(p);
-
-  const sizeEl =
-    document.querySelector(
-      `.size-select[data-p="${pid}"]`
-    );
-
-  const sid = sizeEl?.value;
-
-  const s =
-    (v?.sizes || []).find(
-      x => String(x.id) === String(sid)
-    );
-
-  const priceEl =
-    document.getElementById(`price-${pid}`);
-
-  if (!priceEl) return;
-
-  if (!s) {
-    priceEl.textContent = 'দাম সেট করা হয়নি';
-    updateOrderButton(pid, false);
-    return;
-  }
-
-  const stock = Number(s.stock || 0);
-
-  priceEl.textContent =
-    stock > 0
-      ? money(s.price)
-      : 'Out of Stock';
-
-  updateOrderButton(pid, stock > 0);
-}
-
-/* =========================
-   ORDER BUTTON
-========================= */
-
-function updateOrderButton(pid, available) {
-  const btn =
-    document.querySelector(
-      `.order-btn[data-p="${pid}"]`
-    );
-
-  if (!btn) return;
-
-  if (available) {
-    btn.disabled = false;
-    btn.textContent = 'Order Now';
-  } else {
-    btn.disabled = true;
-    btn.textContent = 'Out of Stock';
-  }
+  }).join("");
 }
 
 /* =========================
    OPEN ORDER MODAL
 ========================= */
 
-function openOrder(pid) {
-  const p = catalog.find(x => x.id === pid);
+function openOrderModal(productId, variantId, sizeId) {
 
-  if (!p) return;
+  const product = productsData.find(
+    p => Number(p.id) === Number(productId)
+  );
 
-  const v = selectedVariant(p);
+  if (!product) return;
 
-  const sizeEl =
-    document.querySelector(
-      `.size-select[data-p="${p.id}"]`
-    );
+  const variant = (product.product_variants || []).find(
+    v => Number(v.id) === Number(variantId)
+  );
 
-  const sid = sizeEl?.value;
+  if (!variant) return;
 
-  const s =
-    (v?.sizes || []).find(
-      x => String(x.id) === String(sid)
-    );
+  const size = (variant.variant_sizes || []).find(
+    s => Number(s.id) === Number(sizeId)
+  );
 
-  if (!s) {
-    alert('এই product-এর কোনো available size নেই।');
+  if (!size) return;
+
+  if (Number(size.stock) <= 0) {
+    alert("এই size-এর stock শেষ।");
     return;
   }
 
-  const stock = Number(s.stock || 0);
+  document.getElementById("selectedProduct").textContent =
+    `${product.name} — ${variant.name} — ${size.size}`;
 
-  if (stock <= 0) {
-    alert('এই size-এর stock শেষ হয়ে গেছে।');
-    return;
-  }
+  document.getElementById("productName").value =
+    product.name;
 
-  document.getElementById('productName').value =
-    p.name;
+  document.getElementById("variantName").value =
+    variant.name;
 
-  document.getElementById('variantName').value =
-    v.name;
+  document.getElementById("sizeName").value =
+    size.size;
 
-  document.getElementById('sizeName').value =
-    s.size;
+  document.getElementById("unitPrice").value =
+    Number(size.price || product.base_price || 0);
 
-  document.getElementById('unitPrice').value =
-    s.price;
+  document.getElementById("variantSizeId").value =
+    size.id;
 
-  document.getElementById('selectedProduct').textContent =
-    `${p.name} — ${v.name} — ${s.size} — ${money(s.price)} — Stock: ${stock}`;
+  document.getElementById("quantity").value = 1;
 
-  const quantityEl =
-    document.getElementById('quantity');
-
-  quantityEl.value = 1;
-  quantityEl.max = stock;
+  document.getElementById("quantity").max =
+    Number(size.stock);
 
   updateOrderTotal();
 
-  modal.classList.remove('hidden');
+  const message =
+    document.getElementById("orderMessage");
+
+  message.className = "order-message";
+  message.textContent = "";
+
+  document.getElementById("orderModal")
+    .classList.add("active");
 }
-
-/* =========================
-   ORDER TOTAL
-========================= */
-
-function updateOrderTotal() {
-  const quantityEl =
-    document.getElementById('quantity');
-
-  const q =
-    Math.max(1, Number(quantityEl.value || 1));
-
-  const price =
-    Number(
-      document.getElementById('unitPrice').value || 0
-    );
-
-  document.getElementById('orderTotal').textContent =
-    `Product Total: ${money(q * price)}`;
-}
-
-document
-  .getElementById('quantity')
-  .addEventListener('input', updateOrderTotal);
 
 /* =========================
    CLOSE MODAL
 ========================= */
 
-document.getElementById('closeModal').onclick = () => {
-  modal.classList.add('hidden');
-};
+function closeOrderModal() {
+  document.getElementById("orderModal")
+    .classList.remove("active");
+}
 
-/* =========================
-   PLACE ORDER
-   STOCK WILL DECREASE
-========================= */
+document.addEventListener("DOMContentLoaded", () => {
 
-orderForm.addEventListener('submit', async e => {
+  loadProducts();
 
-  e.preventDefault();
+  const closeButton =
+    document.getElementById("closeModal");
 
-  const quantityEl =
-    document.getElementById('quantity');
-
-  const q =
-    Number(quantityEl.value);
-
-  const price =
-    Number(
-      document.getElementById('unitPrice').value
+  if (closeButton) {
+    closeButton.addEventListener(
+      "click",
+      closeOrderModal
     );
+  }
 
-  const productName =
-    document.getElementById('productName').value;
+  const modal =
+    document.getElementById("orderModal");
 
-  const variantName =
-    document.getElementById('variantName').value;
+  if (modal) {
+    modal.addEventListener("click", event => {
 
-  const sizeName =
-    document.getElementById('sizeName').value;
+      if (event.target === modal) {
+        closeOrderModal();
+      }
 
-  /* Selected product বের করা */
-  const p =
-    catalog.find(
-      x => x.name === productName
+    });
+  }
+
+  const quantity =
+    document.getElementById("quantity");
+
+  if (quantity) {
+    quantity.addEventListener(
+      "input",
+      updateOrderTotal
     );
-
-  if (!p) {
-    alert('Product পাওয়া যায়নি।');
-    return;
   }
 
-  const v =
-    p.variants.find(
-      x => x.name === variantName
+  const form =
+    document.getElementById("orderForm");
+
+  if (form) {
+    form.addEventListener(
+      "submit",
+      submitOrder
     );
-
-  if (!v) {
-    alert('Variant পাওয়া যায়নি।');
-    return;
   }
-
-  const s =
-    (v.sizes || []).find(
-      x => x.size === sizeName
-    );
-
-  if (!s) {
-    alert('Size পাওয়া যায়নি।');
-    return;
-  }
-
-  const variantSizeId = s.id;
-
-  if (!variantSizeId) {
-    alert(
-      'এই product-এর stock system এখনো সেট করা হয়নি।'
-    );
-    return;
-  }
-
-  if (q < 1) {
-    alert('Quantity কমপক্ষে 1 হতে হবে।');
-    return;
-  }
-
-  if (q > Number(s.stock)) {
-    alert(
-      `এই size-এ মাত্র ${s.stock} টি stock আছে।`
-    );
-    return;
-  }
-
-  const msg =
-    document.getElementById('orderMessage');
-
-  msg.textContent = 'অর্ডার processing হচ্ছে...';
-
-  /* =========================
-     SUPABASE RPC
-  ========================= */
-
-  const { data, error } = await sb.rpc(
-    'place_order',
-    {
-      p_customer_name:
-        document
-          .getElementById('customerName')
-          .value
-          .trim(),
-
-      p_phone:
-        document
-          .getElementById('phone')
-          .value
-          .trim(),
-
-      p_address:
-        document
-          .getElementById('address')
-          .value
-          .trim(),
-
-      p_district:
-        document
-          .getElementById('district')
-          .value
-          .trim(),
-
-      p_upazila:
-        document
-          .getElementById('upazila')
-          .value
-          .trim(),
-
-      p_product_name:
-        productName,
-
-      p_variant_name:
-        variantName,
-
-      p_size_name:
-        sizeName,
-
-      p_variant_size_id:
-        variantSizeId,
-
-      p_quantity:
-        q,
-
-      p_product_price:
-        price
-    }
-  );
-
-  /* RPC error */
-  if (error) {
-    msg.textContent =
-      'অর্ডার হয়নি: ' + error.message;
-
-    return;
-  }
-
-  /* Function success কিনা */
-  if (!data || data.success !== true) {
-
-    msg.textContent =
-      'অর্ডার হয়নি: ' +
-      (data?.message || 'Unknown error');
-
-    return;
-  }
-
-  /* =========================
-     SUCCESS
-  ========================= */
-
-  msg.textContent =
-    `অর্ডার সফল হয়েছে। বাকি stock: ${data.remaining_stock}`;
-
-  alert(
-    `অর্ডার সফল হয়েছে!\n\nবাকি stock: ${data.remaining_stock}`
-  );
-
-  orderForm.reset();
-
-  document.getElementById('quantity').value = 1;
-
-  /*
-    Modal বন্ধ
-  */
-  modal.classList.add('hidden');
-
-  /*
-    Product list আবার load করা হবে,
-    যাতে নতুন stock সঙ্গে সঙ্গে দেখা যায়।
-  */
-  await loadProducts();
-
 });
 
 /* =========================
-   ESCAPE HTML
+   UPDATE TOTAL
 ========================= */
 
-function escapeHtml(s) {
-  return String(s ?? '').replace(
-    /[&<>"']/g,
-    c => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    }[c])
-  );
-}
+function updateOrderTotal() {
 
-function escapeAttr(s) {
-  return escapeHtml(s);
+  const quantity =
+    Number(document.getElementById("quantity").value) || 1;
+
+  const unitPrice =
+    Number(document.getElementById("unitPrice").value) || 0;
+
+  const total =
+    quantity * unitPrice;
+
+  const totalElement =
+    document.getElementById("orderTotal");
+
+  if (totalElement) {
+    totalElement.textContent =
+      `৳${total}`;
+  }
 }
 
 /* =========================
-   START
+   SUBMIT ORDER
 ========================= */
 
-loadProducts();
+async function submitOrder(event) {
+
+  event.preventDefault();
+
+  const submitButton =
+    event.target.querySelector(
+      ".submit-order"
+    );
+
+  const message =
+    document.getElementById("orderMessage");
+
+  const customerName =
+    document.getElementById("customerName").value.trim();
+
+  const phone =
+    document.getElementById("phone").value.trim();
+
+  const address =
+    document.getElementById("address").value.trim();
+
+  const district =
+    document.getElementById("district").value.trim();
+
+  const upazila =
+    document.getElementById("upazila").value.trim();
+
+  const productName =
+    document.getElementById("productName").value;
+
+  const variantName =
+    document.getElementById("variantName").value;
+
+  const sizeName =
+    document.getElementById("sizeName").value;
+
+  const variantSizeId =
+    Number(
+      document.getElementById("variantSizeId").value
+    );
+
+  const quantity =
+    Number(
+      document.getElementById("quantity").value
+    );
+
+  const unitPrice =
+    Number(
+      document.getElementById("unitPrice").value
+    );
+
+  if (
+    !customerName ||
+    !phone ||
+    !address ||
+    !district ||
+    !upazila ||
+    !variantSizeId ||
+    !quantity ||
+    !unitPrice
+  ) {
+
+    showOrderMessage(
+      "সব তথ্য সঠিকভাবে পূরণ করুন।",
+      "error"
+    );
+
+    return;
+  }
+
+  if (quantity < 1) {
+
+    showOrderMessage(
+      "Quantity কমপক্ষে 1 হতে হবে।",
+      "error"
+    );
+
+    return;
+  }
+
+  submitButton.disabled = true;
+  submitButton.textContent =
+    "অর্ডার করা হচ্ছে...";
+
+  showOrderMessage("", "");
+
+  const { data, error } = await sb.rpc(
+    "place_order",
+    {
+      p_customer_name: customerName,
+      p_phone: phone,
+      p_address: address,
+      p_district: district,
+      p_upazila: upazila,
+      p_product_name: productName,
+      p_variant_name: variantName,
+      p_size_name: sizeName,
+      p_variant_size_id: variantSizeId,
+      p_quantity: quantity,
+      p_product_price: unitPrice
+    }
+  );
+
+  if (error) {
+
+    console.error(error);
+
+    showOrderMessage(
+      "অর্ডার করা যায়নি। আবার চেষ্টা করুন।",
+      "error"
+    );
+
+    submitButton.disabled = false;
+    submitButton.textContent =
+      "অর্ডার করুন";
+
+    return;
+  }
+
+  if (!data || data.success !== true) {
+
+    showOrderMessage(
+      data?.message ||
+      "অর্ডার করা যায়নি।",
+      "error"
+    );
+
+    submitButton.disabled = false;
+    submitButton.textContent =
+      "অর্ডার করুন";
+
+    return;
+  }
+
+  showOrderMessage(
+    `অর্ডার সফল হয়েছে! আপনার Order ID: #${data.order_id}`,
+    "success"
+  );
+
+  event.target.reset();
+
+  document.getElementById("quantity").value = 1;
+
+  setTimeout(() => {
+
+    closeOrderModal();
+
+    loadProducts();
+
+  }, 1500);
+
+  submitButton.disabled = false;
+  submitButton.textContent =
+    "অর্ডার করুন";
+}
+
+/* =========================
+   MESSAGE
+========================= */
+
+function showOrderMessage(text, type) {
+
+  const message =
+    document.getElementById("orderMessage");
+
+  if (!message) return;
+
+  message.textContent = text;
+
+  message.className =
+    "order-message" +
+    (type ? ` ${type}` : "");
+}
+
+/* =========================
+   SECURITY / HTML HELPERS
+========================= */
+
+function escapeHTML(value) {
+
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value);
+}
