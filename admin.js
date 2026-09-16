@@ -969,38 +969,4 @@ document
    START
 ========================= */
 
-refreshAuth();      const patch={name:document.getElementById('pName').value.trim(),description:document.getElementById('pDescription').value.trim()};
-      if(mainUrl) patch.main_image_url=mainUrl;
-      const r=await sb.from('products').update(patch).eq('id',id).select().single();if(r.error)throw r.error;p=r.data;
-    }else{
-      const r=await sb.from('products').insert({name:document.getElementById('pName').value.trim(),description:document.getElementById('pDescription').value.trim(),main_image_url:mainUrl}).select().single();if(r.error)throw r.error;p=r.data;
-    }
-    // For a clean first version, replace the variants/sizes on each save.
-    if(id){
-      const {data:oldV}=await sb.from('product_variants').select('id').eq('product_id',id);
-      const oldIds=(oldV||[]).map(v=>v.id);
-      if(oldIds.length) await sb.from('variant_sizes').delete().in('variant_id',oldIds);
-      await sb.from('product_variants').delete().eq('product_id',id);
-    }
-    for(const box of variantsEl.querySelectorAll('.variant-box')){
-      const vFile=box.querySelector('.v-image').files[0];
-      const vUrl=vFile?await uploadImage(vFile,`variant-${p.id}`):null;
-      const vr=await sb.from('product_variants').insert({product_id:p.id,name:box.querySelector('.v-name').value.trim(),image_url:vUrl||box.dataset.existingImage||p.main_image_url}).select().single();
-      if(vr.error)throw vr.error;
-      const rows=[...box.querySelectorAll('.size-row')];
-      if(rows.length){
-        const payload=rows.map(r=>({variant_id:vr.data.id,size:r.querySelector('.s-name').value.trim(),price:Number(r.querySelector('.s-price').value),stock:Number(r.querySelector('.s-stock').value),active:true}));
-        const sr=await sb.from('variant_sizes').insert(payload);if(sr.error)throw sr.error;
-      }
-    }
-    msg.textContent='Product saved successfully.';
-    await loadProducts();
-  }catch(err){msg.textContent='Error: '+err.message;}
-});
-async function deleteProduct(id){
-  if(!confirm('এই product এবং এর varieties/sizes delete করবেন?'))return;
-  const {error}=await sb.from('products').delete().eq('id',id);
-  if(error){alert(error.message);return;}
-  loadProducts();
-}
 refreshAuth();
