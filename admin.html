@@ -260,6 +260,7 @@
         .admin-stat-value {
             font-size: 28px;
             font-weight: 800;
+            min-height: 34px;
         }
 
 
@@ -320,7 +321,7 @@
 
 
         /* =========================
-           PAYMENT SETTINGS
+           PAYMENT
         ========================= */
 
         .payment-settings {
@@ -535,7 +536,7 @@
 
 
         /* =========================
-           ADMIN PRODUCTS
+           PRODUCTS
         ========================= */
 
         .product-admin-list {
@@ -654,11 +655,17 @@
         .order-filter-btn {
             border: 1px solid #ddd;
             background: #fff;
+            color: #333;
             border-radius: 20px;
             padding: 8px 15px;
             cursor: pointer;
             font-size: 13px;
             font-weight: 700;
+        }
+
+        .order-filter-btn:hover {
+            border-color: #f85606;
+            color: #f85606;
         }
 
         .order-filter-btn.active {
@@ -684,6 +691,7 @@
 
         .order-main {
             min-width: 0;
+            flex: 1;
         }
 
         .order-title {
@@ -732,7 +740,7 @@
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            gap: 10px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
@@ -741,11 +749,28 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700;
+            white-space: nowrap;
         }
 
+        .order-status.new,
         .order-status.pending {
             background: #fff3cd;
             color: #856404;
+        }
+
+        .order-status.shipped {
+            background: #e9f3ff;
+            color: #15558a;
+        }
+
+        .order-status.received {
+            background: #e5f7e9;
+            color: #176b31;
+        }
+
+        .order-status.rejected {
+            background: #ffe6e6;
+            color: #a00000;
         }
 
         .order-status.completed {
@@ -753,19 +778,49 @@
             color: #18783b;
         }
 
-        .complete-order-button {
+        .order-status-button {
             border: 0;
-            background: #e4f8e8;
-            color: #16843a;
+            background: #fff0e8;
+            color: #f85606;
             padding: 9px 12px;
             border-radius: 7px;
             cursor: pointer;
             font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .order-status-button:hover {
+            background: #f85606;
+            color: #fff;
+        }
+
+        .delete-order-button {
+            border: 0;
+            background: #ffe5e5;
+            color: #c00000;
+            padding: 9px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .delete-order-button:hover {
+            background: #c00000;
+            color: #fff;
+        }
+
+        .order-empty {
+            padding: 30px;
+            text-align: center;
+            color: #777;
+            background: #fff;
+            border-radius: 10px;
         }
 
 
         /* =========================
-           STORE SETTINGS
+           SETTINGS
         ========================= */
 
         .settings-grid {
@@ -797,7 +852,7 @@
 
 
         /* =========================
-           EMPTY / ERROR
+           EMPTY / ERROR / LOADING
         ========================= */
 
         .empty-admin,
@@ -814,7 +869,7 @@
 
 
         /* =========================
-           DASHBOARD QUICK ACTION
+           QUICK ACTION
         ========================= */
 
         .quick-actions {
@@ -941,7 +996,12 @@
             }
 
             .order-actions {
-                align-items: flex-start;
+                align-items: stretch;
+                width: 100%;
+            }
+
+            .order-actions button {
+                width: 100%;
             }
 
             .quick-actions {
@@ -985,7 +1045,6 @@
             <div class="login-subtitle">
                 Admin Panel
             </div>
-
 
             <form id="loginForm">
 
@@ -1054,9 +1113,6 @@
         class="admin-dashboard"
     >
 
-
-        <!-- HEADER -->
-
         <header class="admin-header">
 
             <div class="admin-brand">
@@ -1086,9 +1142,7 @@
         <div class="admin-layout">
 
 
-            <!-- =================================================
-                 SIDEBAR
-            ================================================== -->
+            <!-- SIDEBAR -->
 
             <aside class="admin-sidebar">
 
@@ -1100,7 +1154,6 @@
                     📊 Dashboard
                 </button>
 
-
                 <button
                     type="button"
                     class="admin-nav-btn"
@@ -1108,7 +1161,6 @@
                 >
                     ➕ Add Product
                 </button>
-
 
                 <button
                     type="button"
@@ -1118,7 +1170,6 @@
                     📦 Products
                 </button>
 
-
                 <button
                     type="button"
                     class="admin-nav-btn"
@@ -1126,7 +1177,6 @@
                 >
                     🧾 Orders
                 </button>
-
 
                 <button
                     type="button"
@@ -1139,9 +1189,7 @@
             </aside>
 
 
-            <!-- =================================================
-                 MAIN
-            ================================================== -->
+            <!-- MAIN -->
 
             <main class="admin-main">
 
@@ -1202,7 +1250,7 @@
                         <div class="admin-stat">
 
                             <div class="admin-stat-label">
-                                Pending Orders
+                                New Orders
                             </div>
 
                             <div
@@ -1233,17 +1281,13 @@
                     </div>
 
 
-                    <!-- QUICK ACTIONS -->
-
                     <div class="admin-card">
 
                         <h2 class="admin-card-title">
                             Quick Actions
                         </h2>
 
-
                         <div class="quick-actions">
-
 
                             <button
                                 type="button"
@@ -1253,7 +1297,6 @@
                                 ➕ নতুন Product যোগ করুন
                             </button>
 
-
                             <button
                                 type="button"
                                 class="quick-action-btn"
@@ -1261,7 +1304,6 @@
                             >
                                 📦 সব Product দেখুন
                             </button>
-
 
                             <button
                                 type="button"
@@ -1271,7 +1313,6 @@
                                 🧾 Orders দেখুন
                             </button>
 
-
                             <button
                                 type="button"
                                 class="quick-action-btn"
@@ -1279,7 +1320,6 @@
                             >
                                 ⚙️ Store Settings
                             </button>
-
 
                         </div>
 
@@ -1297,7 +1337,6 @@
                     class="admin-section"
                 >
 
-
                     <h1
                         id="productFormTitle"
                         class="admin-page-title"
@@ -1305,14 +1344,12 @@
                         Add Product
                     </h1>
 
-
                     <p class="admin-page-subtitle">
                         নতুন Product যোগ করুন অথবা আগের Product Edit করুন
                     </p>
 
 
                     <div class="admin-card">
-
 
                         <div
                             id="productFormAlert"
@@ -1322,13 +1359,8 @@
 
                         <form id="productForm">
 
-
-                            <!-- PRODUCT BASIC INFORMATION -->
-
                             <div class="product-form-grid">
 
-
-                                <!-- PRODUCT NAME -->
 
                                 <div class="admin-field">
 
@@ -1345,8 +1377,6 @@
 
                                 </div>
 
-
-                                <!-- REGULAR PRICE -->
 
                                 <div class="admin-field">
 
@@ -1368,8 +1398,6 @@
 
                                 </div>
 
-
-                                <!-- SALE PRICE -->
 
                                 <div class="admin-field">
 
@@ -1393,8 +1421,6 @@
                                 </div>
 
 
-                                <!-- DESCRIPTION -->
-
                                 <div class="admin-field full-field">
 
                                     <label for="descriptionAdmin">
@@ -1413,8 +1439,6 @@
                                 </div>
 
 
-                                <!-- MAIN IMAGE -->
-
                                 <div class="admin-field full-field">
 
                                     <label for="mainImageAdmin">
@@ -1426,7 +1450,6 @@
                                         id="mainImageAdmin"
                                         accept="image/*"
                                     >
-
 
                                     <div
                                         id="mainImagePreview"
@@ -1444,24 +1467,18 @@
                                 </div>
 
 
-                                <!-- PAYMENT SETTINGS -->
-
                                 <div class="admin-field full-field">
 
                                     <div class="payment-settings">
-
 
                                         <div class="payment-settings-title">
                                             💳 Payment Methods
                                         </div>
 
-
                                         <div class="payment-settings-description">
                                             এই Product-এর জন্য Customer কোন কোন Payment Method ব্যবহার করতে পারবে তা নির্বাচন করুন।
                                         </div>
 
-
-                                        <!-- COD -->
 
                                         <label class="payment-option">
 
@@ -1470,7 +1487,6 @@
                                                 id="allowCodAdmin"
                                                 checked
                                             >
-
 
                                             <div class="payment-option-content">
 
@@ -1487,15 +1503,12 @@
                                         </label>
 
 
-                                        <!-- ADVANCE -->
-
                                         <label class="payment-option">
 
                                             <input
                                                 type="checkbox"
                                                 id="allowAdvanceAdmin"
                                             >
-
 
                                             <div class="payment-option-content">
 
@@ -1519,21 +1532,14 @@
                                             ⚠️ অন্তত একটি Payment Method নির্বাচন করুন।
                                         </div>
 
-
                                     </div>
 
                                 </div>
 
-
                             </div>
 
 
-                            <!-- =================================================
-                                 VARIANTS
-                            ================================================== -->
-
                             <div class="admin-card">
-
 
                                 <div class="variants-header">
 
@@ -1543,7 +1549,6 @@
                                     >
                                         Product Variants
                                     </h2>
-
 
                                     <button
                                         type="button"
@@ -1555,17 +1560,13 @@
 
                                 </div>
 
-
                                 <div
                                     id="variantsContainer"
                                     class="variants-container"
                                 ></div>
 
-
                             </div>
 
-
-                            <!-- FORM ACTIONS -->
 
                             <div
                                 style="
@@ -1575,7 +1576,6 @@
                                 "
                             >
 
-
                                 <button
                                     type="submit"
                                     id="saveProductButton"
@@ -1583,7 +1583,6 @@
                                 >
                                     💾 Save Product
                                 </button>
-
 
                                 <button
                                     type="button"
@@ -1593,9 +1592,7 @@
                                     Reset
                                 </button>
 
-
                             </div>
-
 
                         </form>
 
@@ -1613,19 +1610,15 @@
                     class="admin-section"
                 >
 
-
                     <h1 class="admin-page-title">
                         Products
                     </h1>
-
 
                     <p class="admin-page-subtitle">
                         আপনার সব Product এখান থেকে Edit করতে পারবেন
                     </p>
 
-
                     <div class="admin-card">
-
 
                         <div
                             id="adminProductsList"
@@ -1637,7 +1630,6 @@
                             </div>
 
                         </div>
-
 
                     </div>
 
@@ -1653,21 +1645,16 @@
                     class="admin-section"
                 >
 
-
                     <h1 class="admin-page-title">
                         Orders
                     </h1>
-
 
                     <p class="admin-page-subtitle">
                         Customer-এর সব Order এখান থেকে পরিচালনা করুন
                     </p>
 
 
-                    <!-- ORDER FILTER -->
-
                     <div class="order-filter-bar">
-
 
                         <button
                             type="button"
@@ -1677,30 +1664,50 @@
                             All
                         </button>
 
+                        <button
+                            type="button"
+                            class="order-filter-btn"
+                            data-order-filter="new"
+                        >
+                            🆕 New
+                        </button>
 
                         <button
                             type="button"
                             class="order-filter-btn"
-                            data-order-filter="pending"
+                            data-order-filter="shipped"
                         >
-                            Pending
+                            📦 Shipped
                         </button>
 
+                        <button
+                            type="button"
+                            class="order-filter-btn"
+                            data-order-filter="received"
+                        >
+                            ✅ Received
+                        </button>
+
+                        <button
+                            type="button"
+                            class="order-filter-btn"
+                            data-order-filter="rejected"
+                        >
+                            ❌ Rejected
+                        </button>
 
                         <button
                             type="button"
                             class="order-filter-btn"
                             data-order-filter="completed"
                         >
-                            Completed
+                            🏁 Completed
                         </button>
-
 
                     </div>
 
 
                     <div class="admin-card">
-
 
                         <div
                             id="adminOrdersList"
@@ -1713,14 +1720,13 @@
 
                         </div>
 
-
                     </div>
 
                 </section>
 
 
                 <!-- =================================================
-                     STORE SETTINGS
+                     SETTINGS
                 ================================================== -->
 
                 <section
@@ -1757,11 +1763,8 @@
 
                         <form id="storeSettingsForm">
 
-
                             <div class="settings-grid">
 
-
-                                <!-- ABOUT US -->
 
                                 <div class="admin-field settings-full-field">
 
@@ -1781,8 +1784,6 @@
                                 </div>
 
 
-                                <!-- PHONE -->
-
                                 <div class="admin-field">
 
                                     <label for="contactPhoneAdmin">
@@ -1797,8 +1798,6 @@
 
                                 </div>
 
-
-                                <!-- WHATSAPP -->
 
                                 <div class="admin-field">
 
@@ -1815,8 +1814,6 @@
                                 </div>
 
 
-                                <!-- EMAIL -->
-
                                 <div class="admin-field">
 
                                     <label for="contactEmailAdmin">
@@ -1831,8 +1828,6 @@
 
                                 </div>
 
-
-                                <!-- ADDRESS -->
 
                                 <div class="admin-field">
 
@@ -1849,8 +1844,6 @@
                                 </div>
 
 
-                                <!-- FACEBOOK -->
-
                                 <div class="admin-field">
 
                                     <label for="contactFacebookAdmin">
@@ -1866,8 +1859,6 @@
                                 </div>
 
 
-                                <!-- INSTAGRAM -->
-
                                 <div class="admin-field">
 
                                     <label for="contactInstagramAdmin">
@@ -1882,7 +1873,6 @@
 
                                 </div>
 
-
                             </div>
 
 
@@ -1894,13 +1884,11 @@
                                 💾 Save Store Settings
                             </button>
 
-
                         </form>
 
                     </div>
 
                 </section>
-
 
             </main>
 
@@ -1909,16 +1897,11 @@
     </section>
 
 
-    <!-- =====================================================
-         SCRIPTS
-    ====================================================== -->
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script src="config.js"></script>
 
     <script src="admin.js"></script>
-
 
 </body>
 
