@@ -8,164 +8,199 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Admin Dashboard</title>
+  <title>My Shop — Admin Panel</title>
 
   <link rel="stylesheet" href="style.css">
 
   <style>
-    body {
-      background: #f8fafc;
+    /* =====================================================
+       ADMIN PANEL
+       ===================================================== */
+
+    body.admin-page {
+      background: #f5f5f5;
+      margin: 0;
     }
 
-    .admin-page {
-      max-width: 1200px;
-      margin: auto;
-      padding: 30px 20px 60px;
-    }
-
-    .admin-header {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-    }
-
-    .admin-header h1 {
-      font-size: 25px;
-      margin-bottom: 3px;
-    }
-
-    .admin-header p {
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    .logout-btn {
-      border: none;
-      background: #fee2e2;
-      color: #991b1b;
-      padding: 10px 15px;
-      border-radius: 9px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .login-wrapper {
+    .admin-login {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
+      background: #f5f5f5;
     }
 
-    .login-box {
+    .login-card {
       width: 100%;
       max-width: 420px;
       background: #fff;
-      padding: 30px;
-      border-radius: 18px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+      border-radius: 14px;
+      padding: 32px 25px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.10);
     }
 
-    .login-box h1 {
+    .login-logo {
       text-align: center;
+      font-size: 30px;
+      font-weight: 800;
       margin-bottom: 8px;
     }
 
-    .login-box > p {
+    .login-subtitle {
       text-align: center;
-      color: #6b7280;
-      margin-bottom: 25px;
+      color: #777;
+      margin-bottom: 28px;
     }
 
-    .login-form-group {
+    .admin-field {
       margin-bottom: 16px;
     }
 
-    .login-form-group label {
+    .admin-field label {
       display: block;
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 6px;
+      font-weight: 600;
+      margin-bottom: 7px;
     }
 
-    .login-form-group input {
+    .admin-field input,
+    .admin-field textarea,
+    .admin-field select {
       width: 100%;
-      padding: 12px;
-      border: 1px solid #e5e7eb;
-      border-radius: 9px;
+      box-sizing: border-box;
+      padding: 12px 13px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
       font-size: 15px;
       outline: none;
+      background: #fff;
     }
 
-    .login-form-group input:focus {
-      border-color: #2563eb;
+    .admin-field textarea {
+      min-height: 100px;
+      resize: vertical;
     }
 
-    .login-btn {
-      width: 100%;
-      border: none;
-      background: #2563eb;
-      color: #fff;
-      padding: 13px;
-      border-radius: 9px;
-      font-size: 15px;
-      font-weight: 700;
+    .admin-field input:focus,
+    .admin-field textarea:focus,
+    .admin-field select:focus {
+      border-color: #f85606;
+    }
+
+    .admin-btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 17px;
       cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
     }
 
-    .login-btn:disabled {
-      background: #9ca3af;
+    .admin-btn-primary {
+      background: #f85606;
+      color: #fff;
+    }
+
+    .admin-btn-primary:hover {
+      background: #df4900;
+    }
+
+    .admin-btn-secondary {
+      background: #eee;
+      color: #333;
+    }
+
+    .admin-btn-danger {
+      background: #ffe5e5;
+      color: #d00;
+    }
+
+    .admin-btn-success {
+      background: #e4f8e8;
+      color: #16843a;
     }
 
     .login-message {
-      margin-top: 12px;
-      padding: 10px;
-      border-radius: 8px;
-      display: none;
+      margin-top: 15px;
+      text-align: center;
+      color: #d00;
       font-size: 14px;
     }
 
-    .login-message.error {
-      display: block;
-      background: #fee2e2;
-      color: #991b1b;
-    }
+    /* Dashboard */
 
-    .dashboard {
+    .admin-dashboard {
       display: none;
+      min-height: 100vh;
     }
 
-    .dashboard.active {
-      display: block;
-    }
-
-    .admin-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .admin-tab {
-      border: 1px solid #e5e7eb;
+    .admin-header {
+      height: 64px;
       background: #fff;
-      padding: 11px 18px;
-      border-radius: 9px;
-      cursor: pointer;
-      font-weight: 700;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    .admin-tab.active {
-      background: #2563eb;
-      color: #fff;
-      border-color: #2563eb;
+    .admin-brand {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .admin-header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-user-email {
+      font-size: 13px;
+      color: #777;
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: calc(100vh - 64px);
+    }
+
+    .admin-sidebar {
+      width: 235px;
+      background: #fff;
+      border-right: 1px solid #e8e8e8;
+      padding: 18px 12px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+
+    .admin-nav-btn {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      padding: 13px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 5px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .admin-nav-btn:hover,
+    .admin-nav-btn.active {
+      background: #fff1e9;
+      color: #f85606;
+    }
+
+    .admin-main {
+      flex: 1;
+      padding: 24px;
+      min-width: 0;
     }
 
     .admin-section {
@@ -176,61 +211,220 @@
       display: block;
     }
 
-    .section-card {
+    .admin-page-title {
+      margin: 0 0 5px;
+      font-size: 25px;
+    }
+
+    .admin-page-subtitle {
+      margin: 0 0 22px;
+      color: #777;
+      font-size: 14px;
+    }
+
+    /* Stats */
+
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .admin-stat {
       background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #eee;
+    }
+
+    .admin-stat-label {
+      color: #777;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .admin-stat-value {
+      font-size: 27px;
+      font-weight: 800;
+    }
+
+    /* Cards */
+
+    .admin-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #eee;
       padding: 20px;
       margin-bottom: 20px;
     }
 
-    .section-card h2 {
-      margin-bottom: 15px;
-      font-size: 21px;
+    .admin-card-title {
+      margin: 0 0 18px;
+      font-size: 18px;
     }
 
-    .orders-toolbar {
+    /* Add Product */
+
+    .product-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .full-field {
+      grid-column: 1 / -1;
+    }
+
+    .image-preview {
+      margin-top: 10px;
+      width: 150px;
+      height: 150px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #f5f5f5;
+      display: none;
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Variants */
+
+    .variants-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .variant-box {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 15px;
+      background: #fafafa;
+    }
+
+    .variant-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .variant-title {
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .variant-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
+    }
+
+    .size-list {
+      margin-top: 15px;
+    }
+
+    .size-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 9px;
+      align-items: center;
+    }
+
+    .size-row input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      outline: none;
+    }
+
+    .add-size-btn {
+      margin-top: 5px;
+    }
+
+    /* Products */
+
+    .product-admin-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .admin-product-row {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .admin-product-image {
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #f5f5f5;
+      flex-shrink: 0;
+    }
+
+    .admin-product-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .admin-product-name {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .admin-product-meta {
+      color: #777;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .admin-product-actions {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    /* Orders */
+
+    .order-filter-bar {
+      display: flex;
+      gap: 8px;
       flex-wrap: wrap;
       margin-bottom: 18px;
     }
 
-    .filter-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .filter-btn {
-      border: 1px solid #e5e7eb;
+    .order-filter-btn {
+      border: 1px solid #ddd;
       background: #fff;
-      padding: 9px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .filter-btn.active {
-      background: #2563eb;
-      color: #fff;
-      border-color: #2563eb;
-    }
-
-    .pending-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 22px;
-      height: 22px;
-      padding: 0 6px;
-      background: #dc2626;
-      color: #fff;
       border-radius: 20px;
-      font-size: 12px;
-      margin-left: 5px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .order-filter-btn.active {
+      background: #f85606;
+      color: #fff;
+      border-color: #f85606;
     }
 
     .orders-list {
@@ -239,158 +433,232 @@
     }
 
     .order-card {
-      border: 1px solid #e5e7eb;
+      background: #fff;
+      border: 1px solid #eee;
       border-radius: 12px;
-      padding: 16px;
+      padding: 18px;
     }
 
-    .order-top {
+    .order-card-top {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 10px;
+      gap: 15px;
       margin-bottom: 12px;
     }
 
     .order-id {
       font-weight: 800;
-      font-size: 16px;
+    }
+
+    .order-date {
+      color: #888;
+      font-size: 12px;
+      margin-top: 4px;
     }
 
     .order-status {
-      padding: 5px 9px;
       border-radius: 20px;
+      padding: 6px 10px;
       font-size: 12px;
-      font-weight: 800;
-    }
-
-    .order-status.pending {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .order-status.completed {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .order-details {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 7px 20px;
-      color: #4b5563;
-      font-size: 14px;
-    }
-
-    .order-details strong {
-      color: #111827;
-    }
-
-    .complete-btn {
-      margin-top: 14px;
-      border: none;
-      background: #16a34a;
-      color: #fff;
-      padding: 9px 13px;
-      border-radius: 8px;
-      cursor: pointer;
       font-weight: 700;
     }
 
-    .complete-btn:disabled {
-      background: #9ca3af;
+    .order-status.pending {
+      background: #fff3cd;
+      color: #856404;
     }
 
-    .products-admin-list {
+    .order-status.completed {
+      background: #dff6e5;
+      color: #18783b;
+    }
+
+    .order-grid {
       display: grid;
-      gap: 12px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 20px;
+      font-size: 14px;
     }
 
-    .admin-product {
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 15px;
+    .order-field strong {
+      display: inline-block;
+      min-width: 95px;
+    }
+
+    .order-bottom {
+      margin-top: 15px;
+      padding-top: 13px;
+      border-top: 1px solid #eee;
       display: flex;
-      justify-content: space-between;
-      gap: 15px;
       align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
 
-    .admin-product-info h3 {
-      margin-bottom: 4px;
+    .order-total {
+      font-size: 18px;
+      font-weight: 800;
     }
 
-    .admin-product-info p {
-      color: #6b7280;
-      font-size: 13px;
-    }
+    /* Empty / Loading */
 
-    .stock-summary {
-      font-size: 13px;
-      color: #4b5563;
-      text-align: right;
-    }
-
-    .admin-empty {
+    .admin-empty,
+    .admin-loading {
       text-align: center;
-      color: #6b7280;
-      padding: 30px;
+      padding: 35px 15px;
+      color: #777;
     }
 
-    @media (max-width: 600px) {
-      .admin-page {
-        padding: 18px 12px 40px;
+    .admin-alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .admin-alert.success {
+      background: #e7f7eb;
+      color: #176d32;
+    }
+
+    .admin-alert.error {
+      background: #ffe8e8;
+      color: #a00000;
+    }
+
+    /* Mobile */
+
+    @media (max-width: 900px) {
+
+      .admin-stats {
+        grid-template-columns: repeat(2, 1fr);
       }
 
-      .admin-header {
-        padding: 16px;
+      .admin-sidebar {
+        width: 190px;
       }
 
-      .admin-header h1 {
-        font-size: 21px;
-      }
-
-      .admin-tabs {
-        overflow-x: auto;
-      }
-
-      .admin-tab {
-        white-space: nowrap;
-      }
-
-      .order-details {
+      .product-form-grid {
         grid-template-columns: 1fr;
       }
 
-      .admin-product {
+      .full-field {
+        grid-column: auto;
+      }
+
+      .size-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+    }
+
+    @media (max-width: 650px) {
+
+      .admin-header {
+        padding: 0 13px;
+      }
+
+      .admin-brand {
+        font-size: 18px;
+      }
+
+      .admin-user-email {
+        display: none;
+      }
+
+      .admin-layout {
+        display: block;
+      }
+
+      .admin-sidebar {
+        width: 100%;
+        border-right: 0;
+        border-bottom: 1px solid #eee;
+        padding: 8px;
+        display: flex;
+        overflow-x: auto;
+        gap: 5px;
+      }
+
+      .admin-nav-btn {
+        width: auto;
+        white-space: nowrap;
+        margin: 0;
+      }
+
+      .admin-main {
+        padding: 15px;
+      }
+
+      .admin-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .admin-stat {
+        padding: 14px;
+      }
+
+      .admin-stat-value {
+        font-size: 22px;
+      }
+
+      .admin-product-row {
         align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .admin-product-actions {
+        width: 100%;
+      }
+
+      .order-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .order-card-top {
         flex-direction: column;
       }
 
-      .stock-summary {
-        text-align: left;
+      .variant-fields {
+        grid-template-columns: 1fr;
       }
+
+      .size-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .size-row button {
+        grid-column: 1 / -1;
+      }
+
     }
   </style>
 </head>
 
-<body>
+<body class="admin-page">
 
-  <!-- =========================
+  <!-- =====================================================
        LOGIN
-  ========================== -->
+       ===================================================== -->
 
-  <div id="loginPage" class="login-wrapper">
+  <section id="adminLogin" class="admin-login">
 
-    <div class="login-box">
+    <div class="login-card">
 
-      <h1>Admin Login</h1>
+      <div class="login-logo">
+        🛍️ My Shop
+      </div>
 
-      <p>আপনার Admin account দিয়ে Login করুন</p>
+      <div class="login-subtitle">
+        Admin Panel
+      </div>
 
       <form id="loginForm">
 
-        <div class="login-form-group">
+        <div class="admin-field">
           <label for="loginEmail">
             Email
           </label>
@@ -400,10 +668,11 @@
             id="loginEmail"
             placeholder="Admin email"
             required
+            autocomplete="email"
           >
         </div>
 
-        <div class="login-form-group">
+        <div class="admin-field">
           <label for="loginPassword">
             Password
           </label>
@@ -413,183 +682,506 @@
             id="loginPassword"
             placeholder="Password"
             required
+            autocomplete="current-password"
           >
         </div>
 
         <button
           type="submit"
+          class="admin-btn admin-btn-primary"
+          style="width:100%;"
           id="loginButton"
-          class="login-btn"
         >
           Login
         </button>
 
-        <div
-          id="loginMessage"
-          class="login-message"
-        ></div>
-
       </form>
+
+      <div
+        id="loginMessage"
+        class="login-message"
+      ></div>
 
     </div>
 
-  </div>
+  </section>
 
 
-  <!-- =========================
-       DASHBOARD
-  ========================== -->
+  <!-- =====================================================
+       ADMIN DASHBOARD
+       ===================================================== -->
 
-  <div id="dashboard" class="dashboard">
+  <section
+    id="adminDashboard"
+    class="admin-dashboard"
+  >
 
-    <div class="admin-page">
+    <!-- Header -->
 
-      <header class="admin-header">
+    <header class="admin-header">
 
-        <div>
-          <h1>Admin Dashboard</h1>
+      <div class="admin-brand">
+        🛍️ My Shop Admin
+      </div>
 
-          <p id="adminEmail">
-            Admin
-          </p>
-        </div>
+      <div class="admin-header-right">
+
+        <span
+          id="adminUserEmail"
+          class="admin-user-email"
+        ></span>
 
         <button
           id="logoutButton"
-          class="logout-btn"
+          class="admin-btn admin-btn-secondary"
         >
           Logout
         </button>
 
-      </header>
-
-
-      <!-- TABS -->
-
-      <div class="admin-tabs">
-
-        <button
-          class="admin-tab active"
-          data-tab="ordersSection"
-        >
-          Orders
-        </button>
-
-        <button
-          class="admin-tab"
-          data-tab="productsSection"
-        >
-          Products
-        </button>
-
       </div>
 
+    </header>
 
-      <!-- =========================
-           ORDERS
-      ========================== -->
 
-      <section
-        id="ordersSection"
-        class="admin-section active"
-      >
+    <div class="admin-layout">
 
-        <div class="section-card">
+      <!-- Sidebar -->
 
-          <h2>Orders</h2>
+      <aside class="admin-sidebar">
 
-          <div class="orders-toolbar">
+        <button
+          class="admin-nav-btn active"
+          data-section="dashboardSection"
+        >
+          📊 Dashboard
+        </button>
 
-            <div class="filter-buttons">
+        <button
+          class="admin-nav-btn"
+          data-section="addProductSection"
+        >
+          ➕ Add Product
+        </button>
+
+        <button
+          class="admin-nav-btn"
+          data-section="productsSectionAdmin"
+        >
+          📦 Products
+        </button>
+
+        <button
+          class="admin-nav-btn"
+          data-section="ordersSectionAdmin"
+        >
+          🛒 Orders
+        </button>
+
+      </aside>
+
+
+      <!-- Main -->
+
+      <main class="admin-main">
+
+        <!-- =================================================
+             DASHBOARD
+             ================================================= -->
+
+        <section
+          id="dashboardSection"
+          class="admin-section active"
+        >
+
+          <h1 class="admin-page-title">
+            Dashboard
+          </h1>
+
+          <p class="admin-page-subtitle">
+            আপনার shop-এর overview
+          </p>
+
+
+          <div class="admin-stats">
+
+            <div class="admin-stat">
+
+              <div class="admin-stat-label">
+                Total Products
+              </div>
+
+              <div
+                id="statProducts"
+                class="admin-stat-value"
+              >
+                0
+              </div>
+
+            </div>
+
+
+            <div class="admin-stat">
+
+              <div class="admin-stat-label">
+                Total Stock
+              </div>
+
+              <div
+                id="statStock"
+                class="admin-stat-value"
+              >
+                0
+              </div>
+
+            </div>
+
+
+            <div class="admin-stat">
+
+              <div class="admin-stat-label">
+                Pending Orders
+              </div>
+
+              <div
+                id="statPendingOrders"
+                class="admin-stat-value"
+              >
+                0
+              </div>
+
+            </div>
+
+
+            <div class="admin-stat">
+
+              <div class="admin-stat-label">
+                Completed Orders
+              </div>
+
+              <div
+                id="statCompletedOrders"
+                class="admin-stat-value"
+              >
+                0
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="admin-card">
+
+            <h2 class="admin-card-title">
+              Quick Actions
+            </h2>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
 
               <button
-                class="filter-btn active"
-                data-filter="all"
+                class="admin-btn admin-btn-primary"
+                data-open-section="addProductSection"
               >
-                All
+                ➕ Add New Product
               </button>
 
               <button
-                class="filter-btn"
-                data-filter="pending"
+                class="admin-btn admin-btn-secondary"
+                data-open-section="ordersSectionAdmin"
               >
-                Pending
-
-                <span
-                  id="pendingCount"
-                  class="pending-badge"
-                >
-                  0
-                </span>
-
+                🛒 View Orders
               </button>
 
               <button
-                class="filter-btn"
-                data-filter="completed"
+                class="admin-btn admin-btn-secondary"
+                data-open-section="productsSectionAdmin"
               >
-                Completed
+                📦 View Products
               </button>
 
             </div>
 
-            <button
-              id="refreshOrders"
-              class="filter-btn"
+          </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ADD PRODUCT
+             ================================================= -->
+
+        <section
+          id="addProductSection"
+          class="admin-section"
+        >
+
+          <h1 class="admin-page-title">
+            Add New Product
+          </h1>
+
+          <p class="admin-page-subtitle">
+            নতুন product, variant, size, price এবং stock যোগ করুন
+          </p>
+
+
+          <div
+            id="productFormAlert"
+            class="admin-alert"
+          ></div>
+
+
+          <form id="productForm">
+
+            <div class="admin-card">
+
+              <h2 class="admin-card-title">
+                Product Information
+              </h2>
+
+              <div class="product-form-grid">
+
+                <div class="admin-field">
+
+                  <label for="productNameAdmin">
+                    Product Name *
+                  </label>
+
+                  <input
+                    type="text"
+                    id="productNameAdmin"
+                    placeholder="যেমন: Premium T-Shirt"
+                    required
+                  >
+
+                </div>
+
+
+                <div class="admin-field">
+
+                  <label for="basePriceAdmin">
+                    Base Price
+                  </label>
+
+                  <input
+                    type="number"
+                    id="basePriceAdmin"
+                    min="0"
+                    step="0.01"
+                    placeholder="যেমন: 500"
+                  >
+
+                </div>
+
+
+                <div class="admin-field full-field">
+
+                  <label for="descriptionAdmin">
+                    Description
+                  </label>
+
+                  <textarea
+                    id="descriptionAdmin"
+                    placeholder="Product সম্পর্কে বিস্তারিত লিখুন..."
+                  ></textarea>
+
+                </div>
+
+
+                <div class="admin-field full-field">
+
+                  <label for="mainImageAdmin">
+                    Main Product Image *
+                  </label>
+
+                  <input
+                    type="file"
+                    id="mainImageAdmin"
+                    accept="image/*"
+                    required
+                  >
+
+                  <div
+                    id="mainImagePreview"
+                    class="image-preview"
+                  >
+                    <img
+                      id="mainImagePreviewImg"
+                      src=""
+                      alt="Preview"
+                    >
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <!-- Variants -->
+
+            <div class="admin-card">
+
+              <div class="variants-header">
+
+                <h2 class="admin-card-title" style="margin:0;">
+                  Product Variants
+                </h2>
+
+                <button
+                  type="button"
+                  id="addVariantButton"
+                  class="admin-btn admin-btn-primary"
+                >
+                  + Add Variant
+                </button>
+
+              </div>
+
+              <div
+                id="variantsContainer"
+              ></div>
+
+            </div>
+
+
+            <!-- Save -->
+
+            <div class="admin-card">
+
+              <div
+                style="
+                  display:flex;
+                  justify-content:flex-end;
+                  gap:10px;
+                  flex-wrap:wrap;
+                "
+              >
+
+                <button
+                  type="button"
+                  id="resetProductButton"
+                  class="admin-btn admin-btn-secondary"
+                >
+                  Reset
+                </button>
+
+                <button
+                  type="submit"
+                  id="saveProductButton"
+                  class="admin-btn admin-btn-primary"
+                >
+                  💾 Save Product
+                </button>
+
+              </div>
+
+            </div>
+
+          </form>
+
+        </section>
+
+
+        <!-- =================================================
+             PRODUCTS
+             ================================================= -->
+
+        <section
+          id="productsSectionAdmin"
+          class="admin-section"
+        >
+
+          <h1 class="admin-page-title">
+            Products
+          </h1>
+
+          <p class="admin-page-subtitle">
+            আপনার সব product এবং stock
+          </p>
+
+
+          <div class="admin-card">
+
+            <div
+              id="adminProductsList"
+              class="product-admin-list"
             >
-              Refresh
+              <div class="admin-loading">
+                Loading products...
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ORDERS
+             ================================================= -->
+
+        <section
+          id="ordersSectionAdmin"
+          class="admin-section"
+        >
+
+          <h1 class="admin-page-title">
+            Orders
+          </h1>
+
+          <p class="admin-page-subtitle">
+            Customer orders manage করুন
+          </p>
+
+
+          <div class="order-filter-bar">
+
+            <button
+              class="order-filter-btn active"
+              data-order-filter="all"
+            >
+              All
+            </button>
+
+            <button
+              class="order-filter-btn"
+              data-order-filter="pending"
+            >
+              ⏳ Pending
+            </button>
+
+            <button
+              class="order-filter-btn"
+              data-order-filter="completed"
+            >
+              ✅ Completed
             </button>
 
           </div>
 
+
           <div
-            id="ordersList"
+            id="adminOrdersList"
             class="orders-list"
           >
-            <div class="admin-empty">
-              Orders লোড হচ্ছে...
+            <div class="admin-loading">
+              Loading orders...
             </div>
           </div>
 
-        </div>
+        </section>
 
-      </section>
-
-
-      <!-- =========================
-           PRODUCTS
-      ========================== -->
-
-      <section
-        id="productsSection"
-        class="admin-section"
-      >
-
-        <div class="section-card">
-
-          <h2>Products & Stock</h2>
-
-          <div
-            id="adminProductsList"
-            class="products-admin-list"
-          >
-            <div class="admin-empty">
-              Products লোড হচ্ছে...
-            </div>
-          </div>
-
-        </div>
-
-      </section>
+      </main>
 
     </div>
 
-  </div>
+  </section>
 
 
-  <!-- =========================
+  <!-- =====================================================
        SUPABASE
-  ========================== -->
+       ===================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
