@@ -964,7 +964,6 @@
     </section>
 
 
-
     <!-- =====================================================
          DASHBOARD
     ====================================================== -->
@@ -973,7 +972,6 @@
         id="adminDashboard"
         class="admin-dashboard"
     >
-
 
         <!-- HEADER -->
 
@@ -991,6 +989,7 @@
                 ></span>
 
                 <button
+                    type="button"
                     id="logoutButton"
                     class="admin-btn admin-btn-secondary"
                 >
@@ -1000,7 +999,6 @@
             </div>
 
         </header>
-
 
 
         <div class="admin-layout">
@@ -1047,7 +1045,6 @@
             </aside>
 
 
-
             <!-- =================================================
                  MAIN
             ================================================== -->
@@ -1056,7 +1053,7 @@
 
 
                 <!-- =================================================
-                     DASHBOARD SECTION
+                     DASHBOARD
                 ================================================== -->
 
                 <section
@@ -1082,7 +1079,7 @@
                             </div>
 
                             <div
-                                id="totalProducts"
+                                id="statProducts"
                                 class="admin-stat-value"
                             >
                                 0
@@ -1098,7 +1095,7 @@
                             </div>
 
                             <div
-                                id="totalStock"
+                                id="statStock"
                                 class="admin-stat-value"
                             >
                                 0
@@ -1114,7 +1111,7 @@
                             </div>
 
                             <div
-                                id="pendingOrders"
+                                id="statPendingOrders"
                                 class="admin-stat-value"
                             >
                                 0
@@ -1130,7 +1127,7 @@
                             </div>
 
                             <div
-                                id="completedOrders"
+                                id="statCompletedOrders"
                                 class="admin-stat-value"
                             >
                                 0
@@ -1140,6 +1137,8 @@
 
                     </div>
 
+
+                    <!-- QUICK ACTIONS -->
 
                     <div class="admin-card">
 
@@ -1152,7 +1151,7 @@
                             <button
                                 type="button"
                                 class="quick-action-btn"
-                                onclick="showAdminSection('addProductSection')"
+                                data-open-section="addProductSection"
                             >
                                 ➕ নতুন Product যোগ করুন
                             </button>
@@ -1160,7 +1159,7 @@
                             <button
                                 type="button"
                                 class="quick-action-btn"
-                                onclick="showAdminSection('productsSectionAdmin')"
+                                data-open-section="productsSectionAdmin"
                             >
                                 📦 সব Product দেখুন
                             </button>
@@ -1168,7 +1167,7 @@
                             <button
                                 type="button"
                                 class="quick-action-btn"
-                                onclick="showAdminSection('ordersSectionAdmin')"
+                                data-open-section="ordersSectionAdmin"
                             >
                                 🧾 Orders দেখুন
                             </button>
@@ -1180,9 +1179,8 @@
                 </section>
 
 
-
                 <!-- =================================================
-                     ADD / EDIT PRODUCT SECTION
+                     ADD / EDIT PRODUCT
                 ================================================== -->
 
                 <section
@@ -1295,9 +1293,7 @@
                                 </div>
 
 
-                                <!-- =================================================
-                                     PAYMENT SETTINGS
-                                ================================================== -->
+                                <!-- PAYMENT SETTINGS -->
 
                                 <div class="admin-field full-field">
 
@@ -1317,6 +1313,7 @@
                                             <input
                                                 type="checkbox"
                                                 id="allowCodAdmin"
+                                                checked
                                             >
 
                                             <div class="payment-option-content">
@@ -1367,9 +1364,7 @@
 
                                 </div>
 
-
                             </div>
-
 
 
                             <!-- =================================================
@@ -1380,7 +1375,10 @@
 
                                 <div class="variants-header">
 
-                                    <h2 class="admin-card-title" style="margin:0;">
+                                    <h2
+                                        class="admin-card-title"
+                                        style="margin:0;"
+                                    >
                                         Product Variants
                                     </h2>
 
@@ -1401,7 +1399,6 @@
                                 ></div>
 
                             </div>
-
 
 
                             <!-- FORM ACTIONS -->
@@ -1441,9 +1438,8 @@
                 </section>
 
 
-
                 <!-- =================================================
-                     PRODUCTS SECTION
+                     PRODUCTS
                 ================================================== -->
 
                 <section
@@ -1478,9 +1474,8 @@
                 </section>
 
 
-
                 <!-- =================================================
-                     ORDERS SECTION
+                     ORDERS
                 ================================================== -->
 
                 <section
@@ -1497,12 +1492,14 @@
                     </p>
 
 
+                    <!-- ORDER FILTER -->
+
                     <div class="order-filter-bar">
 
                         <button
                             type="button"
                             class="order-filter-btn active"
-                            data-status="all"
+                            data-order-filter="all"
                         >
                             All
                         </button>
@@ -1510,7 +1507,7 @@
                         <button
                             type="button"
                             class="order-filter-btn"
-                            data-status="pending"
+                            data-order-filter="pending"
                         >
                             Pending
                         </button>
@@ -1518,7 +1515,7 @@
                         <button
                             type="button"
                             class="order-filter-btn"
-                            data-status="completed"
+                            data-order-filter="completed"
                         >
                             Completed
                         </button>
@@ -1551,7 +1548,6 @@
     </section>
 
 
-
     <!-- =====================================================
          SCRIPTS
     ====================================================== -->
@@ -1561,117 +1557,6 @@
     <script src="config.js"></script>
 
     <script src="admin.js"></script>
-
-
-    <!-- =====================================================
-         SMALL ADMIN UI HELPERS
-    ====================================================== -->
-
-    <script>
-
-        function showAdminSection(sectionId) {
-
-            document
-                .querySelectorAll(".admin-section")
-                .forEach(section => {
-                    section.classList.remove("active");
-                });
-
-
-            const target =
-                document.getElementById(sectionId);
-
-            if (target) {
-                target.classList.add("active");
-            }
-
-
-            document
-                .querySelectorAll(".admin-nav-btn")
-                .forEach(button => {
-
-                    button.classList.toggle(
-                        "active",
-                        button.dataset.section === sectionId
-                    );
-
-                });
-
-        }
-
-
-        document
-            .querySelectorAll(".admin-nav-btn")
-            .forEach(button => {
-
-                button.addEventListener("click", () => {
-
-                    showAdminSection(
-                        button.dataset.section
-                    );
-
-                });
-
-            });
-
-
-        /*
-         * Payment checkbox warning
-         */
-
-        const allowCodAdmin =
-            document.getElementById("allowCodAdmin");
-
-        const allowAdvanceAdmin =
-            document.getElementById("allowAdvanceAdmin");
-
-        const paymentWarningAdmin =
-            document.getElementById("paymentWarningAdmin");
-
-
-        function checkPaymentMethods() {
-
-            if (
-                allowCodAdmin &&
-                allowAdvanceAdmin &&
-                paymentWarningAdmin
-            ) {
-
-                const hasMethod =
-                    allowCodAdmin.checked ||
-                    allowAdvanceAdmin.checked;
-
-                paymentWarningAdmin.style.display =
-                    hasMethod ? "none" : "block";
-
-            }
-
-        }
-
-
-        if (allowCodAdmin) {
-
-            allowCodAdmin.addEventListener(
-                "change",
-                checkPaymentMethods
-            );
-
-        }
-
-
-        if (allowAdvanceAdmin) {
-
-            allowAdvanceAdmin.addEventListener(
-                "change",
-                checkPaymentMethods
-            );
-
-        }
-
-
-        checkPaymentMethods();
-
-    </script>
 
 
 </body>
