@@ -1,6 +1,7 @@
 /* =========================================================
    MY SHOP ADMIN PANEL
-   Product Add + Product Edit + Stock Update + Orders
+   Login + Dashboard + Add Product + Edit Product
+   + Stock Update + Orders
    ========================================================= */
 
 const sb = window.supabase.createClient(
@@ -59,6 +60,7 @@ const statCompletedOrders = $("statCompletedOrders");
 let currentUser = null;
 let editingProductId = null;
 let existingMainImageUrl = "";
+
 let currentProducts = [];
 let currentOrders = [];
 
@@ -83,6 +85,7 @@ function money(value) {
 
 
 function formatDate(value) {
+
     if (!value) return "";
 
     return new Date(value).toLocaleString("en-BD", {
@@ -96,44 +99,82 @@ function formatDate(value) {
 
 
 function showAlert(message, type = "info") {
+
     if (!productFormAlert) return;
 
     productFormAlert.textContent = message;
-    productFormAlert.className = "form-alert " + type;
+
+    productFormAlert.className =
+        "admin-alert " + type;
+
+    productFormAlert.style.display = "block";
 }
 
 
 function clearAlert() {
+
     if (!productFormAlert) return;
 
     productFormAlert.textContent = "";
-    productFormAlert.className = "form-alert";
+
+    productFormAlert.className =
+        "admin-alert";
+
+    productFormAlert.style.display = "none";
 }
 
 
 /* =========================================================
-   LOGIN / LOGOUT
+   LOGIN / DASHBOARD
    ========================================================= */
 
 function showLogin() {
-    if (adminLogin) adminLogin.style.display = "";
-    if (adminDashboard) adminDashboard.style.display = "none";
-}
 
+    if (adminLogin) {
+        adminLogin.style.display = "flex";
+    }
 
-function showDashboard() {
-    if (adminLogin) adminLogin.style.display = "none";
-    if (adminDashboard) adminDashboard.style.display = "";
-
-    if (adminUserEmail && currentUser) {
-        adminUserEmail.textContent = currentUser.email || "";
+    if (adminDashboard) {
+        adminDashboard.style.display = "none";
     }
 }
 
 
+function showDashboard() {
+
+    if (adminLogin) {
+        adminLogin.style.display = "none";
+    }
+
+    if (adminDashboard) {
+
+        /*
+         * IMPORTANT:
+         * আগের code-এ এখানে display="" ছিল।
+         * CSS-এ .admin-dashboard { display:none; }
+         * থাকার কারণে dashboard দেখা যাচ্ছিল না।
+         */
+
+        adminDashboard.style.display = "block";
+    }
+
+    if (adminUserEmail && currentUser) {
+
+        adminUserEmail.textContent =
+            currentUser.email || "";
+    }
+}
+
+
+/* =========================================================
+   VERIFY ADMIN
+   ========================================================= */
+
 async function verifyAdmin(user) {
 
-    if (!user) return false;
+    if (!user) {
+        return false;
+    }
 
     const { data, error } = await sb
         .from("admin_users")
@@ -142,7 +183,12 @@ async function verifyAdmin(user) {
         .maybeSingle();
 
     if (error) {
-        console.error("Admin verification error:", error);
+
+        console.error(
+            "Admin verification error:",
+            error
+        );
+
         return false;
     }
 
@@ -150,45 +196,75 @@ async function verifyAdmin(user) {
 }
 
 
+/* =========================================================
+   INITIAL SESSION
+   ========================================================= */
+
 async function checkInitialSession() {
 
     showLogin();
 
-    const { data, error } = await sb.auth.getSession();
+    try {
 
-    if (error) {
-        console.error(error);
-        return;
-    }
+        const {
+            data,
+            error
+        } = await sb.auth.getSession();
 
-    const session = data.session;
+        if (error) {
+            throw error;
+        }
 
-    if (!session) {
+        const session = data?.session;
+
+        if (!session) {
+            showLogin();
+            return;
+        }
+
+        const isAdmin =
+            await verifyAdmin(session.user);
+
+        if (!isAdmin) {
+
+            await sb.auth.signOut();
+
+            if (loginMessage) {
+                loginMessage.textContent =
+                    "এই account-এর admin access নেই।";
+            }
+
+            showLogin();
+            return;
+        }
+
+        currentUser = session.user;
+
+        showDashboard();
+
+        await loadEverything();
+
+    } catch (error) {
+
+        console.error(
+            "Initial session error:",
+            error
+        );
+
         showLogin();
-        return;
-    }
-
-    const isAdmin = await verifyAdmin(session.user);
-
-    if (!isAdmin) {
-        await sb.auth.signOut();
 
         if (loginMessage) {
             loginMessage.textContent =
-                "এই account-এর admin access নেই।";
+                error.message ||
+                "Session load করতে সমস্যা হয়েছে।";
         }
-
-        showLogin();
-        return;
     }
-
-    currentUser = session.user;
-
-    showDashboard();
-
-    await loadEverything();
 }
 
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
 
 async function handleLogin(event) {
 
@@ -205,10 +281,16 @@ async function handleLogin(event) {
 
     try {
 
-        const email = loginEmail.value.trim();
-        const password = loginPassword.value;
+        const email =
+            loginEmail.value.trim();
 
-        const { data, error } = await sb.auth.signInWithPassword({
+        const password =
+            loginPassword.value;
+
+        const {
+            data,
+            error
+        } = await sb.auth.signInWithPassword({
             email,
             password
         });
@@ -217,9 +299,16 @@ async function handleLogin(event) {
             throw error;
         }
 
+        if (!data?.user) {
+            throw new Error(
+                "Login user পাওয়া যায়নি।"
+            );
+        }
+
         const user = data.user;
 
-        const isAdmin = await verifyAdmin(user);
+        const isAdmin =
+            await verifyAdmin(user);
 
         if (!isAdmin) {
 
@@ -238,12 +327,18 @@ async function handleLogin(event) {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Login error:",
+            error
+        );
 
         if (loginMessage) {
             loginMessage.textContent =
-                error.message || "Login failed.";
+                error.message ||
+                "Login failed.";
         }
+
+        showLogin();
 
     } finally {
 
@@ -253,9 +348,17 @@ async function handleLogin(event) {
 }
 
 
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
 async function handleLogout() {
 
-    await sb.auth.signOut();
+    try {
+        await sb.auth.signOut();
+    } catch (error) {
+        console.error(error);
+    }
 
     currentUser = null;
     editingProductId = null;
@@ -272,14 +375,31 @@ async function handleLogout() {
 
 function openSection(sectionName) {
 
-    document.querySelectorAll(".admin-section").forEach(section => {
+    /*
+     * HTML-এর section-এ data-section নেই।
+     * তাই ID দিয়ে সরাসরি section দেখানো হচ্ছে।
+     */
+
+    document.querySelectorAll(
+        ".admin-section"
+    ).forEach(section => {
+
+        section.classList.toggle(
+            "active",
+            section.id === sectionName
+        );
+
         section.style.display =
-            section.dataset.section === sectionName
-                ? ""
+            section.id === sectionName
+                ? "block"
                 : "none";
     });
 
-    document.querySelectorAll(".admin-nav-btn").forEach(button => {
+
+    document.querySelectorAll(
+        ".admin-nav-btn"
+    ).forEach(button => {
+
         button.classList.toggle(
             "active",
             button.dataset.section === sectionName
@@ -294,29 +414,39 @@ function openSection(sectionName) {
 
 if (mainImageAdmin) {
 
-    mainImageAdmin.addEventListener("change", () => {
+    mainImageAdmin.addEventListener(
+        "change",
+        () => {
 
-        const file = mainImageAdmin.files?.[0];
+            const file =
+                mainImageAdmin.files?.[0];
 
-        if (!file) {
-            if (mainImagePreview) {
-                mainImagePreview.style.display =
-                    existingMainImageUrl ? "" : "none";
+            if (!file) {
+
+                if (mainImagePreview) {
+
+                    mainImagePreview.style.display =
+                        existingMainImageUrl
+                            ? "block"
+                            : "none";
+                }
+
+                return;
             }
 
-            return;
-        }
+            const url =
+                URL.createObjectURL(file);
 
-        const url = URL.createObjectURL(file);
+            if (mainImagePreviewImg) {
+                mainImagePreviewImg.src = url;
+            }
 
-        if (mainImagePreviewImg) {
-            mainImagePreviewImg.src = url;
+            if (mainImagePreview) {
+                mainImagePreview.style.display =
+                    "block";
+            }
         }
-
-        if (mainImagePreview) {
-            mainImagePreview.style.display = "";
-        }
-    });
+    );
 }
 
 
@@ -326,11 +456,14 @@ if (mainImageAdmin) {
 
 function createVariantElement(variant = {}) {
 
-    const wrapper = document.createElement("div");
+    const wrapper =
+        document.createElement("div");
 
-    wrapper.className = "admin-variant";
+    wrapper.className =
+        "admin-variant";
 
     wrapper.innerHTML = `
+
         <div class="variant-header">
 
             <div>
@@ -346,11 +479,15 @@ function createVariantElement(variant = {}) {
 
         </div>
 
+
         <input
             type="hidden"
             class="variant-id"
-            value="${escapeHTML(variant.id || "")}"
+            value="${escapeHTML(
+                variant.id || ""
+            )}"
         >
+
 
         <div class="admin-form-group">
 
@@ -362,11 +499,14 @@ function createVariantElement(variant = {}) {
                 type="text"
                 class="variant-name"
                 placeholder="যেমন: Black / Blue / Red"
-                value="${escapeHTML(variant.name || "")}"
+                value="${escapeHTML(
+                    variant.name || ""
+                )}"
                 required
             >
 
         </div>
+
 
         <div class="admin-form-group">
 
@@ -382,31 +522,41 @@ function createVariantElement(variant = {}) {
 
         </div>
 
+
         <div class="variant-existing-image">
+
             ${
                 variant.image_url
                     ? `
                         <img
-                            src="${escapeHTML(variant.image_url)}"
+                            src="${escapeHTML(
+                                variant.image_url
+                            )}"
                             alt=""
                         >
                     `
                     : ""
             }
+
         </div>
+
 
         <input
             type="hidden"
             class="existing-variant-image-url"
-            value="${escapeHTML(variant.image_url || "")}"
+            value="${escapeHTML(
+                variant.image_url || ""
+            )}"
         >
+
 
         <div class="sizes-title">
             Sizes / Price / Stock
         </div>
 
-        <div class="variant-sizes">
-        </div>
+
+        <div class="variant-sizes"></div>
+
 
         <button
             type="button"
@@ -416,59 +566,99 @@ function createVariantElement(variant = {}) {
         </button>
     `;
 
+
     const sizesContainer =
-        wrapper.querySelector(".variant-sizes");
+        wrapper.querySelector(
+            ".variant-sizes"
+        );
 
     const addSizeButton =
-        wrapper.querySelector(".add-size-button");
+        wrapper.querySelector(
+            ".add-size-button"
+        );
 
     const removeVariantButton =
-        wrapper.querySelector(".remove-variant-button");
+        wrapper.querySelector(
+            ".remove-variant-button"
+        );
 
 
     if (Array.isArray(variant.sizes)) {
 
         variant.sizes.forEach(size => {
-            addSizeElement(sizesContainer, size);
-        });
 
+            addSizeElement(
+                sizesContainer,
+                size
+            );
+
+        });
     }
 
 
-    addSizeButton.addEventListener("click", () => {
-        addSizeElement(sizesContainer);
-    });
+    addSizeButton.addEventListener(
+        "click",
+        () => {
+
+            addSizeElement(
+                sizesContainer
+            );
+        }
+    );
 
 
-    removeVariantButton.addEventListener("click", () => {
-        wrapper.remove();
-    });
+    removeVariantButton.addEventListener(
+        "click",
+        () => {
+
+            wrapper.remove();
+        }
+    );
 
 
-    variantsContainer.appendChild(wrapper);
+    variantsContainer.appendChild(
+        wrapper
+    );
 }
 
 
-function addSizeElement(container, size = {}) {
+/* =========================================================
+   SIZE UI
+   ========================================================= */
 
-    const row = document.createElement("div");
+function addSizeElement(
+    container,
+    size = {}
+) {
 
-    row.className = "admin-size-row";
+    const row =
+        document.createElement("div");
+
+    row.className =
+        "admin-size-row";
+
 
     row.innerHTML = `
+
         <input
             type="hidden"
             class="size-id"
-            value="${escapeHTML(size.id || "")}"
+            value="${escapeHTML(
+                size.id || ""
+            )}"
         >
+
 
         <input
             type="text"
             class="size-name"
             placeholder="Size"
-            value="${escapeHTML(size.size || "")}"
+            value="${escapeHTML(
+                size.size || ""
+            )}"
             required
         >
+
 
         <input
             type="number"
@@ -476,9 +666,12 @@ function addSizeElement(container, size = {}) {
             placeholder="Price"
             min="0"
             step="0.01"
-            value="${size.price ?? ""}"
+            value="${
+                size.price ?? ""
+            }"
             required
         >
+
 
         <input
             type="number"
@@ -486,9 +679,12 @@ function addSizeElement(container, size = {}) {
             placeholder="Stock"
             min="0"
             step="1"
-            value="${size.stock ?? 0}"
+            value="${
+                size.stock ?? 0
+            }"
             required
         >
+
 
         <button
             type="button"
@@ -499,14 +695,24 @@ function addSizeElement(container, size = {}) {
         </button>
     `;
 
-    row.querySelector(".remove-size-button")
-        .addEventListener("click", () => {
+
+    row.querySelector(
+        ".remove-size-button"
+    ).addEventListener(
+        "click",
+        () => {
             row.remove();
-        });
+        }
+    );
+
 
     container.appendChild(row);
 }
 
+
+/* =========================================================
+   CLEAR / ADD VARIANT
+   ========================================================= */
 
 function clearVariants() {
 
@@ -521,12 +727,19 @@ function addNewVariant() {
     createVariantElement({
         name: "",
         image_url: "",
-        sizes: []
+        sizes: [
+            {
+                size: "",
+                price: 0,
+                stock: 0
+            }
+        ]
     });
 }
 
 
 if (addVariantButton) {
+
     addVariantButton.addEventListener(
         "click",
         addNewVariant
@@ -543,25 +756,43 @@ async function uploadProductImage(file) {
     if (!file) return null;
 
     const extension =
-        file.name.split(".").pop().toLowerCase();
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
 
     const filename =
         `products/${Date.now()}-${crypto.randomUUID()}.${extension}`;
 
-    const { error } = await sb.storage
+
+    const {
+        error
+    } = await sb.storage
         .from("product-images")
-        .upload(filename, file, {
-            cacheControl: "3600",
-            upsert: false
-        });
+        .upload(
+            filename,
+            file,
+            {
+                cacheControl: "3600",
+                upsert: false
+            }
+        );
+
 
     if (error) {
         throw error;
     }
 
-    const { data } = sb.storage
+
+    const {
+        data
+    } = sb.storage
         .from("product-images")
-        .getPublicUrl(filename);
+        .getPublicUrl(
+            filename
+        );
+
 
     return data.publicUrl;
 }
@@ -572,32 +803,50 @@ async function uploadVariantImage(file) {
     if (!file) return null;
 
     const extension =
-        file.name.split(".").pop().toLowerCase();
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
 
     const filename =
         `variants/${Date.now()}-${crypto.randomUUID()}.${extension}`;
 
-    const { error } = await sb.storage
+
+    const {
+        error
+    } = await sb.storage
         .from("product-images")
-        .upload(filename, file, {
-            cacheControl: "3600",
-            upsert: false
-        });
+        .upload(
+            filename,
+            file,
+            {
+                cacheControl: "3600",
+                upsert: false
+            }
+        );
+
 
     if (error) {
         throw error;
     }
 
-    const { data } = sb.storage
+
+    const {
+        data
+    } = sb.storage
         .from("product-images")
-        .getPublicUrl(filename);
+        .getPublicUrl(
+            filename
+        );
+
 
     return data.publicUrl;
 }
 
 
 /* =========================================================
-   COLLECT FORM DATA
+   COLLECT PRODUCT FORM
    ========================================================= */
 
 function collectProductForm() {
@@ -606,21 +855,31 @@ function collectProductForm() {
         productNameAdmin.value.trim();
 
     const basePrice =
-        Number(basePriceAdmin.value || 0);
+        Number(
+            basePriceAdmin.value || 0
+        );
 
     const description =
         descriptionAdmin.value.trim();
 
 
     if (!name) {
-        throw new Error("Product name দিন।");
+        throw new Error(
+            "Product name দিন।"
+        );
     }
 
 
     const variantElements =
-        [...document.querySelectorAll(".admin-variant")];
+        [
+            ...document.querySelectorAll(
+                ".admin-variant"
+            )
+        ];
+
 
     if (!variantElements.length) {
+
         throw new Error(
             "কমপক্ষে একটি variant যোগ করুন।"
         );
@@ -630,108 +889,141 @@ function collectProductForm() {
     const variants = [];
 
 
-    variantElements.forEach((variantEl, index) => {
+    variantElements.forEach(
+        (variantEl, index) => {
 
-        const id =
-            variantEl.querySelector(".variant-id")?.value || "";
-
-        const variantName =
-            variantEl.querySelector(".variant-name")
-                ?.value.trim();
-
-        const existingImage =
-            variantEl.querySelector(
-                ".existing-variant-image-url"
-            )?.value || "";
-
-        const imageFile =
-            variantEl.querySelector(".variant-image")
-                ?.files?.[0] || null;
+            const id =
+                variantEl.querySelector(
+                    ".variant-id"
+                )?.value || "";
 
 
-        if (!variantName) {
-            throw new Error(
-                `Variant ${index + 1}-এর নাম দিন।`
+            const variantName =
+                variantEl.querySelector(
+                    ".variant-name"
+                )?.value.trim();
+
+
+            const existingImage =
+                variantEl.querySelector(
+                    ".existing-variant-image-url"
+                )?.value || "";
+
+
+            const imageFile =
+                variantEl.querySelector(
+                    ".variant-image"
+                )?.files?.[0] || null;
+
+
+            if (!variantName) {
+
+                throw new Error(
+                    `Variant ${
+                        index + 1
+                    }-এর নাম দিন।`
+                );
+            }
+
+
+            const sizeElements =
+                [
+                    ...variantEl.querySelectorAll(
+                        ".admin-size-row"
+                    )
+                ];
+
+
+            if (!sizeElements.length) {
+
+                throw new Error(
+                    `"${variantName}" variant-এর অন্তত একটি size দিন।`
+                );
+            }
+
+
+            const sizes = [];
+
+
+            sizeElements.forEach(
+                (sizeEl, sizeIndex) => {
+
+                    const sizeId =
+                        sizeEl.querySelector(
+                            ".size-id"
+                        )?.value || "";
+
+
+                    const sizeName =
+                        sizeEl.querySelector(
+                            ".size-name"
+                        )?.value.trim();
+
+
+                    const price =
+                        Number(
+                            sizeEl.querySelector(
+                                ".size-price"
+                            )?.value || 0
+                        );
+
+
+                    const stock =
+                        Number(
+                            sizeEl.querySelector(
+                                ".size-stock"
+                            )?.value || 0
+                        );
+
+
+                    if (!sizeName) {
+
+                        throw new Error(
+                            `"${variantName}" এর Size ${
+                                sizeIndex + 1
+                            }-এর নাম দিন।`
+                        );
+                    }
+
+
+                    if (price < 0) {
+
+                        throw new Error(
+                            `"${sizeName}" এর price সঠিক নয়।`
+                        );
+                    }
+
+
+                    if (stock < 0) {
+
+                        throw new Error(
+                            `"${sizeName}" এর stock সঠিক নয়।`
+                        );
+                    }
+
+
+                    sizes.push({
+                        id: sizeId || null,
+                        size: sizeName,
+                        price,
+                        stock,
+                        active: true
+                    });
+
+                }
             );
-        }
 
 
-        const sizeElements =
-            [...variantEl.querySelectorAll(".admin-size-row")];
-
-        if (!sizeElements.length) {
-            throw new Error(
-                `"${variantName}" variant-এর অন্তত একটি size দিন।`
-            );
-        }
-
-
-        const sizes = [];
-
-
-        sizeElements.forEach((sizeEl, sizeIndex) => {
-
-            const sizeId =
-                sizeEl.querySelector(".size-id")?.value || "";
-
-            const sizeName =
-                sizeEl.querySelector(".size-name")
-                    ?.value.trim();
-
-            const price =
-                Number(
-                    sizeEl.querySelector(".size-price")
-                        ?.value || 0
-                );
-
-            const stock =
-                Number(
-                    sizeEl.querySelector(".size-stock")
-                        ?.value || 0
-                );
-
-
-            if (!sizeName) {
-                throw new Error(
-                    `"${variantName}" এর Size ${sizeIndex + 1}-এর নাম দিন।`
-                );
-            }
-
-
-            if (price < 0) {
-                throw new Error(
-                    `"${sizeName}" এর price সঠিক নয়।`
-                );
-            }
-
-
-            if (stock < 0) {
-                throw new Error(
-                    `"${sizeName}" এর stock সঠিক নয়।`
-                );
-            }
-
-
-            sizes.push({
-                id: sizeId || null,
-                size: sizeName,
-                price,
-                stock,
-                active: true
+            variants.push({
+                id: id || null,
+                name: variantName,
+                imageFile,
+                image_url: existingImage,
+                sizes
             });
 
-        });
-
-
-        variants.push({
-            id: id || null,
-            name: variantName,
-            imageFile,
-            image_url: existingImage,
-            sizes
-        });
-
-    });
+        }
+    );
 
 
     return {
@@ -752,21 +1044,30 @@ async function saveProduct(event) {
 
     event.preventDefault();
 
+
     if (!currentUser) {
+
         showAlert(
             "প্রথমে Admin login করুন।",
             "error"
         );
+
         return;
     }
 
 
     clearAlert();
 
+
     saveProductButton.disabled = true;
 
+
+    const isEditing =
+        !!editingProductId;
+
+
     saveProductButton.textContent =
-        editingProductId
+        isEditing
             ? "Updating..."
             : "Saving...";
 
@@ -779,7 +1080,7 @@ async function saveProduct(event) {
 
         /* =========================================
            MAIN IMAGE
-        ========================================= */
+           ========================================= */
 
         let mainImageUrl =
             existingMainImageUrl || null;
@@ -799,21 +1100,25 @@ async function saveProduct(event) {
 
 
         /* =========================================
-           UPDATE EXISTING PRODUCT
-        ========================================= */
+           EDIT PRODUCT
+           ========================================= */
 
         if (editingProductId) {
 
-            const { error: productError } =
-                await sb
-                    .from("products")
-                    .update({
-                        name: product.name,
-                        description: product.description,
-                        base_price: product.basePrice,
-                        main_image_url: mainImageUrl
-                    })
-                    .eq("id", editingProductId);
+            const {
+                error: productError
+            } = await sb
+                .from("products")
+                .update({
+                    name: product.name,
+                    description: product.description,
+                    base_price: product.basePrice,
+                    main_image_url: mainImageUrl
+                })
+                .eq(
+                    "id",
+                    editingProductId
+                );
 
 
             if (productError) {
@@ -822,12 +1127,16 @@ async function saveProduct(event) {
 
 
             /* =====================================
-               EXISTING / NEW VARIANTS
-            ===================================== */
+               VARIANTS
+               ===================================== */
 
-            for (const variant of product.variants) {
+            for (
+                const variant
+                of product.variants
+            ) {
 
-                let variantId = variant.id;
+                let variantId =
+                    variant.id;
 
 
                 /* NEW VARIANT */
@@ -835,7 +1144,8 @@ async function saveProduct(event) {
                 if (!variantId) {
 
                     let variantImageUrl =
-                        variant.image_url || null;
+                        variant.image_url ||
+                        null;
 
 
                     if (variant.imageFile) {
@@ -847,19 +1157,27 @@ async function saveProduct(event) {
                     }
 
 
-                    const { data, error } =
-                        await sb
-                            .from("product_variants")
-                            .insert({
-                                product_id:
-                                    editingProductId,
-                                name: variant.name,
-                                image_url:
-                                    variantImageUrl,
-                                active: true
-                            })
-                            .select("id")
-                            .single();
+                    const {
+                        data,
+                        error
+                    } = await sb
+                        .from(
+                            "product_variants"
+                        )
+                        .insert({
+                            product_id:
+                                editingProductId,
+
+                            name:
+                                variant.name,
+
+                            image_url:
+                                variantImageUrl,
+
+                            active: true
+                        })
+                        .select("id")
+                        .single();
 
 
                     if (error) {
@@ -867,8 +1185,8 @@ async function saveProduct(event) {
                     }
 
 
-                    variantId = data.id;
-
+                    variantId =
+                        data.id;
                 }
 
 
@@ -877,7 +1195,8 @@ async function saveProduct(event) {
                 else {
 
                     let variantImageUrl =
-                        variant.image_url || null;
+                        variant.image_url ||
+                        null;
 
 
                     if (variant.imageFile) {
@@ -889,18 +1208,25 @@ async function saveProduct(event) {
                     }
 
 
-                    const { error } =
-                        await sb
-                            .from("product_variants")
-                            .update({
-                                name: variant.name,
-                                image_url:
-                                    variantImage_url_safe(
-                                        variantImageUrl
-                                    ),
-                                active: true
-                            })
-                            .eq("id", variantId);
+                    const {
+                        error
+                    } = await sb
+                        .from(
+                            "product_variants"
+                        )
+                        .update({
+                            name:
+                                variant.name,
+
+                            image_url:
+                                variantImageUrl,
+
+                            active: true
+                        })
+                        .eq(
+                            "id",
+                            variantId
+                        );
 
 
                     if (error) {
@@ -910,29 +1236,44 @@ async function saveProduct(event) {
 
 
                 /* =================================
-                   SIZES
-                ================================= */
+                   SIZES / STOCK
+                   ================================= */
 
-                for (const size of variant.sizes) {
+                for (
+                    const size
+                    of variant.sizes
+                ) {
 
                     /* EXISTING SIZE */
 
                     if (size.id) {
 
-                        const { error } =
-                            await sb
-                                .from("variant_sizes")
-                                .update({
-                                    size: size.size,
-                                    price: size.price,
-                                    stock: size.stock,
-                                    active: true
-                                })
-                                .eq("id", size.id)
-                                .eq(
-                                    "variant_id",
-                                    variantId
-                                );
+                        const {
+                            error
+                        } = await sb
+                            .from(
+                                "variant_sizes"
+                            )
+                            .update({
+                                size:
+                                    size.size,
+
+                                price:
+                                    size.price,
+
+                                stock:
+                                    size.stock,
+
+                                active: true
+                            })
+                            .eq(
+                                "id",
+                                size.id
+                            )
+                            .eq(
+                                "variant_id",
+                                variantId
+                            );
 
 
                         if (error) {
@@ -945,25 +1286,34 @@ async function saveProduct(event) {
 
                     else {
 
-                        const { error } =
-                            await sb
-                                .from("variant_sizes")
-                                .insert({
-                                    variant_id: variantId,
-                                    size: size.size,
-                                    price: size.price,
-                                    stock: size.stock,
-                                    active: true
-                                });
+                        const {
+                            error
+                        } = await sb
+                            .from(
+                                "variant_sizes"
+                            )
+                            .insert({
+                                variant_id:
+                                    variantId,
+
+                                size:
+                                    size.size,
+
+                                price:
+                                    size.price,
+
+                                stock:
+                                    size.stock,
+
+                                active: true
+                            });
 
 
                         if (error) {
                             throw error;
                         }
                     }
-
                 }
-
             }
 
 
@@ -971,28 +1321,37 @@ async function saveProduct(event) {
                 "Product এবং Stock সফলভাবে update হয়েছে।",
                 "success"
             );
-
         }
 
 
         /* =========================================
            ADD NEW PRODUCT
-        ========================================= */
+           ========================================= */
 
         else {
 
-            const { data: productData, error: productError } =
-                await sb
-                    .from("products")
-                    .insert({
-                        name: product.name,
-                        description: product.description,
-                        base_price: product.basePrice,
-                        main_image_url: mainImageUrl,
-                        active: true
-                    })
-                    .select("id")
-                    .single();
+            const {
+                data: productData,
+                error: productError
+            } = await sb
+                .from("products")
+                .insert({
+                    name:
+                        product.name,
+
+                    description:
+                        product.description,
+
+                    base_price:
+                        product.basePrice,
+
+                    main_image_url:
+                        mainImageUrl,
+
+                    active: true
+                })
+                .select("id")
+                .single();
 
 
             if (productError) {
@@ -1004,10 +1363,14 @@ async function saveProduct(event) {
                 productData.id;
 
 
-            for (const variant of product.variants) {
+            for (
+                const variant
+                of product.variants
+            ) {
 
                 let variantImageUrl =
-                    variant.image_url || null;
+                    variant.image_url ||
+                    null;
 
 
                 if (variant.imageFile) {
@@ -1019,17 +1382,27 @@ async function saveProduct(event) {
                 }
 
 
-                const { data: variantData, error: variantError } =
-                    await sb
-                        .from("product_variants")
-                        .insert({
-                            product_id: productId,
-                            name: variant.name,
-                            image_url: variantImageUrl,
-                            active: true
-                        })
-                        .select("id")
-                        .single();
+                const {
+                    data: variantData,
+                    error: variantError
+                } = await sb
+                    .from(
+                        "product_variants"
+                    )
+                    .insert({
+                        product_id:
+                            productId,
+
+                        name:
+                            variant.name,
+
+                        image_url:
+                            variantImageUrl,
+
+                        active: true
+                    })
+                    .select("id")
+                    .single();
 
 
                 if (variantError) {
@@ -1037,19 +1410,32 @@ async function saveProduct(event) {
                 }
 
 
-                for (const size of variant.sizes) {
+                for (
+                    const size
+                    of variant.sizes
+                ) {
 
-                    const { error: sizeError } =
-                        await sb
-                            .from("variant_sizes")
-                            .insert({
-                                variant_id:
-                                    variantData.id,
-                                size: size.size,
-                                price: size.price,
-                                stock: size.stock,
-                                active: true
-                            });
+                    const {
+                        error: sizeError
+                    } = await sb
+                        .from(
+                            "variant_sizes"
+                        )
+                        .insert({
+                            variant_id:
+                                variantData.id,
+
+                            size:
+                                size.size,
+
+                            price:
+                                size.price,
+
+                            stock:
+                                size.stock,
+
+                            active: true
+                        });
 
 
                     if (sizeError) {
@@ -1066,16 +1452,32 @@ async function saveProduct(event) {
         }
 
 
+        /*
+         * Save সফল হওয়ার পর form reset
+         */
+
         resetProductForm();
+
 
         await loadProducts();
 
         await loadStats();
 
 
+        /*
+         * Products section-এ দেখাবে
+         */
+
+        openSection(
+            "productsSectionAdmin"
+        );
+
     } catch (error) {
 
-        console.error("Save product error:", error);
+        console.error(
+            "Save product error:",
+            error
+        );
 
         showAlert(
             error.message ||
@@ -1085,7 +1487,8 @@ async function saveProduct(event) {
 
     } finally {
 
-        saveProductButton.disabled = false;
+        saveProductButton.disabled =
+            false;
 
         saveProductButton.textContent =
             editingProductId
@@ -1096,31 +1499,34 @@ async function saveProduct(event) {
 
 
 /* =========================================================
-   IMAGE URL SAFE HELPER
-   ========================================================= */
-
-function variantImage_url_safe(value) {
-    return value || null;
-}
-
-
-/* =========================================================
    RESET PRODUCT FORM
    ========================================================= */
 
 function resetProductForm() {
 
     editingProductId = null;
+
     existingMainImageUrl = "";
 
 
     if (productForm) {
         productForm.reset();
+        productForm.dataset.mode = "add";
+    }
+
+
+    /*
+     * নতুন product-এ image required
+     */
+
+    if (mainImageAdmin) {
+        mainImageAdmin.required = true;
     }
 
 
     if (mainImagePreview) {
-        mainImagePreview.style.display = "none";
+        mainImagePreview.style.display =
+            "none";
     }
 
 
@@ -1133,9 +1539,9 @@ function resetProductForm() {
 
 
     /*
-       নতুন Product-এর জন্য একটি Variant
-       এবং একটি Size দিয়ে শুরু হবে।
-    */
+     * নতুন Product-এর জন্য
+     * 1 Variant + 1 Size
+     */
 
     createVariantElement({
         name: "",
@@ -1151,13 +1557,9 @@ function resetProductForm() {
 
 
     if (saveProductButton) {
+
         saveProductButton.textContent =
             "Save Product";
-    }
-
-
-    if (productForm) {
-        productForm.dataset.mode = "add";
     }
 
 
@@ -1166,6 +1568,7 @@ function resetProductForm() {
 
 
 if (resetProductButton) {
+
     resetProductButton.addEventListener(
         "click",
         resetProductForm
@@ -1181,38 +1584,48 @@ async function editProduct(productId) {
 
     try {
 
+        openSection(
+            "addProductSection"
+        );
+
+
         showAlert(
             "Product information loading...",
             "info"
         );
 
 
-        const { data, error } =
-            await sb
-                .from("products")
-                .select(`
+        const {
+            data,
+            error
+        } = await sb
+            .from("products")
+            .select(`
+                id,
+                name,
+                description,
+                base_price,
+                main_image_url,
+                active,
+                product_variants (
                     id,
                     name,
-                    description,
-                    base_price,
-                    main_image_url,
+                    image_url,
                     active,
-                    product_variants (
+                    variant_sizes (
                         id,
-                        name,
-                        image_url,
-                        active,
-                        variant_sizes (
-                            id,
-                            size,
-                            price,
-                            stock,
-                            active
-                        )
+                        size,
+                        price,
+                        stock,
+                        active
                     )
-                `)
-                .eq("id", productId)
-                .single();
+                )
+            `)
+            .eq(
+                "id",
+                productId
+            )
+            .single();
 
 
         if (error) {
@@ -1220,27 +1633,43 @@ async function editProduct(productId) {
         }
 
 
-        editingProductId = data.id;
+        editingProductId =
+            data.id;
+
 
         existingMainImageUrl =
             data.main_image_url || "";
 
 
+        /*
+         * Edit mode-এ main image
+         * নতুন করে দেওয়া বাধ্যতামূলক নয়।
+         */
+
+        if (mainImageAdmin) {
+            mainImageAdmin.required = false;
+        }
+
+
         productNameAdmin.value =
             data.name || "";
 
+
         basePriceAdmin.value =
             data.base_price ?? "";
+
 
         descriptionAdmin.value =
             data.description || "";
 
 
-        if (mainImagePreviewImg) {
+        if (
+            mainImagePreviewImg &&
+            data.main_image_url
+        ) {
 
             mainImagePreviewImg.src =
-                data.main_image_url || "";
-
+                data.main_image_url;
         }
 
 
@@ -1248,7 +1677,7 @@ async function editProduct(productId) {
 
             mainImagePreview.style.display =
                 data.main_image_url
-                    ? ""
+                    ? "block"
                     : "none";
         }
 
@@ -1260,26 +1689,45 @@ async function editProduct(productId) {
             data.product_variants || [];
 
 
-        variants.forEach(variant => {
+        variants.forEach(
+            variant => {
 
-            createVariantElement({
-                id: variant.id,
-                name: variant.name,
-                image_url: variant.image_url,
-                sizes: variant.variant_sizes || []
-            });
+                createVariantElement({
 
-        });
+                    id:
+                        variant.id,
 
+                    name:
+                        variant.name,
+
+                    image_url:
+                        variant.image_url,
+
+                    sizes:
+                        variant.variant_sizes || []
+                });
+            }
+        );
+
+
+        /*
+         * কোনো variant না থাকলে
+         * default variant তৈরি হবে।
+         */
 
         if (!variants.length) {
 
             createVariantElement({
+
                 name: "",
+
+                image_url: "",
+
                 sizes: [
                     {
                         size: "",
-                        price: data.base_price || 0,
+                        price:
+                            data.base_price || 0,
                         stock: 0
                     }
                 ]
@@ -1295,11 +1743,13 @@ async function editProduct(productId) {
 
 
         if (productForm) {
-            productForm.dataset.mode = "edit";
+
+            productForm.dataset.mode =
+                "edit";
         }
 
 
-        openSection("add-product");
+        clearAlert();
 
 
         window.scrollTo({
@@ -1308,12 +1758,12 @@ async function editProduct(productId) {
         });
 
 
-        clearAlert();
-
-
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Edit product error:",
+            error
+        );
 
         showAlert(
             error.message ||
@@ -1324,58 +1774,88 @@ async function editProduct(productId) {
 }
 
 
+/*
+ * onclick="editProduct(...)"
+ * থেকে function access করার জন্য
+ */
+
+window.editProduct =
+    editProduct;
+
+
 /* =========================================================
    LOAD PRODUCTS
    ========================================================= */
 
 async function loadProducts() {
 
-    const { data, error } =
-        await sb
-            .from("products")
-            .select(`
+    if (!adminProductsList) return;
+
+
+    adminProductsList.innerHTML = `
+        <div class="admin-loading">
+            Loading products...
+        </div>
+    `;
+
+
+    const {
+        data,
+        error
+    } = await sb
+        .from("products")
+        .select(`
+            id,
+            name,
+            description,
+            base_price,
+            main_image_url,
+            active,
+            created_at,
+            product_variants (
                 id,
                 name,
-                description,
-                base_price,
-                main_image_url,
+                image_url,
                 active,
-                created_at,
-                product_variants (
+                variant_sizes (
                     id,
-                    name,
-                    image_url,
-                    active,
-                    variant_sizes (
-                        id,
-                        size,
-                        price,
-                        stock,
-                        active
-                    )
+                    size,
+                    price,
+                    stock,
+                    active
                 )
-            `)
-            .order("created_at", {
+            )
+        `)
+        .order(
+            "created_at",
+            {
                 ascending: false
-            });
+            }
+        );
 
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Load products error:",
+            error
+        );
 
-        if (adminProductsList) {
-            adminProductsList.innerHTML =
-                `<div class="admin-error">
-                    ${escapeHTML(error.message)}
-                </div>`;
-        }
+        adminProductsList.innerHTML = `
+            <div class="admin-empty">
+                ${escapeHTML(
+                    error.message
+                )}
+            </div>
+        `;
 
         return;
     }
 
 
-    currentProducts = data || [];
+    currentProducts =
+        data || [];
+
 
     renderProducts();
 }
@@ -1393,7 +1873,7 @@ function renderProducts() {
     if (!currentProducts.length) {
 
         adminProductsList.innerHTML = `
-            <div class="empty-admin">
+            <div class="admin-empty">
                 কোনো Product নেই।
             </div>
         `;
@@ -1403,113 +1883,136 @@ function renderProducts() {
 
 
     adminProductsList.innerHTML =
-        currentProducts.map(product => {
+        currentProducts
+            .map(product => {
 
-            let totalStock = 0;
-            let totalSizes = 0;
+                let totalStock = 0;
+                let totalSizes = 0;
 
 
-            (product.product_variants || [])
-                .forEach(variant => {
+                (
+                    product.product_variants ||
+                    []
+                ).forEach(
+                    variant => {
 
-                    (variant.variant_sizes || [])
-                        .forEach(size => {
+                        (
+                            variant.variant_sizes ||
+                            []
+                        ).forEach(
+                            size => {
 
-                            if (size.active !== false) {
-                                totalStock +=
-                                    Number(size.stock || 0);
+                                if (
+                                    size.active !==
+                                    false
+                                ) {
 
-                                totalSizes++;
+                                    totalStock +=
+                                        Number(
+                                            size.stock ||
+                                            0
+                                        );
+
+                                    totalSizes++;
+                                }
+                            }
+                        );
+                    }
+                );
+
+
+                const status =
+                    product.active === false
+                        ? "Inactive"
+                        : "Active";
+
+
+                return `
+                    <div class="admin-product-card">
+
+                        <div class="admin-product-image">
+
+                            ${
+                                product.main_image_url
+                                    ? `
+                                        <img
+                                            src="${escapeHTML(
+                                                product.main_image_url
+                                            )}"
+                                            alt="${escapeHTML(
+                                                product.name
+                                            )}"
+                                        >
+                                    `
+                                    : `
+                                        <div class="no-image">
+                                            No Image
+                                        </div>
+                                    `
                             }
 
-                        });
-
-                });
-
-
-            const status =
-                product.active === false
-                    ? "Inactive"
-                    : "Active";
-
-
-            return `
-                <div class="admin-product-card">
-
-                    <div class="admin-product-image">
-
-                        ${
-                            product.main_image_url
-                                ? `
-                                    <img
-                                        src="${escapeHTML(
-                                            product.main_image_url
-                                        )}"
-                                        alt="${escapeHTML(
-                                            product.name
-                                        )}"
-                                    >
-                                `
-                                : `
-                                    <div class="no-image">
-                                        No Image
-                                    </div>
-                                `
-                        }
-
-                    </div>
-
-
-                    <div class="admin-product-info">
-
-                        <h3>
-                            ${escapeHTML(product.name)}
-                        </h3>
-
-                        <div class="admin-product-meta">
-                            Base Price:
-                            ৳${money(product.base_price)}
                         </div>
 
-                        <div class="admin-product-meta">
-                            Total Stock:
-                            <strong>
-                                ${totalStock}
-                            </strong>
+
+                        <div class="admin-product-info">
+
+                            <h3>
+                                ${escapeHTML(
+                                    product.name
+                                )}
+                            </h3>
+
+
+                            <div class="admin-product-meta">
+                                Base Price:
+                                ৳${money(
+                                    product.base_price
+                                )}
+                            </div>
+
+
+                            <div class="admin-product-meta">
+                                Total Stock:
+                                <strong>
+                                    ${totalStock}
+                                </strong>
+                            </div>
+
+
+                            <div class="admin-product-meta">
+                                Sizes:
+                                ${totalSizes}
+                            </div>
+
+
+                            <div class="admin-product-status ${
+                                product.active === false
+                                    ? "inactive"
+                                    : "active"
+                            }">
+                                ${status}
+                            </div>
+
                         </div>
 
-                        <div class="admin-product-meta">
-                            Sizes:
-                            ${totalSizes}
-                        </div>
 
-                        <div class="admin-product-status ${
-                            product.active === false
-                                ? "inactive"
-                                : "active"
-                        }">
-                            ${status}
+                        <div class="admin-product-actions">
+
+                            <button
+                                type="button"
+                                class="admin-edit-button"
+                                onclick="editProduct(${product.id})"
+                            >
+                                ✏️ Edit / Stock
+                            </button>
+
                         </div>
 
                     </div>
+                `;
 
-
-                    <div class="admin-product-actions">
-
-                        <button
-                            type="button"
-                            class="admin-edit-button"
-                            onclick="editProduct(${product.id})"
-                        >
-                            ✏️ Edit / Stock
-                        </button>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
+            })
+            .join("");
 }
 
 
@@ -1519,35 +2022,60 @@ function renderProducts() {
 
 async function loadOrders() {
 
-    const { data, error } =
-        await sb
-            .from("orders")
-            .select("*")
-            .order("created_at", {
+    if (!adminOrdersList) return;
+
+
+    adminOrdersList.innerHTML = `
+        <div class="admin-loading">
+            Loading orders...
+        </div>
+    `;
+
+
+    const {
+        data,
+        error
+    } = await sb
+        .from("orders")
+        .select("*")
+        .order(
+            "created_at",
+            {
                 ascending: false
-            });
+            }
+        );
 
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Load orders error:",
+            error
+        );
 
-        if (adminOrdersList) {
-            adminOrdersList.innerHTML =
-                `<div class="admin-error">
-                    ${escapeHTML(error.message)}
-                </div>`;
-        }
+        adminOrdersList.innerHTML = `
+            <div class="admin-empty">
+                ${escapeHTML(
+                    error.message
+                )}
+            </div>
+        `;
 
         return;
     }
 
 
-    currentOrders = data || [];
+    currentOrders =
+        data || [];
+
 
     renderOrders();
 }
 
+
+/* =========================================================
+   RENDER ORDERS
+   ========================================================= */
 
 function renderOrders() {
 
@@ -1557,7 +2085,7 @@ function renderOrders() {
     if (!currentOrders.length) {
 
         adminOrdersList.innerHTML = `
-            <div class="empty-admin">
+            <div class="admin-empty">
                 কোনো Order নেই।
             </div>
         `;
@@ -1567,130 +2095,153 @@ function renderOrders() {
 
 
     adminOrdersList.innerHTML =
-        currentOrders.map(order => {
+        currentOrders
+            .map(order => {
 
-            const completed =
-                order.status === "completed";
+                const completed =
+                    order.status ===
+                    "completed";
 
 
-            return `
-                <div class="admin-order-card">
+                return `
+                    <div class="admin-order-card">
 
-                    <div class="order-main">
+                        <div class="order-main">
 
-                        <div class="order-title">
-                            Order #${escapeHTML(order.id)}
-                        </div>
+                            <div class="order-title">
+                                Order #${escapeHTML(
+                                    order.id
+                                )}
+                            </div>
 
-                        <div class="order-customer">
-                            ${escapeHTML(
-                                order.customer_name
-                            )}
-                        </div>
 
-                        <div class="order-phone">
-                            ${escapeHTML(
-                                order.phone
-                            )}
-                        </div>
+                            <div class="order-customer">
+                                ${escapeHTML(
+                                    order.customer_name
+                                )}
+                            </div>
 
-                        <div class="order-product">
-                            ${escapeHTML(
-                                order.product_name
-                            )}
-                        </div>
 
-                        <div class="order-variant">
-                            ${
-                                escapeHTML(
+                            <div class="order-phone">
+                                ${escapeHTML(
+                                    order.phone
+                                )}
+                            </div>
+
+
+                            <div class="order-product">
+                                ${escapeHTML(
+                                    order.product_name
+                                )}
+                            </div>
+
+
+                            <div class="order-variant">
+
+                                ${escapeHTML(
                                     order.variety || ""
-                                )
-                            }
+                                )}
 
-                            ${
-                                order.size
-                                    ? " · " +
-                                      escapeHTML(order.size)
-                                    : ""
-                            }
+                                ${
+                                    order.size
+                                        ? " · " +
+                                          escapeHTML(
+                                              order.size
+                                          )
+                                        : ""
+                                }
 
-                            · Qty:
-                            ${escapeHTML(order.quantity)}
+                                · Qty:
+                                ${escapeHTML(
+                                    order.quantity
+                                )}
+
+                            </div>
+
+
+                            <div class="order-address">
+
+                                ${escapeHTML(
+                                    order.address ||
+                                    ""
+                                )}
+
+                                ${
+                                    order.upazila
+                                        ? ", " +
+                                          escapeHTML(
+                                              order.upazila
+                                          )
+                                        : ""
+                                }
+
+                                ${
+                                    order.district
+                                        ? ", " +
+                                          escapeHTML(
+                                              order.district
+                                          )
+                                        : ""
+                                }
+
+                            </div>
+
+
+                            <div class="order-total">
+                                Total:
+                                ৳${money(
+                                    order.total_price
+                                )}
+                            </div>
+
+
+                            <div class="order-date">
+                                ${formatDate(
+                                    order.created_at
+                                )}
+                            </div>
+
                         </div>
 
-                        <div class="order-address">
-                            ${escapeHTML(
-                                order.address || ""
-                            )}
 
-                            ${
-                                order.upazila
-                                    ? ", " +
-                                      escapeHTML(
-                                          order.upazila
-                                      )
-                                    : ""
-                            }
+                        <div class="order-actions">
 
-                            ${
-                                order.district
-                                    ? ", " +
-                                      escapeHTML(
-                                          order.district
-                                      )
-                                    : ""
-                            }
-                        </div>
-
-                        <div class="order-total">
-                            Total:
-                            ৳${money(order.total_price)}
-                        </div>
-
-                        <div class="order-date">
-                            ${formatDate(
-                                order.created_at
-                            )}
-                        </div>
-
-                    </div>
-
-
-                    <div class="order-actions">
-
-                        <span class="order-status ${
-                            completed
-                                ? "completed"
-                                : "pending"
-                        }">
-                            ${
+                            <span class="order-status ${
                                 completed
-                                    ? "Completed"
-                                    : "Pending"
+                                    ? "completed"
+                                    : "pending"
+                            }">
+
+                                ${
+                                    completed
+                                        ? "Completed"
+                                        : "Pending"
+                                }
+
+                            </span>
+
+
+                            ${
+                                !completed
+                                    ? `
+                                        <button
+                                            type="button"
+                                            class="complete-order-button"
+                                            onclick="completeOrder(${order.id})"
+                                        >
+                                            Complete Order
+                                        </button>
+                                    `
+                                    : ""
                             }
-                        </span>
 
-
-                        ${
-                            !completed
-                                ? `
-                                    <button
-                                        type="button"
-                                        class="complete-order-button"
-                                        onclick="completeOrder(${order.id})"
-                                    >
-                                        Complete Order
-                                    </button>
-                                `
-                                : ""
-                        }
+                        </div>
 
                     </div>
+                `;
 
-                </div>
-            `;
-
-        }).join("");
+            })
+            .join("");
 }
 
 
@@ -1700,20 +2251,26 @@ function renderOrders() {
 
 async function completeOrder(orderId) {
 
-    if (!confirm(
-        "এই Order-টি Completed হিসেবে mark করবেন?"
-    )) {
+    if (
+        !confirm(
+            "এই Order-টি Completed হিসেবে mark করবেন?"
+        )
+    ) {
         return;
     }
 
 
-    const { error } =
-        await sb
-            .from("orders")
-            .update({
-                status: "completed"
-            })
-            .eq("id", orderId);
+    const {
+        error
+    } = await sb
+        .from("orders")
+        .update({
+            status: "completed"
+        })
+        .eq(
+            "id",
+            orderId
+        );
 
 
     if (error) {
@@ -1733,84 +2290,128 @@ async function completeOrder(orderId) {
 }
 
 
+/*
+ * HTML onclick থেকে access
+ */
+
+window.completeOrder =
+    completeOrder;
+
+
 /* =========================================================
    STATS
    ========================================================= */
 
 async function loadStats() {
 
-    const { data: products, error: productError } =
-        await sb
-            .from("products")
-            .select("id, active");
+    const {
+        data: products,
+        error: productError
+    } = await sb
+        .from("products")
+        .select(
+            "id, active"
+        );
 
 
     if (!productError) {
 
         const activeProducts =
             (products || [])
-                .filter(p => p.active !== false);
+                .filter(
+                    p =>
+                        p.active !== false
+                );
 
 
         if (statProducts) {
+
             statProducts.textContent =
                 activeProducts.length;
         }
     }
 
 
-    const { data: sizes, error: sizeError } =
-        await sb
-            .from("variant_sizes")
-            .select("stock, active");
+    const {
+        data: sizes,
+        error: sizeError
+    } = await sb
+        .from("variant_sizes")
+        .select(
+            "stock, active"
+        );
 
 
     if (!sizeError) {
 
         const totalStock =
             (sizes || [])
-                .filter(s => s.active !== false)
+                .filter(
+                    s =>
+                        s.active !== false
+                )
                 .reduce(
-                    (sum, item) =>
-                        sum + Number(item.stock || 0),
+                    (
+                        sum,
+                        item
+                    ) =>
+                        sum +
+                        Number(
+                            item.stock || 0
+                        ),
                     0
                 );
 
 
         if (statStock) {
+
             statStock.textContent =
                 totalStock;
         }
     }
 
 
-    const { data: orders, error: orderError } =
-        await sb
-            .from("orders")
-            .select("status");
+    const {
+        data: orders,
+        error: orderError
+    } = await sb
+        .from("orders")
+        .select(
+            "status"
+        );
 
 
     if (!orderError) {
 
         const pending =
             (orders || [])
-                .filter(o => o.status === "pending")
+                .filter(
+                    o =>
+                        o.status ===
+                        "pending"
+                )
                 .length;
 
 
         const completed =
             (orders || [])
-                .filter(o => o.status === "completed")
+                .filter(
+                    o =>
+                        o.status ===
+                        "completed"
+                )
                 .length;
 
 
         if (statPendingOrders) {
+
             statPendingOrders.textContent =
                 pending;
         }
 
 
         if (statCompletedOrders) {
+
             statCompletedOrders.textContent =
                 completed;
         }
@@ -1837,6 +2438,7 @@ async function loadEverything() {
    ========================================================= */
 
 if (loginForm) {
+
     loginForm.addEventListener(
         "submit",
         handleLogin
@@ -1845,6 +2447,7 @@ if (loginForm) {
 
 
 if (logoutButton) {
+
     logoutButton.addEventListener(
         "click",
         handleLogout
@@ -1853,6 +2456,7 @@ if (logoutButton) {
 
 
 if (productForm) {
+
     productForm.addEventListener(
         "submit",
         saveProduct
@@ -1860,40 +2464,49 @@ if (productForm) {
 }
 
 
-/* ADMIN NAV */
+/* =========================================================
+   ADMIN NAVIGATION
+   ========================================================= */
 
 document.querySelectorAll(
     ".admin-nav-btn"
 ).forEach(button => {
 
-    button.addEventListener("click", () => {
+    button.addEventListener(
+        "click",
+        () => {
 
-        const section =
-            button.dataset.section;
+            const section =
+                button.dataset.section;
 
-        if (section) {
-            openSection(section);
+            if (section) {
+                openSection(section);
+            }
         }
-
-    });
-
+    );
 });
 
 
-/* OTHER OPEN SECTION BUTTONS */
+/* =========================================================
+   QUICK ACTION BUTTONS
+   ========================================================= */
 
 document.querySelectorAll(
     "[data-open-section]"
 ).forEach(button => {
 
-    button.addEventListener("click", () => {
+    button.addEventListener(
+        "click",
+        () => {
 
-        openSection(
-            button.dataset.openSection
-        );
+            const section =
+                button.dataset.openSection;
 
-    });
-
+            if (section) {
+                openSection(section);
+            }
+        }
+    );
 });
 
 
@@ -1904,13 +2517,15 @@ document.querySelectorAll(
 sb.auth.onAuthStateChange(
     (event, session) => {
 
-        if (event === "SIGNED_OUT") {
+        if (
+            event ===
+            "SIGNED_OUT"
+        ) {
 
             currentUser = null;
 
             showLogin();
         }
-
     }
 );
 
@@ -1918,5 +2533,7 @@ sb.auth.onAuthStateChange(
 /* =========================================================
    START
    ========================================================= */
+
+resetProductForm();
 
 checkInitialSession();
