@@ -451,8 +451,6 @@
       flex-direction: column;
     }
 
-    /* Fixed modal header */
-
     .modal-header {
       flex-shrink: 0;
       padding: 15px 18px;
@@ -494,8 +492,6 @@
     .close-modal:hover {
       background: #eeeeee;
     }
-
-    /* Scrollable form */
 
     .order-form {
       padding: 17px;
@@ -676,6 +672,140 @@
       text-decoration: line-through;
     }
 
+    /* Variant image option */
+
+    .variant-option {
+      min-width: 76px;
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .variant-option-image {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #f3f3f3;
+      border: 1px solid #e5e5e5;
+    }
+
+    .variant-option-name {
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    /* =========================
+       PAYMENT
+    ========================== */
+
+    .payment-section {
+      margin-top: 17px;
+    }
+
+    .payment-method-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .payment-method-option {
+      position: relative;
+    }
+
+    .payment-method-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .payment-method-label {
+      min-height: 54px;
+      border: 1px solid #d5d9de;
+      border-radius: 8px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #444;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .payment-method-label:hover {
+      border-color: #f4511e;
+    }
+
+    .payment-method-option input:checked + .payment-method-label {
+      border-color: #f4511e;
+      background: #fff2ed;
+      color: #f4511e;
+      box-shadow: 0 0 0 1px #f4511e inset;
+    }
+
+    .payment-method-option input:disabled + .payment-method-label {
+      opacity: .45;
+      cursor: not-allowed;
+      background: #f5f5f5;
+    }
+
+    .payment-help {
+      margin-top: 8px;
+      color: #777;
+      font-size: 12px;
+    }
+
+    .payment-details {
+      display: none;
+      margin-top: 11px;
+      padding: 12px;
+      border: 1px solid #ffe0d3;
+      border-radius: 9px;
+      background: #fff8f5;
+    }
+
+    .payment-details.active {
+      display: block;
+    }
+
+    .payment-details-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f4511e;
+      margin-bottom: 9px;
+    }
+
+    .payment-instruction {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .payment-warning {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #fff3f3;
+      border: 1px solid #ffcaca;
+      color: #c62828;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .payment-warning.active {
+      display: block;
+    }
+
     /* =========================
        QUANTITY
     ========================== */
@@ -781,6 +911,27 @@
       text-align: center;
     }
 
+    .order-message.success {
+      display: block;
+      background: #eaf8ee;
+      color: #1b7a3a;
+      border: 1px solid #bde5c9;
+    }
+
+    .order-message.error {
+      display: block;
+      background: #fff1f1;
+      color: #c62828;
+      border: 1px solid #ffc7c7;
+    }
+
+    .order-message.info {
+      display: block;
+      background: #eef6ff;
+      color: #1769aa;
+      border: 1px solid #c8e1ff;
+    }
+
     /* =========================
        SUBMIT
     ========================== */
@@ -848,9 +999,7 @@
       display: none;
     }
 
-    /* =====================================================
-       EXTRA: OLD CART / ADD TO CART ELEMENTS ARE HIDDEN
-       ===================================================== */
+    /* OLD CART ELEMENTS */
 
     #cartSidebar,
     #cartOverlay,
@@ -1072,6 +1221,15 @@
         gap: 8px;
       }
 
+      .payment-method-list {
+        grid-template-columns: 1fr;
+        gap: 7px;
+      }
+
+      .payment-method-label {
+        min-height: 48px;
+      }
+
       .quantity-row {
         align-items: center;
       }
@@ -1144,7 +1302,6 @@
 </head>
 
 <body>
-
 
   <!-- HEADER -->
   <header class="main-header">
@@ -1353,9 +1510,7 @@
         class="order-form"
       >
 
-        <!-- =========================
-             PRODUCT SUMMARY
-        ========================== -->
+        <!-- PRODUCT SUMMARY -->
 
         <div class="product-selection-box">
 
@@ -1612,6 +1767,7 @@
           <div class="quantity-row">
 
             <div>
+
               <div class="form-label">
                 কতটি নিতে চান?
               </div>
@@ -1619,6 +1775,7 @@
               <div class="quantity-help">
                 সর্বোচ্চ available stock অনুযায়ী
               </div>
+
             </div>
 
 
@@ -1656,12 +1813,182 @@
 
           </div>
 
-
           <div
             id="displayQuantity"
             style="display:none;"
           >
             1
+          </div>
+
+        </div>
+
+
+        <!-- =========================
+             PAYMENT
+        ========================== -->
+
+        <div class="payment-section">
+
+          <div class="form-section-title">
+            পেমেন্ট পদ্ধতি
+          </div>
+
+          <div
+            id="paymentMethodList"
+            class="payment-method-list"
+          >
+
+            <!-- COD -->
+
+            <div
+              id="codPaymentOption"
+              class="payment-method-option"
+            >
+
+              <input
+                type="radio"
+                name="paymentMethod"
+                id="paymentCod"
+                value="cod"
+              >
+
+              <label
+                for="paymentCod"
+                class="payment-method-label"
+              >
+                💵 Cash on Delivery
+              </label>
+
+            </div>
+
+
+            <!-- bKash -->
+
+            <div
+              id="bkashPaymentOption"
+              class="payment-method-option"
+            >
+
+              <input
+                type="radio"
+                name="paymentMethod"
+                id="paymentBkash"
+                value="bkash"
+              >
+
+              <label
+                for="paymentBkash"
+                class="payment-method-label"
+              >
+                📱 bKash Send Money
+              </label>
+
+            </div>
+
+
+            <!-- Nagad -->
+
+            <div
+              id="nagadPaymentOption"
+              class="payment-method-option"
+            >
+
+              <input
+                type="radio"
+                name="paymentMethod"
+                id="paymentNagad"
+                value="nagad"
+              >
+
+              <label
+                for="paymentNagad"
+                class="payment-method-label"
+              >
+                📱 Nagad Send Money
+              </label>
+
+            </div>
+
+          </div>
+
+
+          <div class="payment-help">
+            আপনার পণ্যের জন্য যে পেমেন্ট পদ্ধতিগুলো চালু আছে সেগুলোই এখানে দেখানো হবে।
+          </div>
+
+
+          <!-- PAYMENT DETAILS -->
+
+          <div
+            id="paymentDetails"
+            class="payment-details"
+          >
+
+            <div
+              id="paymentDetailsTitle"
+              class="payment-details-title"
+            >
+              পেমেন্ট তথ্য
+            </div>
+
+            <div class="payment-instruction">
+              পেমেন্ট সম্পন্ন করার পর আপনার যে নম্বর থেকে টাকা পাঠিয়েছেন এবং Transaction ID দিন।
+            </div>
+
+
+            <div class="form-group">
+
+              <label
+                class="form-label"
+                for="paymentAccount"
+              >
+                যে নম্বর থেকে টাকা পাঠিয়েছেন
+                <span class="required-mark">*</span>
+              </label>
+
+              <input
+                type="tel"
+                id="paymentAccount"
+                class="form-input"
+                placeholder="01XXXXXXXXX"
+                inputmode="tel"
+                autocomplete="off"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label
+                class="form-label"
+                for="transactionId"
+              >
+                Transaction ID
+                <span class="required-mark">*</span>
+              </label>
+
+              <input
+                type="text"
+                id="transactionId"
+                class="form-input"
+                placeholder="যেমন: 8A7B6C5D"
+                autocomplete="off"
+                autocapitalize="characters"
+              >
+
+            </div>
+
+          </div>
+
+
+          <!-- NO PAYMENT WARNING -->
+
+          <div
+            id="paymentWarning"
+            class="payment-warning"
+          >
+            এই পণ্যের জন্য বর্তমানে কোনো পেমেন্ট পদ্ধতি চালু নেই। অর্ডার করা যাবে না।
           </div>
 
         </div>
@@ -1697,6 +2024,7 @@
 
         <button
           type="submit"
+          id="placeOrderButton"
           class="place-order-btn"
         >
           অর্ডার কনফার্ম করুন
@@ -1767,8 +2095,7 @@
 
   <script src="config.js"></script>
 
-  <!-- Version changed to prevent old cached app.js -->
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 
 </body>
 </html>
