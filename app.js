@@ -44,11 +44,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 function setupEvents() {
 
   // Search
-  $("searchButton")?.addEventListener("click", performSearch);
+  $("searchButton")?.addEventListener(
+    "click",
+    performSearch
+  );
 
-  $("searchInput")?.addEventListener("input", performSearch);
+  $("searchInput")?.addEventListener(
+    "input",
+    performSearch
+  );
 
-  // Product button
+
+  // Category / Products button
   $("categoryMenuButton")?.addEventListener("click", () => {
 
     $("categoryMenuButton").classList.add("active");
@@ -60,6 +67,7 @@ function setupEvents() {
 
   });
 
+
   // Hero button
   $("shopNowButton")?.addEventListener("click", () => {
 
@@ -70,8 +78,13 @@ function setupEvents() {
 
   });
 
+
   // Close modal
-  $("closeModal")?.addEventListener("click", closeOrderModal);
+  $("closeModal")?.addEventListener(
+    "click",
+    closeOrderModal
+  );
+
 
   // Click outside modal
   $("orderModal")?.addEventListener("click", (event) => {
@@ -82,12 +95,17 @@ function setupEvents() {
 
   });
 
-  // Quantity
+
+  // ===============================
+  // QUANTITY MINUS
+  // ===============================
+
   $("quantityMinus")?.addEventListener("click", () => {
 
     const input = $("quantity");
 
-    let value = Number(input.value) || 1;
+    let value =
+      Number(input.value) || 1;
 
     if (value > 1) {
       value--;
@@ -99,15 +117,22 @@ function setupEvents() {
 
   });
 
+
+  // ===============================
+  // QUANTITY PLUS
+  // ===============================
+
   $("quantityPlus")?.addEventListener("click", () => {
 
     const input = $("quantity");
 
-    let value = Number(input.value) || 1;
+    let value =
+      Number(input.value) || 1;
 
-    const maxStock = selectedSize
-      ? Number(selectedSize.stock)
-      : 1;
+    const maxStock =
+      selectedSize
+        ? Number(selectedSize.stock)
+        : 1;
 
     if (value < maxStock) {
       value++;
@@ -119,15 +144,24 @@ function setupEvents() {
 
   });
 
+
+  // ===============================
+  // QUANTITY INPUT
+  // ===============================
+
   $("quantity")?.addEventListener("input", () => {
 
-    let value = Number($("quantity").value) || 1;
+    let value =
+      Number($("quantity").value) || 1;
 
-    const maxStock = selectedSize
-      ? Number(selectedSize.stock)
-      : 1;
+    const maxStock =
+      selectedSize
+        ? Number(selectedSize.stock)
+        : 1;
 
-    if (value < 1) value = 1;
+    if (value < 1) {
+      value = 1;
+    }
 
     if (value > maxStock) {
       value = maxStock;
@@ -139,8 +173,35 @@ function setupEvents() {
 
   });
 
-  // Order
-  $("orderForm")?.addEventListener("submit", submitOrder);
+
+  // ===============================
+  // PAYMENT METHOD
+  // ===============================
+
+  $("paymentCod")?.addEventListener(
+    "change",
+    handlePaymentMethodChange
+  );
+
+  $("paymentBkash")?.addEventListener(
+    "change",
+    handlePaymentMethodChange
+  );
+
+  $("paymentNagad")?.addEventListener(
+    "change",
+    handlePaymentMethodChange
+  );
+
+
+  // ===============================
+  // ORDER FORM
+  // ===============================
+
+  $("orderForm")?.addEventListener(
+    "submit",
+    submitOrder
+  );
 
 }
 
@@ -162,6 +223,8 @@ async function loadProducts() {
       main_image_url,
       base_price,
       active,
+      allow_cod,
+      allow_advance,
       created_at,
       product_variants (
         id,
@@ -184,9 +247,13 @@ async function loadProducts() {
       ascending: false
     });
 
+
   if (error) {
 
-    console.error("Product loading error:", error);
+    console.error(
+      "Product loading error:",
+      error
+    );
 
     showNoProducts(
       "পণ্য লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
@@ -195,35 +262,60 @@ async function loadProducts() {
     return;
   }
 
-  allProducts = (data || []).map(product => {
 
-    const variants = (product.product_variants || [])
-      .filter(v => v.active !== false)
-      .map(variant => {
+  allProducts =
+    (data || []).map(product => {
 
-        return {
-          ...variant,
+      const variants =
+        (product.product_variants || [])
+          .filter(
+            variant =>
+              variant.active !== false
+          )
+          .map(variant => {
 
-          variant_sizes: (variant.variant_sizes || [])
-            .filter(size => size.active !== false)
-            .map(size => ({
-              ...size,
-              price: Number(size.price || 0),
-              stock: Number(size.stock || 0)
-            }))
+            return {
+              ...variant,
 
-        };
+              variant_sizes:
+                (variant.variant_sizes || [])
+                  .filter(
+                    size =>
+                      size.active !== false
+                  )
+                  .map(size => ({
+                    ...size,
+                    price:
+                      Number(size.price || 0),
+                    stock:
+                      Number(size.stock || 0)
+                  }))
+            };
 
-      });
+          });
 
-    return {
-      ...product,
-      product_variants: variants
-    };
 
-  });
+      return {
 
-  filteredProducts = [...allProducts];
+        ...product,
+
+        allow_cod:
+          product.allow_cod !== false,
+
+        allow_advance:
+          product.allow_advance === true,
+
+        product_variants:
+          variants
+
+      };
+
+    });
+
+
+  filteredProducts =
+    [...allProducts];
+
 
   renderProducts();
 
@@ -236,7 +328,8 @@ async function loadProducts() {
 
 function showLoading() {
 
-  const container = $("products");
+  const container =
+    $("products");
 
   if (!container) return;
 
@@ -247,12 +340,23 @@ function showLoading() {
       padding:60px 20px;
       color:#777;
     ">
-      <div style="font-size:32px;margin-bottom:8px;">⏳</div>
-      <div>পণ্য লোড হচ্ছে...</div>
+      <div style="
+        font-size:32px;
+        margin-bottom:8px;
+      ">
+        ⏳
+      </div>
+
+      <div>
+        পণ্য লোড হচ্ছে...
+      </div>
     </div>
   `;
 
-  $("noProducts").style.display = "none";
+  if ($("noProducts")) {
+    $("noProducts").style.display =
+      "none";
+  }
 
 }
 
@@ -263,9 +367,11 @@ function showLoading() {
 
 function renderProducts() {
 
-  const container = $("products");
+  const container =
+    $("products");
 
   if (!container) return;
+
 
   if (!filteredProducts.length) {
 
@@ -278,11 +384,19 @@ function renderProducts() {
     return;
   }
 
-  $("noProducts").style.display = "none";
 
-  container.innerHTML = filteredProducts
-    .map(product => createProductCard(product))
-    .join("");
+  if ($("noProducts")) {
+    $("noProducts").style.display =
+      "none";
+  }
+
+
+  container.innerHTML =
+    filteredProducts
+      .map(product =>
+        createProductCard(product)
+      )
+      .join("");
 
 }
 
@@ -293,59 +407,85 @@ function renderProducts() {
 
 function createProductCard(product) {
 
-  const variants = product.product_variants || [];
+  const variants =
+    product.product_variants || [];
+
 
   let totalStock = 0;
 
+
   variants.forEach(variant => {
 
-    (variant.variant_sizes || []).forEach(size => {
+    (variant.variant_sizes || [])
+      .forEach(size => {
 
-      totalStock += Number(size.stock || 0);
+        totalStock +=
+          Number(size.stock || 0);
 
-    });
+      });
 
   });
 
-  const firstAvailable = getFirstAvailableSize(product);
 
-  let displayPrice = firstAvailable
-    ? firstAvailable.price
-    : Number(product.base_price || 0);
+  const firstAvailable =
+    getFirstAvailableSize(product);
 
-  const image = product.main_image_url || "";
 
-  const safeName = escapeHTML(product.name || "Unnamed Product");
+  const displayPrice =
+    firstAvailable
+      ? firstAvailable.price
+      : Number(product.base_price || 0);
 
-  const imageHTML = image
-    ? `
-      <img
-        src="${escapeAttribute(image)}"
-        class="product-image"
-        alt="${escapeAttribute(product.name || "Product")}"
-        loading="lazy"
-        onerror="this.style.display='none'"
-      >
-    `
-    : `
-      <div style="
-        width:100%;
-        height:100%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:42px;
-        color:#aaa;
-      ">
-        📦
-      </div>
-    `;
 
-  const stockText = totalStock > 0
-    ? `স্টক: ${totalStock}`
-    : "স্টক নেই";
+  const image =
+    product.main_image_url || "";
 
-  const disabled = !firstAvailable || totalStock <= 0;
+
+  const safeName =
+    escapeHTML(
+      product.name ||
+      "Unnamed Product"
+    );
+
+
+  const imageHTML =
+    image
+      ? `
+        <img
+          src="${escapeAttribute(image)}"
+          class="product-image"
+          alt="${escapeAttribute(
+            product.name || "Product"
+          )}"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+      `
+      : `
+        <div style="
+          width:100%;
+          height:100%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:42px;
+          color:#aaa;
+        ">
+          📦
+        </div>
+      `;
+
+
+  const stockText =
+    totalStock > 0
+      ? `স্টক: ${totalStock}`
+      : "স্টক নেই";
+
+
+  const disabled =
+    !firstAvailable ||
+    totalStock <= 0;
+
 
   return `
     <article
@@ -357,11 +497,13 @@ function createProductCard(product) {
         ${imageHTML}
       </div>
 
+
       <div class="product-info">
 
         <div class="product-name">
           ${safeName}
         </div>
+
 
         <div
           class="product-price"
@@ -370,6 +512,7 @@ function createProductCard(product) {
           ৳${formatMoney(displayPrice)}
         </div>
 
+
         <div
           class="product-stock"
           id="card-stock-${product.id}"
@@ -377,13 +520,18 @@ function createProductCard(product) {
           ${stockText}
         </div>
 
+
         <button
           type="button"
           class="buy-now-card-btn"
           ${disabled ? "disabled" : ""}
           onclick="openProductOrder(${product.id})"
         >
-          ${disabled ? "স্টক নেই" : "Buy Now"}
+          ${
+            disabled
+              ? "স্টক নেই"
+              : "Buy Now"
+          }
         </button>
 
       </div>
@@ -400,11 +548,19 @@ function createProductCard(product) {
 
 function getFirstAvailableSize(product) {
 
-  for (const variant of product.product_variants || []) {
+  for (
+    const variant
+    of product.product_variants || []
+  ) {
 
-    for (const size of variant.variant_sizes || []) {
+    for (
+      const size
+      of variant.variant_sizes || []
+    ) {
 
-      if (Number(size.stock) > 0) {
+      if (
+        Number(size.stock) > 0
+      ) {
 
         return {
           ...size,
@@ -428,71 +584,124 @@ function getFirstAvailableSize(product) {
 
 function openProductOrder(productId) {
 
-  const product = allProducts.find(
-    p => Number(p.id) === Number(productId)
-  );
+  const product =
+    allProducts.find(
+      p =>
+        Number(p.id) ===
+        Number(productId)
+    );
+
 
   if (!product) return;
 
-  selectedProduct = product;
 
-  const available = getFirstAvailableSize(product);
+  selectedProduct =
+    product;
+
+
+  const available =
+    getFirstAvailableSize(product);
+
 
   if (!available) {
 
-    alert("এই পণ্যটি বর্তমানে স্টকে নেই।");
+    alert(
+      "এই পণ্যটি বর্তমানে স্টকে নেই।"
+    );
 
     return;
   }
 
-  selectedVariant = available.variant;
-  selectedSize = available;
 
-  $("productName").value = product.name || "";
+  selectedVariant =
+    available.variant;
+
+
+  selectedSize =
+    available;
+
+
+  // Hidden values
+  $("productName").value =
+    product.name || "";
+
 
   $("variantName").value =
     selectedVariant.name || "";
 
+
   $("sizeName").value =
     selectedSize.size || "";
+
 
   $("unitPrice").value =
     selectedSize.price;
 
+
   $("variantSizeId").value =
     selectedSize.id;
 
+
+  // Display values
   $("displayProductName").textContent =
     product.name || "-";
+
 
   $("displayVariantName").textContent =
     selectedVariant.name || "-";
 
+
   $("displaySizeName").textContent =
     selectedSize.size || "-";
 
+
   $("displayUnitPrice").textContent =
-    "৳" + formatMoney(selectedSize.price);
+    "৳" +
+    formatMoney(
+      selectedSize.price
+    );
+
 
   $("quantity").value = 1;
 
+
+  // Render options
   renderVariantOptions();
 
   renderSizeOptions();
 
+  updateVariantImage();
+
+  setupPaymentOptions();
+
   updateOrderTotal();
 
-  $("orderMessage").style.display = "none";
-  $("orderMessage").textContent = "";
 
-  $("orderModal").classList.add("active");
+  // Clear message
+  if ($("orderMessage")) {
+
+    $("orderMessage").style.display =
+      "none";
+
+    $("orderMessage").textContent =
+      "";
+
+  }
+
+
+  $("orderModal").classList.add(
+    "active"
+  );
+
 
   $("orderModal").setAttribute(
     "aria-hidden",
     "false"
   );
 
-  document.body.style.overflow = "hidden";
+
+  document.body.style.overflow =
+    "hidden";
 
 }
 
@@ -503,12 +712,16 @@ function openProductOrder(productId) {
 
 function renderVariantOptions() {
 
-  const area = $("variantArea");
+  const area =
+    $("variantArea");
 
   if (!area) return;
 
+
   const variants =
-    selectedProduct?.product_variants || [];
+    selectedProduct?.product_variants ||
+    [];
+
 
   if (variants.length <= 1) {
 
@@ -516,6 +729,7 @@ function renderVariantOptions() {
 
     return;
   }
+
 
   area.innerHTML = `
     <label class="form-label">
@@ -527,15 +741,49 @@ function renderVariantOptions() {
       ${variants.map(variant => {
 
         const active =
-          Number(variant.id) === Number(selectedVariant?.id);
+          Number(variant.id) ===
+          Number(selectedVariant?.id);
+
+
+        const variantImage =
+          variant.image_url || "";
+
 
         return `
           <button
             type="button"
-            class="option-btn ${active ? "active" : ""}"
+            class="option-btn variant-option ${
+              active
+                ? "active"
+                : ""
+            }"
             onclick="selectVariant(${variant.id})"
           >
-            ${escapeHTML(variant.name || "Option")}
+
+            ${
+              variantImage
+                ? `
+                  <img
+                    src="${escapeAttribute(
+                      variantImage
+                    )}"
+                    class="variant-option-image"
+                    alt="${escapeAttribute(
+                      variant.name ||
+                      "Variant"
+                    )}"
+                  >
+                `
+                : ""
+            }
+
+            <span class="variant-option-name">
+              ${escapeHTML(
+                variant.name ||
+                "Option"
+              )}
+            </span>
+
           </button>
         `;
 
@@ -555,39 +803,62 @@ function selectVariant(variantId) {
 
   if (!selectedProduct) return;
 
+
   const variant =
     selectedProduct.product_variants.find(
-      v => Number(v.id) === Number(variantId)
+      v =>
+        Number(v.id) ===
+        Number(variantId)
     );
+
 
   if (!variant) return;
 
-  selectedVariant = variant;
+
+  selectedVariant =
+    variant;
+
 
   const sizes =
     variant.variant_sizes || [];
 
-  const availableSize =
-    sizes.find(size => Number(size.stock) > 0);
 
+  const availableSize =
+    sizes.find(
+      size =>
+        Number(size.stock) > 0
+    );
+
+
+  // Variant has no stock
   if (!availableSize) {
 
     selectedSize = null;
 
+
     $("displayVariantName").textContent =
       variant.name || "-";
+
 
     $("displaySizeName").textContent =
       "স্টক নেই";
 
+
     $("displayUnitPrice").textContent =
       "৳0";
+
 
     $("unitPrice").value = 0;
 
     $("variantSizeId").value = "";
 
     $("sizeName").value = "";
+
+    $("variantName").value =
+      variant.name || "";
+
+
+    updateVariantImage();
 
     renderVariantOptions();
 
@@ -596,32 +867,49 @@ function selectVariant(variantId) {
     updateOrderTotal();
 
     return;
+
   }
 
-  selectedSize = availableSize;
+
+  selectedSize =
+    availableSize;
+
 
   $("variantName").value =
     variant.name || "";
 
+
   $("sizeName").value =
     availableSize.size || "";
+
 
   $("unitPrice").value =
     availableSize.price;
 
+
   $("variantSizeId").value =
     availableSize.id;
+
 
   $("displayVariantName").textContent =
     variant.name || "-";
 
+
   $("displaySizeName").textContent =
     availableSize.size || "-";
 
+
   $("displayUnitPrice").textContent =
-    "৳" + formatMoney(availableSize.price);
+    "৳" +
+    formatMoney(
+      availableSize.price
+    );
+
 
   $("quantity").value = 1;
+
+
+  updateVariantImage();
 
   renderVariantOptions();
 
@@ -633,24 +921,116 @@ function selectVariant(variantId) {
 
 
 // ===============================
+// VARIANT IMAGE
+// ===============================
+
+function updateVariantImage() {
+
+  if (
+    !selectedProduct ||
+    !selectedVariant
+  ) {
+    return;
+  }
+
+
+  const image =
+    selectedVariant.image_url ||
+    selectedProduct.main_image_url ||
+    "";
+
+
+  // If a dedicated modal image exists,
+  // update it.
+  const modalImage =
+    document.querySelector(
+      "#selectedVariantImage"
+    );
+
+
+  if (modalImage) {
+
+    if (image) {
+
+      modalImage.src =
+        image;
+
+      modalImage.style.display =
+        "block";
+
+    } else {
+
+      modalImage.removeAttribute(
+        "src"
+      );
+
+      modalImage.style.display =
+        "none";
+
+    }
+
+  }
+
+
+  // Also support an existing
+  // product image inside the modal.
+  const productImage =
+    document.querySelector(
+      "#displayProductImage"
+    );
+
+
+  if (productImage) {
+
+    if (image) {
+
+      productImage.src =
+        image;
+
+      productImage.style.display =
+        "block";
+
+    } else {
+
+      productImage.removeAttribute(
+        "src"
+      );
+
+      productImage.style.display =
+        "none";
+
+    }
+
+  }
+
+}
+
+
+// ===============================
 // SIZE OPTIONS
 // ===============================
 
 function renderSizeOptions() {
 
-  const area = $("sizeArea");
+  const area =
+    $("sizeArea");
 
   if (!area) return;
+
 
   if (!selectedVariant) {
 
     area.innerHTML = "";
 
     return;
+
   }
 
+
   const sizes =
-    selectedVariant.variant_sizes || [];
+    selectedVariant.variant_sizes ||
+    [];
+
 
   if (!sizes.length) {
 
@@ -665,7 +1045,9 @@ function renderSizeOptions() {
     `;
 
     return;
+
   }
+
 
   area.innerHTML = `
     <label class="form-label">
@@ -676,22 +1058,45 @@ function renderSizeOptions() {
 
       ${sizes.map(size => {
 
-        const stock = Number(size.stock || 0);
+        const stock =
+          Number(size.stock || 0);
+
 
         const active =
           selectedSize &&
-          Number(selectedSize.id) === Number(size.id);
+          Number(selectedSize.id) ===
+          Number(size.id);
+
 
         return `
           <button
             type="button"
-            class="option-btn ${active ? "active" : ""}"
-            ${stock <= 0 ? "disabled" : ""}
+            class="option-btn ${
+              active
+                ? "active"
+                : ""
+            }"
+            ${
+              stock <= 0
+                ? "disabled"
+                : ""
+            }
             onclick="selectSize(${size.id})"
-            style="${stock <= 0 ? "opacity:.45;cursor:not-allowed;" : ""}"
+            style="${
+              stock <= 0
+                ? "opacity:.45;cursor:not-allowed;"
+                : ""
+            }"
           >
-            ${escapeHTML(size.size || "Size")}
-            ${stock <= 0 ? " (শেষ)" : ""}
+            ${escapeHTML(
+              size.size || "Size"
+            )}
+
+            ${
+              stock <= 0
+                ? " (শেষ)"
+                : ""
+            }
           </button>
         `;
 
@@ -711,35 +1116,320 @@ function selectSize(sizeId) {
 
   if (!selectedVariant) return;
 
+
   const size =
     selectedVariant.variant_sizes.find(
-      s => Number(s.id) === Number(sizeId)
+      s =>
+        Number(s.id) ===
+        Number(sizeId)
     );
 
-  if (!size || Number(size.stock) <= 0) return;
 
-  selectedSize = size;
+  if (
+    !size ||
+    Number(size.stock) <= 0
+  ) {
+    return;
+  }
+
+
+  selectedSize =
+    size;
+
 
   $("sizeName").value =
     size.size || "";
 
+
   $("unitPrice").value =
     size.price;
+
 
   $("variantSizeId").value =
     size.id;
 
+
   $("displaySizeName").textContent =
     size.size || "-";
 
+
   $("displayUnitPrice").textContent =
-    "৳" + formatMoney(size.price);
+    "৳" +
+    formatMoney(size.price);
+
 
   $("quantity").value = 1;
+
 
   renderSizeOptions();
 
   updateOrderTotal();
+
+}
+
+
+// ===============================
+// PAYMENT OPTIONS
+// ===============================
+
+function setupPaymentOptions() {
+
+  if (!selectedProduct) return;
+
+
+  const codEnabled =
+    selectedProduct.allow_cod === true;
+
+
+  const advanceEnabled =
+    selectedProduct.allow_advance === true;
+
+
+  const codOption =
+    $("codPaymentOption");
+
+
+  const bkashOption =
+    $("bkashPaymentOption");
+
+
+  const nagadOption =
+    $("nagadPaymentOption");
+
+
+  if (codOption) {
+
+    codOption.style.display =
+      codEnabled
+        ? ""
+        : "none";
+
+  }
+
+
+  if (bkashOption) {
+
+    bkashOption.style.display =
+      advanceEnabled
+        ? ""
+        : "none";
+
+  }
+
+
+  if (nagadOption) {
+
+    nagadOption.style.display =
+      advanceEnabled
+        ? ""
+        : "none";
+
+  }
+
+
+  // No payment method
+  if (
+    !codEnabled &&
+    !advanceEnabled
+  ) {
+
+    if ($("paymentWarning")) {
+
+      $("paymentWarning").textContent =
+        "এই পণ্যের জন্য বর্তমানে কোনো payment method available নেই।";
+
+      $("paymentWarning").classList.add(
+        "active"
+      );
+
+    }
+
+    if ($("paymentMethodList")) {
+
+      $("paymentMethodList").style.display =
+        "none";
+
+    }
+
+    $("placeOrderButton").disabled =
+      true;
+
+    return;
+
+  }
+
+
+  if ($("paymentMethodList")) {
+
+    $("paymentMethodList").style.display =
+      "";
+
+  }
+
+
+  if ($("paymentWarning")) {
+
+    $("paymentWarning").classList.remove(
+      "active"
+    );
+
+  }
+
+
+  // Default method
+  if (codEnabled) {
+
+    $("paymentCod").checked = true;
+
+  } else if (advanceEnabled) {
+
+    $("paymentBkash").checked = true;
+
+  }
+
+
+  handlePaymentMethodChange();
+
+}
+
+
+// ===============================
+// PAYMENT METHOD CHANGE
+// ===============================
+
+function handlePaymentMethodChange() {
+
+  const cod =
+    $("paymentCod");
+
+  const bkash =
+    $("paymentBkash");
+
+  const nagad =
+    $("paymentNagad");
+
+
+  let method = "";
+
+
+  if (cod?.checked) {
+
+    method = "cod";
+
+  } else if (bkash?.checked) {
+
+    method = "bkash";
+
+  } else if (nagad?.checked) {
+
+    method = "nagad";
+
+  }
+
+
+  const details =
+    $("paymentDetails");
+
+
+  const account =
+    $("paymentAccount");
+
+
+  const transaction =
+    $("transactionId");
+
+
+  if (
+    method === "bkash" ||
+    method === "nagad"
+  ) {
+
+    if (details) {
+
+      details.classList.add(
+        "active"
+      );
+
+    }
+
+
+    if ($("paymentDetailsTitle")) {
+
+      $("paymentDetailsTitle").textContent =
+        method === "bkash"
+          ? "bKash Send Money তথ্য"
+          : "Nagad Send Money তথ্য";
+
+    }
+
+
+    if (account) {
+
+      account.required = true;
+
+    }
+
+
+    if (transaction) {
+
+      transaction.required = true;
+
+    }
+
+    return;
+
+  }
+
+
+  // COD
+  if (details) {
+
+    details.classList.remove(
+      "active"
+    );
+
+  }
+
+
+  if (account) {
+
+    account.required = false;
+
+    account.value = "";
+
+  }
+
+
+  if (transaction) {
+
+    transaction.required = false;
+
+    transaction.value = "";
+
+  }
+
+}
+
+
+// ===============================
+// GET SELECTED PAYMENT METHOD
+// ===============================
+
+function getSelectedPaymentMethod() {
+
+  if ($("paymentCod")?.checked) {
+    return "cod";
+  }
+
+  if ($("paymentBkash")?.checked) {
+    return "bkash";
+  }
+
+  if ($("paymentNagad")?.checked) {
+    return "nagad";
+  }
+
+  return "";
 
 }
 
@@ -752,28 +1442,43 @@ function updateOrderTotal() {
 
   if (!selectedSize) {
 
-    $("orderTotal").textContent = "৳0";
+    $("orderTotal").textContent =
+      "৳0";
 
     return;
+
   }
 
+
   const price =
-    Number(selectedSize.price || 0);
+    Number(
+      selectedSize.price || 0
+    );
+
 
   const quantity =
     Math.max(
       1,
-      Number($("quantity")?.value || 1)
+      Number(
+        $("quantity")?.value || 1
+      )
     );
 
-  const total = price * quantity;
+
+  const total =
+    price * quantity;
+
 
   $("orderTotal").textContent =
-    "৳" + formatMoney(total);
+    "৳" +
+    formatMoney(total);
+
 
   if ($("displayQuantity")) {
+
     $("displayQuantity").textContent =
       quantity;
+
   }
 
 }
@@ -785,14 +1490,19 @@ function updateOrderTotal() {
 
 function closeOrderModal() {
 
-  $("orderModal").classList.remove("active");
+  $("orderModal").classList.remove(
+    "active"
+  );
+
 
   $("orderModal").setAttribute(
     "aria-hidden",
     "true"
   );
 
-  document.body.style.overflow = "";
+
+  document.body.style.overflow =
+    "";
 
 }
 
@@ -805,7 +1515,12 @@ async function submitOrder(event) {
 
   event.preventDefault();
 
-  if (!selectedProduct || !selectedVariant || !selectedSize) {
+
+  if (
+    !selectedProduct ||
+    !selectedVariant ||
+    !selectedSize
+  ) {
 
     showOrderMessage(
       "পণ্য, ভ্যারিয়েন্ট এবং size নির্বাচন করুন।",
@@ -813,13 +1528,21 @@ async function submitOrder(event) {
     );
 
     return;
+
   }
 
+
   const quantity =
-    Number($("quantity").value || 0);
+    Number(
+      $("quantity").value || 0
+    );
+
 
   const stock =
-    Number(selectedSize.stock || 0);
+    Number(
+      selectedSize.stock || 0
+    );
+
 
   if (quantity < 1) {
 
@@ -829,7 +1552,9 @@ async function submitOrder(event) {
     );
 
     return;
+
   }
+
 
   if (quantity > stock) {
 
@@ -839,22 +1564,33 @@ async function submitOrder(event) {
     );
 
     return;
+
   }
+
+
+  // ===============================
+  // CUSTOMER INFORMATION
+  // ===============================
 
   const customerName =
     $("customerName").value.trim();
 
+
   const phone =
     $("phone").value.trim();
+
 
   const district =
     $("district").value.trim();
 
+
   const upazila =
     $("upazila").value.trim();
 
+
   const address =
     $("address").value.trim();
+
 
   if (
     !customerName ||
@@ -870,52 +1606,185 @@ async function submitOrder(event) {
     );
 
     return;
+
   }
 
+
+  // ===============================
+  // PAYMENT
+  // ===============================
+
+  const paymentMethod =
+    getSelectedPaymentMethod();
+
+
+  if (!paymentMethod) {
+
+    showOrderMessage(
+      "একটি payment method নির্বাচন করুন।",
+      false
+    );
+
+    return;
+
+  }
+
+
+  // Frontend validation
+  if (
+    paymentMethod === "cod" &&
+    selectedProduct.allow_cod !== true
+  ) {
+
+    showOrderMessage(
+      "এই পণ্যের জন্য Cash on Delivery available নেই।",
+      false
+    );
+
+    return;
+
+  }
+
+
+  if (
+    (
+      paymentMethod === "bkash" ||
+      paymentMethod === "nagad"
+    ) &&
+    selectedProduct.allow_advance !== true
+  ) {
+
+    showOrderMessage(
+      "এই পণ্যের জন্য Advance Payment available নেই।",
+      false
+    );
+
+    return;
+
+  }
+
+
+  let paymentAccount = "";
+  let transactionId = "";
+
+
+  if (
+    paymentMethod === "bkash" ||
+    paymentMethod === "nagad"
+  ) {
+
+    paymentAccount =
+      $("paymentAccount")
+        .value
+        .trim();
+
+
+    transactionId =
+      $("transactionId")
+        .value
+        .trim();
+
+
+    if (
+      !paymentAccount ||
+      !transactionId
+    ) {
+
+      showOrderMessage(
+        "Payment account number এবং TrxID দিন।",
+        false
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  // ===============================
+  // BUTTON
+  // ===============================
+
   const submitButton =
-    document.querySelector(".place-order-btn");
+    document.querySelector(
+      ".place-order-btn"
+    );
+
 
   const originalText =
     submitButton.textContent;
 
-  submitButton.disabled = true;
+
+  submitButton.disabled =
+    true;
+
+
   submitButton.textContent =
     "অর্ডার করা হচ্ছে...";
 
+
   try {
 
+    // ===============================
+    // RPC
+    // ===============================
+
     const { data, error } =
-      await sb.rpc("place_order", {
+      await sb.rpc(
+        "place_order",
+        {
 
-        p_customer_name: customerName,
+          p_customer_name:
+            customerName,
 
-        p_phone: phone,
+          p_phone:
+            phone,
 
-        p_address: address,
+          p_address:
+            address,
 
-        p_district: district,
+          p_district:
+            district,
 
-        p_upazila: upazila,
+          p_upazila:
+            upazila,
 
-        p_product_name:
-          selectedProduct.name,
+          p_product_name:
+            selectedProduct.name,
 
-        p_variant_name:
-          selectedVariant.name || "",
+          p_variant_name:
+            selectedVariant.name || "",
 
-        p_size_name:
-          selectedSize.size || "",
+          p_size_name:
+            selectedSize.size || "",
 
-        p_variant_size_id:
-          Number(selectedSize.id),
+          p_variant_size_id:
+            Number(
+              selectedSize.id
+            ),
 
-        p_quantity:
-          quantity,
+          p_quantity:
+            quantity,
 
-        p_product_price:
-          Number(selectedSize.price)
+          p_product_price:
+            Number(
+              selectedSize.price
+            ),
 
-      });
+          // NEW PAYMENT DATA
+          p_payment_method:
+            paymentMethod,
+
+          p_payment_account:
+            paymentAccount,
+
+          p_transaction_id:
+            transactionId
+
+        }
+      );
+
 
     if (error) {
 
@@ -924,6 +1793,7 @@ async function submitOrder(event) {
         error
       );
 
+
       showOrderMessage(
         "অর্ডার করা যায়নি: " +
         error.message,
@@ -931,12 +1801,15 @@ async function submitOrder(event) {
       );
 
       return;
+
     }
+
 
     const result =
       Array.isArray(data)
         ? data[0]
         : data;
+
 
     if (!result?.success) {
 
@@ -947,16 +1820,23 @@ async function submitOrder(event) {
       );
 
       return;
+
     }
 
-    // Successful order
+
+    // ===============================
+    // SUCCESS
+    // ===============================
+
     showOrderMessage(
       `অর্ডার সফল হয়েছে! আপনার Order ID: #${result.order_id}`,
       true
     );
 
-    // Refresh products after stock reduction
+
+    // Refresh products
     await loadProducts();
+
 
     setTimeout(() => {
 
@@ -966,18 +1846,23 @@ async function submitOrder(event) {
 
     }, 1800);
 
+
   } catch (error) {
 
     console.error(error);
+
 
     showOrderMessage(
       "অর্ডার করার সময় একটি সমস্যা হয়েছে।",
       false
     );
 
+
   } finally {
 
-    submitButton.disabled = false;
+    submitButton.disabled =
+      false;
+
 
     submitButton.textContent =
       originalText;
@@ -991,20 +1876,36 @@ async function submitOrder(event) {
 // ORDER MESSAGE
 // ===============================
 
-function showOrderMessage(message, success) {
+function showOrderMessage(
+  message,
+  success
+) {
 
   const box =
     $("orderMessage");
 
-  box.style.display = "block";
 
-  box.textContent = message;
+  if (!box) return;
+
+
+  box.style.display =
+    "block";
+
+
+  box.textContent =
+    message;
+
 
   box.style.background =
-    success ? "#e8f5e9" : "#ffebee";
+    success
+      ? "#e8f5e9"
+      : "#ffebee";
+
 
   box.style.color =
-    success ? "#2e7d32" : "#c62828";
+    success
+      ? "#2e7d32"
+      : "#c62828";
 
 }
 
@@ -1017,20 +1918,131 @@ function resetOrderForm() {
 
   $("orderForm")?.reset();
 
-  $("quantity").value = 1;
 
-  selectedProduct = null;
-  selectedVariant = null;
-  selectedSize = null;
+  $("quantity").value =
+    1;
 
-  $("variantArea").innerHTML = "";
-  $("sizeArea").innerHTML = "";
 
-  $("displayProductName").textContent = "-";
-  $("displayVariantName").textContent = "-";
-  $("displaySizeName").textContent = "-";
-  $("displayUnitPrice").textContent = "৳0";
-  $("orderTotal").textContent = "৳0";
+  selectedProduct =
+    null;
+
+
+  selectedVariant =
+    null;
+
+
+  selectedSize =
+    null;
+
+
+  if ($("variantArea")) {
+
+    $("variantArea").innerHTML =
+      "";
+
+  }
+
+
+  if ($("sizeArea")) {
+
+    $("sizeArea").innerHTML =
+      "";
+
+  }
+
+
+  if ($("paymentDetails")) {
+
+    $("paymentDetails")
+      .classList
+      .remove("active");
+
+  }
+
+
+  if ($("paymentAccount")) {
+
+    $("paymentAccount").required =
+      false;
+
+    $("paymentAccount").value =
+      "";
+
+  }
+
+
+  if ($("transactionId")) {
+
+    $("transactionId").required =
+      false;
+
+    $("transactionId").value =
+      "";
+
+  }
+
+
+  if ($("paymentWarning")) {
+
+    $("paymentWarning")
+      .classList
+      .remove("active");
+
+  }
+
+
+  if ($("paymentMethodList")) {
+
+    $("paymentMethodList").style.display =
+      "";
+
+  }
+
+
+  if ($("placeOrderButton")) {
+
+    $("placeOrderButton").disabled =
+      false;
+
+  }
+
+
+  $("displayProductName").textContent =
+    "-";
+
+
+  $("displayVariantName").textContent =
+    "-";
+
+
+  $("displaySizeName").textContent =
+    "-";
+
+
+  $("displayUnitPrice").textContent =
+    "৳0";
+
+
+  $("orderTotal").textContent =
+    "৳0";
+
+
+  const modalImage =
+    document.querySelector(
+      "#selectedVariantImage"
+    );
+
+
+  if (modalImage) {
+
+    modalImage.removeAttribute(
+      "src"
+    );
+
+    modalImage.style.display =
+      "none";
+
+  }
 
 }
 
@@ -1042,30 +2054,48 @@ function resetOrderForm() {
 function performSearch() {
 
   const query =
-    $("searchInput").value
+    $("searchInput")
+      .value
       .trim()
       .toLowerCase();
+
 
   if (!query) {
 
     filteredProducts =
       [...allProducts];
 
-    $("searchResultInfo").textContent = "";
+
+    if ($("searchResultInfo")) {
+
+      $("searchResultInfo")
+        .textContent =
+        "";
+
+    }
+
 
     renderProducts();
 
     return;
+
   }
+
 
   filteredProducts =
     allProducts.filter(product => {
 
       const name =
-        (product.name || "").toLowerCase();
+        (
+          product.name || ""
+        ).toLowerCase();
+
 
       const description =
-        (product.description || "").toLowerCase();
+        (
+          product.description || ""
+        ).toLowerCase();
+
 
       return (
         name.includes(query) ||
@@ -1074,8 +2104,15 @@ function performSearch() {
 
     });
 
-  $("searchResultInfo").textContent =
-    `${filteredProducts.length} টি পণ্য পাওয়া গেছে`;
+
+  if ($("searchResultInfo")) {
+
+    $("searchResultInfo")
+      .textContent =
+      `${filteredProducts.length} টি পণ্য পাওয়া গেছে`;
+
+  }
+
 
   renderProducts();
 
@@ -1091,15 +2128,23 @@ function showNoProducts(message) {
   const box =
     $("noProducts");
 
+
   if (!box) return;
 
-  box.style.display = "block";
+
+  box.style.display =
+    "block";
+
 
   const text =
     box.querySelector("p");
 
+
   if (text) {
-    text.textContent = message;
+
+    text.textContent =
+      message;
+
   }
 
 }
@@ -1113,6 +2158,7 @@ function formatMoney(value) {
 
   const number =
     Number(value || 0);
+
 
   return number.toLocaleString(
     "en-BD",
@@ -1131,11 +2177,26 @@ function formatMoney(value) {
 function escapeHTML(value) {
 
   return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
 
@@ -1143,8 +2204,14 @@ function escapeHTML(value) {
 function escapeAttribute(value) {
 
   return String(value ?? "")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
 
@@ -1156,11 +2223,14 @@ function escapeAttribute(value) {
 window.openProductOrder =
   openProductOrder;
 
+
 window.selectVariant =
   selectVariant;
 
+
 window.selectSize =
   selectSize;
+
 
 window.closeOrderModal =
   closeOrderModal;
