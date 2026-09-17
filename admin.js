@@ -1,7 +1,7 @@
 /* =========================================================
    MY SHOP ADMIN PANEL
    Login + Dashboard + Add Product + Edit Product
-   + Stock Update + Orders
+   + Stock Update + Orders + Order Filters
    ========================================================= */
 
 const sb = window.supabase.createClient(
@@ -64,12 +64,23 @@ let existingMainImageUrl = "";
 let currentProducts = [];
 let currentOrders = [];
 
+/*
+ * Current Order Filter
+ *
+ * Possible values:
+ * all
+ * pending
+ * completed
+ */
+let currentOrderFilter = "all";
+
 
 /* =========================================================
    HELPERS
    ========================================================= */
 
 function escapeHTML(value) {
+
     return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -80,7 +91,9 @@ function escapeHTML(value) {
 
 
 function money(value) {
-    return Number(value || 0).toLocaleString("en-BD");
+
+    return Number(value || 0)
+        .toLocaleString("en-BD");
 }
 
 
@@ -95,6 +108,24 @@ function formatDate(value) {
         hour: "numeric",
         minute: "2-digit"
     });
+}
+
+
+/*
+ * Order status normalize করার helper
+ *
+ * যেমন:
+ * "Pending"
+ * " pending "
+ * "PENDING"
+ *
+ * সবকিছুকে "pending" বানাবে।
+ */
+function normalizeOrderStatus(status) {
+
+    return String(status || "")
+        .trim()
+        .toLowerCase();
 }
 
 
@@ -2082,11 +2113,54 @@ function renderOrders() {
     if (!adminOrdersList) return;
 
 
-    if (!currentOrders.length) {
+    /*
+     * IMPORTANT:
+     * এখানে currentOrderFilter অনুযায়ী
+     * orders filter করা হচ্ছে।
+     */
+
+    const filteredOrders =
+        currentOrderFilter === "all"
+            ? currentOrders
+            : currentOrders.filter(
+                order =>
+                    normalizeOrderStatus(
+                        order.status
+                    ) === currentOrderFilter
+            );
+
+
+    /* =========================================
+       EMPTY FILTER RESULT
+       ========================================= */
+
+    if (!filteredOrders.length) {
+
+        let message =
+            "কোনো Order নেই।";
+
+
+        if (
+            currentOrderFilter ===
+            "pending"
+        ) {
+
+            message =
+                "কোনো Pending Order নেই।";
+
+        } else if (
+            currentOrderFilter ===
+            "completed"
+        ) {
+
+            message =
+                "কোনো Completed Order নেই.";
+        }
+
 
         adminOrdersList.innerHTML = `
             <div class="admin-empty">
-                কোনো Order নেই।
+                ${message}
             </div>
         `;
 
@@ -2094,13 +2168,22 @@ function renderOrders() {
     }
 
 
+    /* =========================================
+       RENDER FILTERED ORDERS
+       ========================================= */
+
     adminOrdersList.innerHTML =
-        currentOrders
+        filteredOrders
             .map(order => {
 
+                const status =
+                    normalizeOrderStatus(
+                        order.status
+                    );
+
+
                 const completed =
-                    order.status ===
-                    "completed";
+                    status === "completed";
 
 
                 return `
@@ -2246,6 +2329,91 @@ function renderOrders() {
 
 
 /* =========================================================
+   ORDER FILTERS
+   ========================================================= */
+
+function setupOrderFilters() {
+
+    const filterButtons =
+        document.querySelectorAll(
+            ".order-filter-btn"
+        );
+
+
+    if (!filterButtons.length) {
+        return;
+    }
+
+
+    filterButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                /*
+                 * data-order-filter থেকে
+                 * filter value নেওয়া হচ্ছে।
+                 */
+
+                currentOrderFilter =
+                    String(
+                        button.dataset.orderFilter ||
+                        "all"
+                    )
+                        .trim()
+                        .toLowerCase();
+
+
+                /*
+                 * শুধু valid filter রাখছি।
+                 */
+
+                if (
+                    ![
+                        "all",
+                        "pending",
+                        "completed"
+                    ].includes(
+                        currentOrderFilter
+                    )
+                ) {
+
+                    currentOrderFilter =
+                        "all";
+                }
+
+
+                /*
+                 * Active button update
+                 */
+
+                filterButtons.forEach(
+                    btn => {
+
+                        btn.classList.toggle(
+                            "active",
+                            btn === button
+                        );
+
+                    }
+                );
+
+
+                /*
+                 * নতুন filter অনুযায়ী
+                 * orders render
+                 */
+
+                renderOrders();
+            }
+        );
+
+    });
+}
+
+
+/* =========================================================
    COMPLETE ORDER
    ========================================================= */
 
@@ -2283,6 +2451,14 @@ async function completeOrder(orderId) {
         return;
     }
 
+
+    /*
+     * loadOrders() করার পর
+     * currentOrderFilter বজায় থাকবে।
+     *
+     * তাই Pending filter চালু থাকলে
+     * completed order সেখান থেকে চলে যাবে।
+     */
 
     await loadOrders();
 
@@ -2387,8 +2563,9 @@ async function loadStats() {
             (orders || [])
                 .filter(
                     o =>
-                        o.status ===
-                        "pending"
+                        normalizeOrderStatus(
+                            o.status
+                        ) === "pending"
                 )
                 .length;
 
@@ -2397,8 +2574,9 @@ async function loadStats() {
             (orders || [])
                 .filter(
                     o =>
-                        o.status ===
-                        "completed"
+                        normalizeOrderStatus(
+                            o.status
+                        ) === "completed"
                 )
                 .length;
 
@@ -2508,6 +2686,13 @@ document.querySelectorAll(
         }
     );
 });
+
+
+/* =========================================================
+   ORDER FILTER BUTTONS
+   ========================================================= */
+
+setupOrderFilters();
 
 
 /* =========================================================
