@@ -45,10 +45,13 @@ const saveProductButton = $("saveProductButton");
 const resetProductButton = $("resetProductButton");
 const productFormAlert = $("productFormAlert");
 
-/* Payment Settings */
-const allowCodAdmin = $("allowCodAdmin");
-const allowAdvanceAdmin = $("allowAdvanceAdmin");
-const paymentWarningAdmin = $("paymentWarningAdmin");
+/* Payment Settings
+   Unique variable names are used to avoid conflict
+   with payment variables inside admin.html.
+*/
+const adminAllowCodCheckbox = $("allowCodAdmin");
+const adminAllowAdvanceCheckbox = $("allowAdvanceAdmin");
+const adminPaymentWarning = $("paymentWarningAdmin");
 
 const adminProductsList = $("adminProductsList");
 const adminOrdersList = $("adminOrdersList");
@@ -78,7 +81,6 @@ let currentOrderFilter = "all";
    ========================================================= */
 
 function escapeHTML(value) {
-
     return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -89,14 +91,11 @@ function escapeHTML(value) {
 
 
 function money(value) {
-
-    return Number(value || 0)
-        .toLocaleString("en-BD");
+    return Number(value || 0).toLocaleString("en-BD");
 }
 
 
 function formatDate(value) {
-
     if (!value) return "";
 
     return new Date(value).toLocaleString("en-BD", {
@@ -110,7 +109,6 @@ function formatDate(value) {
 
 
 function normalizeOrderStatus(status) {
-
     return String(status || "")
         .trim()
         .toLowerCase();
@@ -118,27 +116,19 @@ function normalizeOrderStatus(status) {
 
 
 function showAlert(message, type = "info") {
-
     if (!productFormAlert) return;
 
     productFormAlert.textContent = message;
-
-    productFormAlert.className =
-        "admin-alert " + type;
-
+    productFormAlert.className = "admin-alert " + type;
     productFormAlert.style.display = "block";
 }
 
 
 function clearAlert() {
-
     if (!productFormAlert) return;
 
     productFormAlert.textContent = "";
-
-    productFormAlert.className =
-        "admin-alert";
-
+    productFormAlert.className = "admin-alert";
     productFormAlert.style.display = "none";
 }
 
@@ -147,47 +137,35 @@ function clearAlert() {
    PAYMENT SETTINGS
    ========================================================= */
 
-function checkPaymentMethods() {
+function checkPaymentMethodsAdmin() {
 
     const codEnabled =
-        !!allowCodAdmin?.checked;
+        !!adminAllowCodCheckbox?.checked;
 
     const advanceEnabled =
-        !!allowAdvanceAdmin?.checked;
+        !!adminAllowAdvanceCheckbox?.checked;
 
+    if (!adminPaymentWarning) return;
 
-    if (!paymentWarningAdmin) {
-        return;
-    }
-
-
-    if (!codEnabled && !advanceEnabled) {
-
-        paymentWarningAdmin.style.display =
-            "block";
-
-    } else {
-
-        paymentWarningAdmin.style.display =
-            "none";
-    }
+    adminPaymentWarning.style.display =
+        (!codEnabled && !advanceEnabled)
+            ? "block"
+            : "none";
 }
 
 
-if (allowCodAdmin) {
-
-    allowCodAdmin.addEventListener(
+if (adminAllowCodCheckbox) {
+    adminAllowCodCheckbox.addEventListener(
         "change",
-        checkPaymentMethods
+        checkPaymentMethodsAdmin
     );
 }
 
 
-if (allowAdvanceAdmin) {
-
-    allowAdvanceAdmin.addEventListener(
+if (adminAllowAdvanceCheckbox) {
+    adminAllowAdvanceCheckbox.addEventListener(
         "change",
-        checkPaymentMethods
+        checkPaymentMethodsAdmin
     );
 }
 
@@ -219,7 +197,6 @@ function showDashboard() {
     }
 
     if (adminUserEmail && currentUser) {
-
         adminUserEmail.textContent =
             currentUser.email || "";
     }
@@ -232,10 +209,7 @@ function showDashboard() {
 
 async function verifyAdmin(user) {
 
-    if (!user) {
-        return false;
-    }
-
+    if (!user) return false;
 
     const {
         data,
@@ -246,17 +220,13 @@ async function verifyAdmin(user) {
         .eq("user_id", user.id)
         .maybeSingle();
 
-
     if (error) {
-
         console.error(
             "Admin verification error:",
             error
         );
-
         return false;
     }
-
 
     return !!data;
 }
@@ -270,7 +240,6 @@ async function checkInitialSession() {
 
     showLogin();
 
-
     try {
 
         const {
@@ -278,56 +247,36 @@ async function checkInitialSession() {
             error
         } = await sb.auth.getSession();
 
+        if (error) throw error;
 
-        if (error) {
-            throw error;
-        }
-
-
-        const session =
-            data?.session;
-
+        const session = data?.session;
 
         if (!session) {
-
             showLogin();
-
             return;
         }
 
-
         const isAdmin =
-            await verifyAdmin(
-                session.user
-            );
-
+            await verifyAdmin(session.user);
 
         if (!isAdmin) {
 
             await sb.auth.signOut();
 
-
             if (loginMessage) {
-
                 loginMessage.textContent =
                     "এই account-এর admin access নেই।";
             }
 
-
             showLogin();
-
             return;
         }
 
-
-        currentUser =
-            session.user;
-
+        currentUser = session.user;
 
         showDashboard();
 
         await loadEverything();
-
 
     } catch (error) {
 
@@ -336,12 +285,9 @@ async function checkInitialSession() {
             error
         );
 
-
         showLogin();
 
-
         if (loginMessage) {
-
             loginMessage.textContent =
                 error.message ||
                 "Session load করতে সমস্যা হয়েছে।";
@@ -358,32 +304,22 @@ async function handleLogin(event) {
 
     event.preventDefault();
 
-
-    if (!loginButton) {
-        return;
-    }
-
+    if (!loginButton) return;
 
     loginButton.disabled = true;
-
-    loginButton.textContent =
-        "Logging in...";
-
+    loginButton.textContent = "Logging in...";
 
     if (loginMessage) {
         loginMessage.textContent = "";
     }
-
 
     try {
 
         const email =
             loginEmail.value.trim();
 
-
         const password =
             loginPassword.value;
-
 
         const {
             data,
@@ -393,47 +329,33 @@ async function handleLogin(event) {
             password
         });
 
-
-        if (error) {
-            throw error;
-        }
-
+        if (error) throw error;
 
         if (!data?.user) {
-
             throw new Error(
                 "Login user পাওয়া যায়নি।"
             );
         }
 
-
-        const user =
-            data.user;
-
+        const user = data.user;
 
         const isAdmin =
             await verifyAdmin(user);
 
-
         if (!isAdmin) {
 
             await sb.auth.signOut();
-
 
             throw new Error(
                 "Login হয়েছে, কিন্তু এই account-এর Admin access নেই।"
             );
         }
 
-
-        currentUser =
-            user;
-
+        currentUser = user;
 
         showDashboard();
 
         await loadEverything();
-
 
     } catch (error) {
 
@@ -442,25 +364,18 @@ async function handleLogin(event) {
             error
         );
 
-
         if (loginMessage) {
-
             loginMessage.textContent =
                 error.message ||
                 "Login failed.";
         }
 
-
         showLogin();
-
 
     } finally {
 
-        loginButton.disabled =
-            false;
-
-        loginButton.textContent =
-            "Login";
+        loginButton.disabled = false;
+        loginButton.textContent = "Login";
     }
 }
 
@@ -472,21 +387,15 @@ async function handleLogin(event) {
 async function handleLogout() {
 
     try {
-
         await sb.auth.signOut();
-
     } catch (error) {
-
         console.error(error);
     }
-
 
     currentUser = null;
     editingProductId = null;
 
-
     resetProductForm();
-
     showLogin();
 }
 
@@ -504,19 +413,16 @@ function openSection(sectionName) {
         const active =
             section.id === sectionName;
 
-
         section.classList.toggle(
             "active",
             active
         );
-
 
         section.style.display =
             active
                 ? "block"
                 : "none";
     });
-
 
     document.querySelectorAll(
         ".admin-nav-btn"
@@ -531,7 +437,7 @@ function openSection(sectionName) {
 
 
 /* =========================================================
-   IMAGE PREVIEW
+   MAIN IMAGE PREVIEW
    ========================================================= */
 
 if (mainImageAdmin) {
@@ -543,11 +449,9 @@ if (mainImageAdmin) {
             const file =
                 mainImageAdmin.files?.[0];
 
-
             if (!file) {
 
                 if (mainImagePreview) {
-
                     mainImagePreview.style.display =
                         existingMainImageUrl
                             ? "block"
@@ -557,20 +461,14 @@ if (mainImageAdmin) {
                 return;
             }
 
-
             const url =
                 URL.createObjectURL(file);
 
-
             if (mainImagePreviewImg) {
-
-                mainImagePreviewImg.src =
-                    url;
+                mainImagePreviewImg.src = url;
             }
 
-
             if (mainImagePreview) {
-
                 mainImagePreview.style.display =
                     "block";
             }
@@ -583,20 +481,15 @@ if (mainImageAdmin) {
    VARIANT UI
    ========================================================= */
 
-function createVariantElement(
-    variant = {}
-) {
+function createVariantElement(variant = {}) {
 
     const wrapper =
         document.createElement("div");
 
-
     wrapper.className =
         "admin-variant";
 
-
     wrapper.innerHTML = `
-
         <div class="variant-header">
 
             <div>
@@ -612,15 +505,11 @@ function createVariantElement(
 
         </div>
 
-
         <input
             type="hidden"
             class="variant-id"
-            value="${escapeHTML(
-                variant.id || ""
-            )}"
+            value="${escapeHTML(variant.id || "")}"
         >
-
 
         <div class="admin-form-group">
 
@@ -632,14 +521,11 @@ function createVariantElement(
                 type="text"
                 class="variant-name"
                 placeholder="যেমন: Black / Blue / Red"
-                value="${escapeHTML(
-                    variant.name || ""
-                )}"
+                value="${escapeHTML(variant.name || "")}"
                 required
             >
 
         </div>
-
 
         <div class="admin-form-group">
 
@@ -655,16 +541,13 @@ function createVariantElement(
 
         </div>
 
-
         <div class="variant-existing-image">
 
             ${
                 variant.image_url
                     ? `
                         <img
-                            src="${escapeHTML(
-                                variant.image_url
-                            )}"
+                            src="${escapeHTML(variant.image_url)}"
                             alt=""
                         >
                     `
@@ -673,23 +556,17 @@ function createVariantElement(
 
         </div>
 
-
         <input
             type="hidden"
             class="existing-variant-image-url"
-            value="${escapeHTML(
-                variant.image_url || ""
-            )}"
+            value="${escapeHTML(variant.image_url || "")}"
         >
-
 
         <div class="sizes-title">
             Sizes / Price / Stock
         </div>
 
-
         <div class="variant-sizes"></div>
-
 
         <button
             type="button"
@@ -699,66 +576,52 @@ function createVariantElement(
         </button>
     `;
 
-
     const sizesContainer =
         wrapper.querySelector(
             ".variant-sizes"
         );
-
 
     const addSizeButton =
         wrapper.querySelector(
             ".add-size-button"
         );
 
-
     const removeVariantButton =
         wrapper.querySelector(
             ".remove-variant-button"
         );
 
+    if (Array.isArray(variant.sizes)) {
 
-    if (
-        Array.isArray(
-            variant.sizes
-        )
-    ) {
+        variant.sizes.forEach(size => {
 
-        variant.sizes.forEach(
-            size => {
+            addSizeElement(
+                sizesContainer,
+                size
+            );
 
-                addSizeElement(
-                    sizesContainer,
-                    size
-                );
-            }
-        );
+        });
     }
-
 
     addSizeButton.addEventListener(
         "click",
         () => {
-
             addSizeElement(
                 sizesContainer
             );
         }
     );
 
-
     removeVariantButton.addEventListener(
         "click",
         () => {
-
             wrapper.remove();
         }
     );
 
-
-    variantsContainer.appendChild(
-        wrapper
-    );
+    if (variantsContainer) {
+        variantsContainer.appendChild(wrapper);
+    }
 }
 
 
@@ -774,32 +637,23 @@ function addSizeElement(
     const row =
         document.createElement("div");
 
-
     row.className =
         "admin-size-row";
 
-
     row.innerHTML = `
-
         <input
             type="hidden"
             class="size-id"
-            value="${escapeHTML(
-                size.id || ""
-            )}"
+            value="${escapeHTML(size.id || "")}"
         >
-
 
         <input
             type="text"
             class="size-name"
             placeholder="Size"
-            value="${escapeHTML(
-                size.size || ""
-            )}"
+            value="${escapeHTML(size.size || "")}"
             required
         >
-
 
         <input
             type="number"
@@ -811,7 +665,6 @@ function addSizeElement(
             required
         >
 
-
         <input
             type="number"
             class="size-stock"
@@ -822,7 +675,6 @@ function addSizeElement(
             required
         >
 
-
         <button
             type="button"
             class="remove-size-button"
@@ -832,25 +684,14 @@ function addSizeElement(
         </button>
     `;
 
-
-    const removeButton =
-        row.querySelector(
-            ".remove-size-button"
-        );
-
-
-    removeButton.addEventListener(
+    row.querySelector(
+        ".remove-size-button"
+    ).addEventListener(
         "click",
-        () => {
-
-            row.remove();
-        }
+        () => row.remove()
     );
 
-
-    container.appendChild(
-        row
-    );
+    container.appendChild(row);
 }
 
 
@@ -861,9 +702,7 @@ function addSizeElement(
 function clearVariants() {
 
     if (variantsContainer) {
-
-        variantsContainer.innerHTML =
-            "";
+        variantsContainer.innerHTML = "";
     }
 }
 
@@ -871,11 +710,8 @@ function clearVariants() {
 function addNewVariant() {
 
     createVariantElement({
-
         name: "",
-
         image_url: "",
-
         sizes: [
             {
                 size: "",
@@ -902,10 +738,7 @@ if (addVariantButton) {
 
 async function uploadProductImage(file) {
 
-    if (!file) {
-        return null;
-    }
-
+    if (!file) return null;
 
     const extension =
         file.name
@@ -913,10 +746,8 @@ async function uploadProductImage(file) {
             .pop()
             .toLowerCase();
 
-
     const filename =
         `products/${Date.now()}-${crypto.randomUUID()}.${extension}`;
-
 
     const {
         error
@@ -931,20 +762,13 @@ async function uploadProductImage(file) {
             }
         );
 
-
-    if (error) {
-        throw error;
-    }
-
+    if (error) throw error;
 
     const {
         data
     } = sb.storage
         .from("product-images")
-        .getPublicUrl(
-            filename
-        );
-
+        .getPublicUrl(filename);
 
     return data.publicUrl;
 }
@@ -952,10 +776,7 @@ async function uploadProductImage(file) {
 
 async function uploadVariantImage(file) {
 
-    if (!file) {
-        return null;
-    }
-
+    if (!file) return null;
 
     const extension =
         file.name
@@ -963,10 +784,8 @@ async function uploadVariantImage(file) {
             .pop()
             .toLowerCase();
 
-
     const filename =
         `variants/${Date.now()}-${crypto.randomUUID()}.${extension}`;
-
 
     const {
         error
@@ -981,20 +800,13 @@ async function uploadVariantImage(file) {
             }
         );
 
-
-    if (error) {
-        throw error;
-    }
-
+    if (error) throw error;
 
     const {
         data
     } = sb.storage
         .from("product-images")
-        .getPublicUrl(
-            filename
-        );
-
+        .getPublicUrl(filename);
 
     return data.publicUrl;
 }
@@ -1009,34 +821,29 @@ function collectProductForm() {
     const name =
         productNameAdmin.value.trim();
 
-
     const basePrice =
-        Number(
-            basePriceAdmin.value || 0
-        );
-
+        Number(basePriceAdmin.value || 0);
 
     const description =
         descriptionAdmin.value.trim();
 
-
     if (!name) {
-
         throw new Error(
             "Product name দিন।"
         );
     }
 
-
-    /* Payment Settings */
-
     const allowCod =
-        !!allowCodAdmin?.checked;
-
+        !!adminAllowCodCheckbox?.checked;
 
     const allowAdvance =
-        !!allowAdvanceAdmin?.checked;
+        !!adminAllowAdvanceCheckbox?.checked;
 
+    if (!allowCod && !allowAdvance) {
+        throw new Error(
+            "কমপক্ষে একটি payment method ON করুন।"
+        );
+    }
 
     const variantElements =
         [
@@ -1045,17 +852,13 @@ function collectProductForm() {
             )
         ];
 
-
     if (!variantElements.length) {
-
         throw new Error(
             "কমপক্ষে একটি variant যোগ করুন।"
         );
     }
 
-
     const variants = [];
-
 
     variantElements.forEach(
         (variantEl, index) => {
@@ -1065,32 +868,26 @@ function collectProductForm() {
                     ".variant-id"
                 )?.value || "";
 
-
             const variantName =
                 variantEl.querySelector(
                     ".variant-name"
                 )?.value.trim();
-
 
             const existingImage =
                 variantEl.querySelector(
                     ".existing-variant-image-url"
                 )?.value || "";
 
-
             const imageFile =
                 variantEl.querySelector(
                     ".variant-image"
                 )?.files?.[0] || null;
 
-
             if (!variantName) {
-
                 throw new Error(
                     `Variant ${index + 1}-এর নাম দিন।`
                 );
             }
-
 
             const sizeElements =
                 [
@@ -1099,17 +896,13 @@ function collectProductForm() {
                     )
                 ];
 
-
             if (!sizeElements.length) {
-
                 throw new Error(
                     `"${variantName}" variant-এর অন্তত একটি size দিন।`
                 );
             }
 
-
             const sizes = [];
-
 
             sizeElements.forEach(
                 (sizeEl, sizeIndex) => {
@@ -1119,12 +912,10 @@ function collectProductForm() {
                             ".size-id"
                         )?.value || "";
 
-
                     const sizeName =
                         sizeEl.querySelector(
                             ".size-name"
                         )?.value.trim();
-
 
                     const price =
                         Number(
@@ -1133,7 +924,6 @@ function collectProductForm() {
                             )?.value || 0
                         );
 
-
                     const stock =
                         Number(
                             sizeEl.querySelector(
@@ -1141,81 +931,50 @@ function collectProductForm() {
                             )?.value || 0
                         );
 
-
                     if (!sizeName) {
-
                         throw new Error(
                             `"${variantName}" এর Size ${sizeIndex + 1}-এর নাম দিন।`
                         );
                     }
 
-
                     if (price < 0) {
-
                         throw new Error(
                             `"${sizeName}" এর price সঠিক নয়।`
                         );
                     }
 
-
                     if (stock < 0) {
-
                         throw new Error(
                             `"${sizeName}" এর stock সঠিক নয়।`
                         );
                     }
 
-
                     sizes.push({
-
-                        id:
-                            sizeId || null,
-
-                        size:
-                            sizeName,
-
+                        id: sizeId || null,
+                        size: sizeName,
                         price,
-
                         stock,
-
-                        active:
-                            true
+                        active: true
                     });
                 }
             );
 
-
             variants.push({
-
-                id:
-                    id || null,
-
-                name:
-                    variantName,
-
+                id: id || null,
+                name: variantName,
                 imageFile,
-
-                image_url:
-                    existingImage,
-
+                image_url: existingImage,
                 sizes
             });
         }
     );
 
-
     return {
-
         name,
-
         basePrice,
-
         description,
-
         allowCod,
-
         allowAdvance,
-
         variants
     };
 }
@@ -1229,7 +988,6 @@ async function saveProduct(event) {
 
     event.preventDefault();
 
-
     if (!currentUser) {
 
         showAlert(
@@ -1240,58 +998,28 @@ async function saveProduct(event) {
         return;
     }
 
-
     clearAlert();
 
-
-    saveProductButton.disabled =
-        true;
-
+    saveProductButton.disabled = true;
 
     const isEditing =
         !!editingProductId;
-
 
     saveProductButton.textContent =
         isEditing
             ? "Updating..."
             : "Saving...";
 
-
     try {
 
         const product =
             collectProductForm();
 
-
-        /*
-         * কমপক্ষে একটি payment method
-         * অবশ্যই ON থাকতে হবে।
-         */
-
-        if (
-            !product.allowCod &&
-            !product.allowAdvance
-        ) {
-
-            throw new Error(
-                "কমপক্ষে একটি payment method ON করুন।"
-            );
-        }
-
-
-        /* =========================================
-           MAIN IMAGE
-           ========================================= */
-
         let mainImageUrl =
-            existingMainImageUrl ||
-            null;
-
+            existingMainImageUrl || null;
 
         const mainImageFile =
             mainImageAdmin?.files?.[0];
-
 
         if (mainImageFile) {
 
@@ -1302,9 +1030,9 @@ async function saveProduct(event) {
         }
 
 
-        /* =========================================
+        /* =====================================================
            EDIT PRODUCT
-           ========================================= */
+           ===================================================== */
 
         if (editingProductId) {
 
@@ -1331,21 +1059,19 @@ async function saveProduct(event) {
 
                     allow_advance:
                         product.allowAdvance
+
                 })
                 .eq(
                     "id",
                     editingProductId
                 );
 
-
             if (productError) {
                 throw productError;
             }
 
 
-            /* =====================================
-               VARIANTS
-               ===================================== */
+            /* VARIANTS */
 
             for (
                 const variant
@@ -1361,9 +1087,7 @@ async function saveProduct(event) {
                 if (!variantId) {
 
                     let variantImageUrl =
-                        variant.image_url ||
-                        null;
-
+                        variant.image_url || null;
 
                     if (variant.imageFile) {
 
@@ -1372,7 +1096,6 @@ async function saveProduct(event) {
                                 variant.imageFile
                             );
                     }
-
 
                     const {
                         data,
@@ -1394,29 +1117,26 @@ async function saveProduct(event) {
 
                             active:
                                 true
+
                         })
                         .select("id")
                         .single();
 
-
                     if (error) {
                         throw error;
                     }
-
 
                     variantId =
                         data.id;
                 }
 
 
-                /* UPDATE EXISTING VARIANT */
+                /* EXISTING VARIANT */
 
                 else {
 
                     let variantImageUrl =
-                        variant.image_url ||
-                        null;
-
+                        variant.image_url || null;
 
                     if (variant.imageFile) {
 
@@ -1425,7 +1145,6 @@ async function saveProduct(event) {
                                 variant.imageFile
                             );
                     }
-
 
                     const {
                         error
@@ -1443,12 +1162,12 @@ async function saveProduct(event) {
 
                             active:
                                 true
+
                         })
                         .eq(
                             "id",
                             variantId
                         );
-
 
                     if (error) {
                         throw error;
@@ -1456,16 +1175,12 @@ async function saveProduct(event) {
                 }
 
 
-                /* =================================
-                   SIZES / STOCK
-                   ================================= */
+                /* SIZES */
 
                 for (
                     const size
                     of variant.sizes
                 ) {
-
-                    /* EXISTING SIZE */
 
                     if (size.id) {
 
@@ -1488,6 +1203,7 @@ async function saveProduct(event) {
 
                                 active:
                                     true
+
                             })
                             .eq(
                                 "id",
@@ -1498,17 +1214,11 @@ async function saveProduct(event) {
                                 variantId
                             );
 
-
                         if (error) {
                             throw error;
                         }
 
-                    }
-
-
-                    /* NEW SIZE */
-
-                    else {
+                    } else {
 
                         const {
                             error
@@ -1532,8 +1242,8 @@ async function saveProduct(event) {
 
                                 active:
                                     true
-                            });
 
+                            });
 
                         if (error) {
                             throw error;
@@ -1550,9 +1260,9 @@ async function saveProduct(event) {
         }
 
 
-        /* =========================================
+        /* =====================================================
            ADD NEW PRODUCT
-           ========================================= */
+           ===================================================== */
 
         else {
 
@@ -1583,19 +1293,20 @@ async function saveProduct(event) {
 
                     active:
                         true
+
                 })
                 .select("id")
                 .single();
-
 
             if (productError) {
                 throw productError;
             }
 
-
             const productId =
                 productData.id;
 
+
+            /* VARIANTS */
 
             for (
                 const variant
@@ -1603,9 +1314,7 @@ async function saveProduct(event) {
             ) {
 
                 let variantImageUrl =
-                    variant.image_url ||
-                    null;
-
+                    variant.image_url || null;
 
                 if (variant.imageFile) {
 
@@ -1614,7 +1323,6 @@ async function saveProduct(event) {
                             variant.imageFile
                         );
                 }
-
 
                 const {
                     data: variantData,
@@ -1636,15 +1344,17 @@ async function saveProduct(event) {
 
                         active:
                             true
+
                     })
                     .select("id")
                     .single();
-
 
                 if (variantError) {
                     throw variantError;
                 }
 
+
+                /* SIZES */
 
                 for (
                     const size
@@ -1673,8 +1383,8 @@ async function saveProduct(event) {
 
                             active:
                                 true
-                        });
 
+                        });
 
                     if (sizeError) {
                         throw sizeError;
@@ -1690,22 +1400,16 @@ async function saveProduct(event) {
         }
 
 
-        /*
-         * Save successful
-         */
+        /* SUCCESS */
 
         resetProductForm();
 
-
         await loadProducts();
-
         await loadStats();
-
 
         openSection(
             "productsSectionAdmin"
         );
-
 
     } catch (error) {
 
@@ -1714,24 +1418,19 @@ async function saveProduct(event) {
             error
         );
 
-
         showAlert(
             error.message ||
             "Product save করতে সমস্যা হয়েছে।",
             "error"
         );
 
-
     } finally {
 
         saveProductButton.disabled =
             false;
 
-
         saveProductButton.textContent =
-            productForm?.dataset.mode === "edit"
-                ? "Update Product"
-                : "Save Product";
+            "Save Product";
     }
 }
 
@@ -1743,9 +1442,7 @@ async function saveProduct(event) {
 function resetProductForm() {
 
     editingProductId = null;
-
     existingMainImageUrl = "";
-
 
     if (productForm) {
 
@@ -1755,65 +1452,40 @@ function resetProductForm() {
             "add";
     }
 
-
-    /*
-     * নতুন product-এ main image required
-     */
-
     if (mainImageAdmin) {
-
-        mainImageAdmin.required =
-            true;
+        mainImageAdmin.required = true;
     }
 
-
     if (mainImagePreview) {
-
         mainImagePreview.style.display =
             "none";
     }
 
-
     if (mainImagePreviewImg) {
-
-        mainImagePreviewImg.src =
-            "";
+        mainImagePreviewImg.src = "";
     }
 
 
-    /*
-     * Default payment:
-     *
-     * COD ON
-     * Advance OFF
-     */
+    /* DEFAULT PAYMENT */
 
-    if (allowCodAdmin) {
-
-        allowCodAdmin.checked =
+    if (adminAllowCodCheckbox) {
+        adminAllowCodCheckbox.checked =
             true;
     }
 
-
-    if (allowAdvanceAdmin) {
-
-        allowAdvanceAdmin.checked =
+    if (adminAllowAdvanceCheckbox) {
+        adminAllowAdvanceCheckbox.checked =
             false;
     }
 
-
-    checkPaymentMethods();
+    checkPaymentMethodsAdmin();
 
 
     clearVariants();
 
-
     createVariantElement({
-
         name: "",
-
         image_url: "",
-
         sizes: [
             {
                 size: "",
@@ -1823,13 +1495,10 @@ function resetProductForm() {
         ]
     });
 
-
     if (saveProductButton) {
-
         saveProductButton.textContent =
             "Save Product";
     }
-
 
     clearAlert();
 }
@@ -1855,7 +1524,6 @@ async function editProduct(productId) {
         openSection(
             "addProductSection"
         );
-
 
         showAlert(
             "Product information loading...",
@@ -1897,7 +1565,6 @@ async function editProduct(productId) {
             )
             .single();
 
-
         if (error) {
             throw error;
         }
@@ -1906,57 +1573,43 @@ async function editProduct(productId) {
         editingProductId =
             data.id;
 
-
         existingMainImageUrl =
-            data.main_image_url ||
-            "";
+            data.main_image_url || "";
 
 
         if (mainImageAdmin) {
-
-            mainImageAdmin.required =
-                false;
+            mainImageAdmin.required = false;
         }
 
 
         productNameAdmin.value =
             data.name || "";
 
-
         basePriceAdmin.value =
             data.base_price ?? "";
-
 
         descriptionAdmin.value =
             data.description || "";
 
 
-        /*
-         * Payment settings
-         */
+        /* PAYMENT SETTINGS */
 
-        if (allowCodAdmin) {
+        if (adminAllowCodCheckbox) {
 
-            allowCodAdmin.checked =
-                data.allow_cod ??
-                true;
+            adminAllowCodCheckbox.checked =
+                data.allow_cod !== false;
         }
 
+        if (adminAllowAdvanceCheckbox) {
 
-        if (allowAdvanceAdmin) {
-
-            allowAdvanceAdmin.checked =
-                data.allow_advance ??
-                false;
+            adminAllowAdvanceCheckbox.checked =
+                data.allow_advance === true;
         }
 
+        checkPaymentMethodsAdmin();
 
-        checkPaymentMethods();
 
-
-        /*
-         * Main image
-         */
+        /* MAIN IMAGE */
 
         if (
             mainImagePreviewImg &&
@@ -1967,7 +1620,6 @@ async function editProduct(productId) {
                 data.main_image_url;
         }
 
-
         if (mainImagePreview) {
 
             mainImagePreview.style.display =
@@ -1977,17 +1629,12 @@ async function editProduct(productId) {
         }
 
 
-        /*
-         * Variants
-         */
+        /* VARIANTS */
 
         clearVariants();
 
-
         const variants =
-            data.product_variants ||
-            [];
-
+            data.product_variants || [];
 
         variants.forEach(
             variant => {
@@ -2004,16 +1651,12 @@ async function editProduct(productId) {
                         variant.image_url,
 
                     sizes:
-                        variant.variant_sizes ||
-                        []
+                        variant.variant_sizes || []
+
                 });
             }
         );
 
-
-        /*
-         * No variant হলে default
-         */
 
         if (!variants.length) {
 
@@ -2027,11 +1670,11 @@ async function editProduct(productId) {
                     {
                         size: "",
                         price:
-                            data.base_price ||
-                            0,
+                            data.base_price || 0,
                         stock: 0
                     }
                 ]
+
             });
         }
 
@@ -2042,24 +1685,18 @@ async function editProduct(productId) {
                 "Update Product";
         }
 
-
         if (productForm) {
 
             productForm.dataset.mode =
                 "edit";
         }
 
-
         clearAlert();
 
-
         window.scrollTo({
-
             top: 0,
-
             behavior: "smooth"
         });
-
 
     } catch (error) {
 
@@ -2067,7 +1704,6 @@ async function editProduct(productId) {
             "Edit product error:",
             error
         );
-
 
         showAlert(
             error.message ||
@@ -2077,10 +1713,6 @@ async function editProduct(productId) {
     }
 }
 
-
-/*
- * HTML onclick থেকে access
- */
 
 window.editProduct =
     editProduct;
@@ -2092,10 +1724,7 @@ window.editProduct =
 
 async function loadProducts() {
 
-    if (!adminProductsList) {
-        return;
-    }
-
+    if (!adminProductsList) return;
 
     adminProductsList.innerHTML = `
         <div class="admin-loading">
@@ -2148,15 +1777,11 @@ async function loadProducts() {
             error
         );
 
-
         adminProductsList.innerHTML = `
             <div class="admin-empty">
-                ${escapeHTML(
-                    error.message
-                )}
+                ${escapeHTML(error.message)}
             </div>
         `;
-
 
         return;
     }
@@ -2164,7 +1789,6 @@ async function loadProducts() {
 
     currentProducts =
         data || [];
-
 
     renderProducts();
 }
@@ -2176,9 +1800,7 @@ async function loadProducts() {
 
 function renderProducts() {
 
-    if (!adminProductsList) {
-        return;
-    }
+    if (!adminProductsList) return;
 
 
     if (!currentProducts.length) {
@@ -2188,7 +1810,6 @@ function renderProducts() {
                 কোনো Product নেই।
             </div>
         `;
-
 
         return;
     }
@@ -2203,34 +1824,24 @@ function renderProducts() {
 
 
                 (
-                    product.product_variants ||
-                    []
-                ).forEach(
-                    variant => {
+                    product.product_variants || []
+                ).forEach(variant => {
 
-                        (
-                            variant.variant_sizes ||
-                            []
-                        ).forEach(
-                            size => {
+                    (
+                        variant.variant_sizes || []
+                    ).forEach(size => {
 
-                                if (
-                                    size.active !==
-                                    false
-                                ) {
+                        if (size.active !== false) {
 
-                                    totalStock +=
-                                        Number(
-                                            size.stock ||
-                                            0
-                                        );
+                            totalStock +=
+                                Number(
+                                    size.stock || 0
+                                );
 
-                                    totalSizes++;
-                                }
-                            }
-                        );
-                    }
-                );
+                            totalSizes++;
+                        }
+                    });
+                });
 
 
                 const status =
@@ -2240,13 +1851,10 @@ function renderProducts() {
 
 
                 const codEnabled =
-                    product.allow_cod ??
-                    true;
-
+                    product.allow_cod !== false;
 
                 const advanceEnabled =
-                    product.allow_advance ??
-                    false;
+                    product.allow_advance === true;
 
 
                 let paymentText =
@@ -2366,7 +1974,6 @@ function renderProducts() {
 
                     </div>
                 `;
-
             })
             .join("");
 }
@@ -2378,10 +1985,7 @@ function renderProducts() {
 
 async function loadOrders() {
 
-    if (!adminOrdersList) {
-        return;
-    }
-
+    if (!adminOrdersList) return;
 
     adminOrdersList.innerHTML = `
         <div class="admin-loading">
@@ -2411,15 +2015,11 @@ async function loadOrders() {
             error
         );
 
-
         adminOrdersList.innerHTML = `
             <div class="admin-empty">
-                ${escapeHTML(
-                    error.message
-                )}
+                ${escapeHTML(error.message)}
             </div>
         `;
-
 
         return;
     }
@@ -2427,7 +2027,6 @@ async function loadOrders() {
 
     currentOrders =
         data || [];
-
 
     renderOrders();
 }
@@ -2437,9 +2036,7 @@ async function loadOrders() {
    PAYMENT LABEL
    ========================================================= */
 
-function getPaymentMethodLabel(
-    paymentMethod
-) {
+function getPaymentMethodLabel(paymentMethod) {
 
     const method =
         String(
@@ -2450,28 +2047,20 @@ function getPaymentMethodLabel(
 
 
     if (method === "cod") {
-
         return "Cash on Delivery";
     }
 
-
     if (method === "bkash") {
-
         return "bKash Send Money";
     }
 
-
     if (method === "nagad") {
-
         return "Nagad Send Money";
     }
 
-
     if (!method) {
-
         return "Not specified";
     }
-
 
     return paymentMethod;
 }
@@ -2483,9 +2072,7 @@ function getPaymentMethodLabel(
 
 function renderOrders() {
 
-    if (!adminOrdersList) {
-        return;
-    }
+    if (!adminOrdersList) return;
 
 
     const filteredOrders =
@@ -2505,22 +2092,14 @@ function renderOrders() {
         let message =
             "কোনো Order নেই।";
 
-
-        if (
-            currentOrderFilter ===
-            "pending"
-        ) {
-
+        if (currentOrderFilter === "pending") {
             message =
-                "কোনো Pending Order নেই.";
+                "কোনো Pending Order নেই।";
+        }
 
-        } else if (
-            currentOrderFilter ===
-            "completed"
-        ) {
-
+        if (currentOrderFilter === "completed") {
             message =
-                "কোনো Completed Order নেই.";
+                "কোনো Completed Order নেই।";
         }
 
 
@@ -2529,7 +2108,6 @@ function renderOrders() {
                 ${message}
             </div>
         `;
-
 
         return;
     }
@@ -2544,10 +2122,8 @@ function renderOrders() {
                         order.status
                     );
 
-
                 const completed =
-                    status ===
-                    "completed";
+                    status === "completed";
 
 
                 const paymentMethod =
@@ -2555,15 +2131,11 @@ function renderOrders() {
                         order.payment_method
                     );
 
-
                 const paymentAccount =
-                    order.payment_account ||
-                    "";
-
+                    order.payment_account || "";
 
                 const transactionId =
-                    order.transaction_id ||
-                    "";
+                    order.transaction_id || "";
 
 
                 return `
@@ -2625,8 +2197,7 @@ function renderOrders() {
                             <div class="order-address">
 
                                 ${escapeHTML(
-                                    order.address ||
-                                    ""
+                                    order.address || ""
                                 )}
 
                                 ${
@@ -2757,7 +2328,6 @@ function renderOrders() {
 
                     </div>
                 `;
-
             })
             .join("");
 }
@@ -2775,58 +2345,52 @@ function setupOrderFilters() {
         );
 
 
-    if (!filterButtons.length) {
-        return;
-    }
+    if (!filterButtons.length) return;
 
 
-    filterButtons.forEach(
-        button => {
+    filterButtons.forEach(button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+        button.addEventListener(
+            "click",
+            () => {
+
+                currentOrderFilter =
+                    String(
+                        button.dataset.orderFilter ||
+                        "all"
+                    )
+                        .trim()
+                        .toLowerCase();
+
+
+                if (
+                    ![
+                        "all",
+                        "pending",
+                        "completed"
+                    ].includes(
+                        currentOrderFilter
+                    )
+                ) {
 
                     currentOrderFilter =
-                        String(
-                            button.dataset.orderFilter ||
-                            "all"
-                        )
-                            .trim()
-                            .toLowerCase();
-
-
-                    if (
-                        ![
-                            "all",
-                            "pending",
-                            "completed"
-                        ].includes(
-                            currentOrderFilter
-                        )
-                    ) {
-
-                        currentOrderFilter =
-                            "all";
-                    }
-
-
-                    filterButtons.forEach(
-                        btn => {
-
-                            btn.classList.toggle(
-                                "active",
-                                btn === button
-                            );
-                        }
-                    );
-
-
-                    renderOrders();
+                        "all";
                 }
-            );
-        }
-    );
+
+
+                filterButtons.forEach(btn => {
+
+                    btn.classList.toggle(
+                        "active",
+                        btn === button
+                    );
+                });
+
+
+                renderOrders();
+            }
+        );
+    });
 }
 
 
@@ -2834,16 +2398,13 @@ function setupOrderFilters() {
    COMPLETE ORDER
    ========================================================= */
 
-async function completeOrder(
-    orderId
-) {
+async function completeOrder(orderId) {
 
     if (
         !confirm(
             "এই Order-টি Completed হিসেবে mark করবেন?"
         )
     ) {
-
         return;
     }
 
@@ -2873,7 +2434,6 @@ async function completeOrder(
 
 
     await loadOrders();
-
     await loadStats();
 }
 
@@ -3014,13 +2574,9 @@ async function loadStats() {
 async function loadEverything() {
 
     await Promise.all([
-
         loadProducts(),
-
         loadOrders(),
-
         loadStats()
-
     ]);
 }
 
@@ -3062,27 +2618,21 @@ if (productForm) {
 
 document.querySelectorAll(
     ".admin-nav-btn"
-).forEach(
-    button => {
+).forEach(button => {
 
-        button.addEventListener(
-            "click",
-            () => {
+    button.addEventListener(
+        "click",
+        () => {
 
-                const section =
-                    button.dataset.section;
+            const section =
+                button.dataset.section;
 
-
-                if (section) {
-
-                    openSection(
-                        section
-                    );
-                }
+            if (section) {
+                openSection(section);
             }
-        );
-    }
-);
+        }
+    );
+});
 
 
 /* =========================================================
@@ -3091,27 +2641,21 @@ document.querySelectorAll(
 
 document.querySelectorAll(
     "[data-open-section]"
-).forEach(
-    button => {
+).forEach(button => {
 
-        button.addEventListener(
-            "click",
-            () => {
+    button.addEventListener(
+        "click",
+        () => {
 
-                const section =
-                    button.dataset.openSection;
+            const section =
+                button.dataset.openSection;
 
-
-                if (section) {
-
-                    openSection(
-                        section
-                    );
-                }
+            if (section) {
+                openSection(section);
             }
-        );
-    }
-);
+        }
+    );
+});
 
 
 /* =========================================================
@@ -3128,10 +2672,7 @@ setupOrderFilters();
 sb.auth.onAuthStateChange(
     (event, session) => {
 
-        if (
-            event ===
-            "SIGNED_OUT"
-        ) {
+        if (event === "SIGNED_OUT") {
 
             currentUser = null;
 
