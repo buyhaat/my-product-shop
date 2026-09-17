@@ -2,6 +2,7 @@
 <html lang="bn">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -25,6 +26,7 @@
             color: #222;
             font-family: Arial, sans-serif;
         }
+
 
         /* =========================
            LOGIN
@@ -123,6 +125,7 @@
             font-size: 14px;
         }
 
+
         /* =========================
            DASHBOARD
         ========================= */
@@ -166,6 +169,7 @@
             min-height: calc(100vh - 64px);
         }
 
+
         /* =========================
            SIDEBAR
         ========================= */
@@ -198,6 +202,7 @@
             color: #f85606;
         }
 
+
         /* =========================
            MAIN
         ========================= */
@@ -226,6 +231,7 @@
             color: #777;
             font-size: 14px;
         }
+
 
         /* =========================
            STATS
@@ -256,6 +262,7 @@
             font-weight: 800;
         }
 
+
         /* =========================
            CARD
         ========================= */
@@ -273,6 +280,7 @@
             font-size: 18px;
         }
 
+
         /* =========================
            PRODUCT FORM
         ========================= */
@@ -285,6 +293,13 @@
 
         .full-field {
             grid-column: 1 / -1;
+        }
+
+        .price-help {
+            display: block;
+            margin-top: 6px;
+            color: #888;
+            font-size: 12px;
         }
 
         .image-preview {
@@ -302,6 +317,7 @@
             height: 100%;
             object-fit: cover;
         }
+
 
         /* =========================
            PAYMENT SETTINGS
@@ -377,6 +393,7 @@
             color: #856404;
             font-size: 13px;
         }
+
 
         /* =========================
            VARIANTS
@@ -484,6 +501,7 @@
             font-weight: 700;
         }
 
+
         /* =========================
            ALERT
         ========================= */
@@ -514,6 +532,7 @@
             background: #e9f3ff;
             color: #15558a;
         }
+
 
         /* =========================
            ADMIN PRODUCTS
@@ -575,6 +594,22 @@
             line-height: 1.6;
         }
 
+        .admin-product-price {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .admin-regular-price {
+            color: #888;
+            text-decoration: line-through;
+            margin-right: 6px;
+        }
+
+        .admin-sale-price {
+            color: #f85606;
+            font-weight: 800;
+        }
+
         .admin-product-status {
             display: inline-block;
             margin-top: 6px;
@@ -603,6 +638,7 @@
             cursor: pointer;
             font-weight: 700;
         }
+
 
         /* =========================
            ORDERS
@@ -727,6 +763,7 @@
             font-weight: 700;
         }
 
+
         /* =========================
            EMPTY / ERROR
         ========================= */
@@ -742,6 +779,7 @@
         .admin-error {
             color: #c00000;
         }
+
 
         /* =========================
            DASHBOARD QUICK ACTION
@@ -768,6 +806,7 @@
             background: #fffaf7;
         }
 
+
         /* =========================
            MOBILE
         ========================= */
@@ -787,6 +826,7 @@
             }
 
         }
+
 
         @media (max-width: 650px) {
 
@@ -909,6 +949,7 @@
                 Admin Panel
             </div>
 
+
             <form id="loginForm">
 
                 <div class="admin-field">
@@ -927,39 +968,23 @@
 
                 </div>
 
+
                 <div class="admin-field">
 
-    <label for="regularPriceAdmin">
-        Regular Price
-    </label>
+                    <label for="loginPassword">
+                        Password
+                    </label>
 
-    <input
-        type="number"
-        id="regularPriceAdmin"
-        placeholder="যেমন: 700"
-        min="0"
-        step="0.01"
-    >
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        placeholder="Password"
+                        autocomplete="current-password"
+                        required
+                    >
 
-</div>
+                </div>
 
-
-<div class="admin-field">
-
-    <label for="basePriceAdmin">
-        Sale Price
-    </label>
-
-    <input
-        type="number"
-        id="basePriceAdmin"
-        placeholder="যেমন: 500"
-        min="0"
-        step="0.01"
-        required
-    >
-
-</div>
 
                 <button
                     type="submit"
@@ -971,6 +996,7 @@
                 </button>
 
             </form>
+
 
             <div
                 id="loginMessage"
@@ -990,6 +1016,7 @@
         id="adminDashboard"
         class="admin-dashboard"
     >
+
 
         <!-- HEADER -->
 
@@ -1036,6 +1063,7 @@
                     📊 Dashboard
                 </button>
 
+
                 <button
                     type="button"
                     class="admin-nav-btn"
@@ -1044,6 +1072,7 @@
                     ➕ Add Product
                 </button>
 
+
                 <button
                     type="button"
                     class="admin-nav-btn"
@@ -1051,6 +1080,7 @@
                 >
                     📦 Products
                 </button>
+
 
                 <button
                     type="button"
@@ -1089,6 +1119,7 @@
 
 
                     <div class="admin-stats">
+
 
                         <div class="admin-stat">
 
@@ -1164,7 +1195,9 @@
                             Quick Actions
                         </h2>
 
+
                         <div class="quick-actions">
+
 
                             <button
                                 type="button"
@@ -1174,6 +1207,7 @@
                                 ➕ নতুন Product যোগ করুন
                             </button>
 
+
                             <button
                                 type="button"
                                 class="quick-action-btn"
@@ -1182,6 +1216,7 @@
                                 📦 সব Product দেখুন
                             </button>
 
+
                             <button
                                 type="button"
                                 class="quick-action-btn"
@@ -1189,6 +1224,7 @@
                             >
                                 🧾 Orders দেখুন
                             </button>
+
 
                         </div>
 
@@ -1206,6 +1242,7 @@
                     class="admin-section"
                 >
 
+
                     <h1
                         id="productFormTitle"
                         class="admin-page-title"
@@ -1213,12 +1250,14 @@
                         Add Product
                     </h1>
 
+
                     <p class="admin-page-subtitle">
                         নতুন Product যোগ করুন অথবা আগের Product Edit করুন
                     </p>
 
 
                     <div class="admin-card">
+
 
                         <div
                             id="productFormAlert"
@@ -1233,6 +1272,8 @@
 
                             <div class="product-form-grid">
 
+
+                                <!-- PRODUCT NAME -->
 
                                 <div class="admin-field">
 
@@ -1250,10 +1291,35 @@
                                 </div>
 
 
+                                <!-- REGULAR PRICE -->
+
+                                <div class="admin-field">
+
+                                    <label for="regularPriceAdmin">
+                                        Regular Price
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="regularPriceAdmin"
+                                        placeholder="যেমন: 700"
+                                        min="0"
+                                        step="0.01"
+                                    >
+
+                                    <span class="price-help">
+                                        Product-এর আসল/আগের দাম
+                                    </span>
+
+                                </div>
+
+
+                                <!-- SALE PRICE -->
+
                                 <div class="admin-field">
 
                                     <label for="basePriceAdmin">
-                                        Base Price
+                                        Sale Price
                                     </label>
 
                                     <input
@@ -1262,10 +1328,17 @@
                                         placeholder="যেমন: 500"
                                         min="0"
                                         step="0.01"
+                                        required
                                     >
+
+                                    <span class="price-help">
+                                        Offer/Discount-এর পর Customer যে দাম দেবে
+                                    </span>
 
                                 </div>
 
+
+                                <!-- DESCRIPTION -->
 
                                 <div class="admin-field full-field">
 
@@ -1275,8 +1348,12 @@
 
                                     <textarea
                                         id="descriptionAdmin"
-                                        placeholder="Product সম্পর্কে বিস্তারিত লিখুন..."
+                                        placeholder="যেমন: High quality cotton fabric, comfortable and stylish..."
                                     ></textarea>
+
+                                    <span class="price-help">
+                                        Customer-এর Product Card-এ ছোট করে এই Description দেখানো হবে।
+                                    </span>
 
                                 </div>
 
@@ -1294,6 +1371,7 @@
                                         id="mainImageAdmin"
                                         accept="image/*"
                                     >
+
 
                                     <div
                                         id="mainImagePreview"
@@ -1317,14 +1395,18 @@
 
                                     <div class="payment-settings">
 
+
                                         <div class="payment-settings-title">
                                             💳 Payment Methods
                                         </div>
+
 
                                         <div class="payment-settings-description">
                                             এই Product-এর জন্য Customer কোন কোন Payment Method ব্যবহার করতে পারবে তা নির্বাচন করুন।
                                         </div>
 
+
+                                        <!-- COD -->
 
                                         <label class="payment-option">
 
@@ -1333,6 +1415,7 @@
                                                 id="allowCodAdmin"
                                                 checked
                                             >
+
 
                                             <div class="payment-option-content">
 
@@ -1349,12 +1432,15 @@
                                         </label>
 
 
+                                        <!-- ADVANCE -->
+
                                         <label class="payment-option">
 
                                             <input
                                                 type="checkbox"
                                                 id="allowAdvanceAdmin"
                                             >
+
 
                                             <div class="payment-option-content">
 
@@ -1378,9 +1464,11 @@
                                             ⚠️ অন্তত একটি Payment Method নির্বাচন করুন।
                                         </div>
 
+
                                     </div>
 
                                 </div>
+
 
                             </div>
 
@@ -1391,6 +1479,7 @@
 
                             <div class="admin-card">
 
+
                                 <div class="variants-header">
 
                                     <h2
@@ -1399,6 +1488,7 @@
                                     >
                                         Product Variants
                                     </h2>
+
 
                                     <button
                                         type="button"
@@ -1416,6 +1506,7 @@
                                     class="variants-container"
                                 ></div>
 
+
                             </div>
 
 
@@ -1428,6 +1519,7 @@
                                     flex-wrap:wrap;
                                 "
                             >
+
 
                                 <button
                                     type="submit"
@@ -1445,6 +1537,7 @@
                                 >
                                     Reset
                                 </button>
+
 
                             </div>
 
@@ -1465,9 +1558,11 @@
                     class="admin-section"
                 >
 
+
                     <h1 class="admin-page-title">
                         Products
                     </h1>
+
 
                     <p class="admin-page-subtitle">
                         আপনার সব Product এখান থেকে Edit করতে পারবেন
@@ -1475,6 +1570,7 @@
 
 
                     <div class="admin-card">
+
 
                         <div
                             id="adminProductsList"
@@ -1486,6 +1582,7 @@
                             </div>
 
                         </div>
+
 
                     </div>
 
@@ -1501,9 +1598,11 @@
                     class="admin-section"
                 >
 
+
                     <h1 class="admin-page-title">
                         Orders
                     </h1>
+
 
                     <p class="admin-page-subtitle">
                         Customer-এর সব Order এখান থেকে পরিচালনা করুন
@@ -1514,6 +1613,7 @@
 
                     <div class="order-filter-bar">
 
+
                         <button
                             type="button"
                             class="order-filter-btn active"
@@ -1521,6 +1621,7 @@
                         >
                             All
                         </button>
+
 
                         <button
                             type="button"
@@ -1530,6 +1631,7 @@
                             Pending
                         </button>
 
+
                         <button
                             type="button"
                             class="order-filter-btn"
@@ -1538,10 +1640,12 @@
                             Completed
                         </button>
 
+
                     </div>
 
 
                     <div class="admin-card">
+
 
                         <div
                             id="adminOrdersList"
@@ -1553,6 +1657,7 @@
                             </div>
 
                         </div>
+
 
                     </div>
 
