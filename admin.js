@@ -2,6 +2,7 @@
    MY SHOP ADMIN PANEL
    Login + Dashboard + Add Product + Edit Product
    + Stock Update + Orders + Order Filters
+   + Payment Method Settings
    ========================================================= */
 
 const sb = window.supabase.createClient(
@@ -44,6 +45,11 @@ const saveProductButton = $("saveProductButton");
 const resetProductButton = $("resetProductButton");
 const productFormAlert = $("productFormAlert");
 
+/* Payment Settings */
+const allowCodAdmin = $("allowCodAdmin");
+const allowAdvanceAdmin = $("allowAdvanceAdmin");
+const paymentWarningAdmin = $("paymentWarningAdmin");
+
 const adminProductsList = $("adminProductsList");
 const adminOrdersList = $("adminOrdersList");
 
@@ -64,14 +70,6 @@ let existingMainImageUrl = "";
 let currentProducts = [];
 let currentOrders = [];
 
-/*
- * Current Order Filter
- *
- * Possible values:
- * all
- * pending
- * completed
- */
 let currentOrderFilter = "all";
 
 
@@ -111,16 +109,6 @@ function formatDate(value) {
 }
 
 
-/*
- * Order status normalize করার helper
- *
- * যেমন:
- * "Pending"
- * " pending "
- * "PENDING"
- *
- * সবকিছুকে "pending" বানাবে।
- */
 function normalizeOrderStatus(status) {
 
     return String(status || "")
@@ -156,6 +144,55 @@ function clearAlert() {
 
 
 /* =========================================================
+   PAYMENT SETTINGS
+   ========================================================= */
+
+function checkPaymentMethods() {
+
+    const codEnabled =
+        !!allowCodAdmin?.checked;
+
+    const advanceEnabled =
+        !!allowAdvanceAdmin?.checked;
+
+
+    if (!paymentWarningAdmin) {
+        return;
+    }
+
+
+    if (!codEnabled && !advanceEnabled) {
+
+        paymentWarningAdmin.style.display =
+            "block";
+
+    } else {
+
+        paymentWarningAdmin.style.display =
+            "none";
+    }
+}
+
+
+if (allowCodAdmin) {
+
+    allowCodAdmin.addEventListener(
+        "change",
+        checkPaymentMethods
+    );
+}
+
+
+if (allowAdvanceAdmin) {
+
+    allowAdvanceAdmin.addEventListener(
+        "change",
+        checkPaymentMethods
+    );
+}
+
+
+/* =========================================================
    LOGIN / DASHBOARD
    ========================================================= */
 
@@ -178,14 +215,6 @@ function showDashboard() {
     }
 
     if (adminDashboard) {
-
-        /*
-         * IMPORTANT:
-         * আগের code-এ এখানে display="" ছিল।
-         * CSS-এ .admin-dashboard { display:none; }
-         * থাকার কারণে dashboard দেখা যাচ্ছিল না।
-         */
-
         adminDashboard.style.display = "block";
     }
 
@@ -207,11 +236,16 @@ async function verifyAdmin(user) {
         return false;
     }
 
-    const { data, error } = await sb
+
+    const {
+        data,
+        error
+    } = await sb
         .from("admin_users")
         .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
+
 
     if (error) {
 
@@ -222,6 +256,7 @@ async function verifyAdmin(user) {
 
         return false;
     }
+
 
     return !!data;
 }
@@ -235,6 +270,7 @@ async function checkInitialSession() {
 
     showLogin();
 
+
     try {
 
         const {
@@ -242,38 +278,56 @@ async function checkInitialSession() {
             error
         } = await sb.auth.getSession();
 
+
         if (error) {
             throw error;
         }
 
-        const session = data?.session;
+
+        const session =
+            data?.session;
+
 
         if (!session) {
+
             showLogin();
+
             return;
         }
 
+
         const isAdmin =
-            await verifyAdmin(session.user);
+            await verifyAdmin(
+                session.user
+            );
+
 
         if (!isAdmin) {
 
             await sb.auth.signOut();
 
+
             if (loginMessage) {
+
                 loginMessage.textContent =
                     "এই account-এর admin access নেই।";
             }
 
+
             showLogin();
+
             return;
         }
 
-        currentUser = session.user;
+
+        currentUser =
+            session.user;
+
 
         showDashboard();
 
         await loadEverything();
+
 
     } catch (error) {
 
@@ -282,9 +336,12 @@ async function checkInitialSession() {
             error
         );
 
+
         showLogin();
 
+
         if (loginMessage) {
+
             loginMessage.textContent =
                 error.message ||
                 "Session load করতে সমস্যা হয়েছে।";
@@ -301,22 +358,32 @@ async function handleLogin(event) {
 
     event.preventDefault();
 
-    if (!loginButton) return;
+
+    if (!loginButton) {
+        return;
+    }
+
 
     loginButton.disabled = true;
-    loginButton.textContent = "Logging in...";
+
+    loginButton.textContent =
+        "Logging in...";
+
 
     if (loginMessage) {
         loginMessage.textContent = "";
     }
+
 
     try {
 
         const email =
             loginEmail.value.trim();
 
+
         const password =
             loginPassword.value;
+
 
         const {
             data,
@@ -326,35 +393,47 @@ async function handleLogin(event) {
             password
         });
 
+
         if (error) {
             throw error;
         }
 
+
         if (!data?.user) {
+
             throw new Error(
                 "Login user পাওয়া যায়নি।"
             );
         }
 
-        const user = data.user;
+
+        const user =
+            data.user;
+
 
         const isAdmin =
             await verifyAdmin(user);
 
+
         if (!isAdmin) {
 
             await sb.auth.signOut();
+
 
             throw new Error(
                 "Login হয়েছে, কিন্তু এই account-এর Admin access নেই।"
             );
         }
 
-        currentUser = user;
+
+        currentUser =
+            user;
+
 
         showDashboard();
 
         await loadEverything();
+
 
     } catch (error) {
 
@@ -363,18 +442,25 @@ async function handleLogin(event) {
             error
         );
 
+
         if (loginMessage) {
+
             loginMessage.textContent =
                 error.message ||
                 "Login failed.";
         }
 
+
         showLogin();
+
 
     } finally {
 
-        loginButton.disabled = false;
-        loginButton.textContent = "Login";
+        loginButton.disabled =
+            false;
+
+        loginButton.textContent =
+            "Login";
     }
 }
 
@@ -386,13 +472,18 @@ async function handleLogin(event) {
 async function handleLogout() {
 
     try {
+
         await sb.auth.signOut();
+
     } catch (error) {
+
         console.error(error);
     }
 
+
     currentUser = null;
     editingProductId = null;
+
 
     resetProductForm();
 
@@ -406,22 +497,22 @@ async function handleLogout() {
 
 function openSection(sectionName) {
 
-    /*
-     * HTML-এর section-এ data-section নেই।
-     * তাই ID দিয়ে সরাসরি section দেখানো হচ্ছে।
-     */
-
     document.querySelectorAll(
         ".admin-section"
     ).forEach(section => {
 
+        const active =
+            section.id === sectionName;
+
+
         section.classList.toggle(
             "active",
-            section.id === sectionName
+            active
         );
 
+
         section.style.display =
-            section.id === sectionName
+            active
                 ? "block"
                 : "none";
     });
@@ -452,6 +543,7 @@ if (mainImageAdmin) {
             const file =
                 mainImageAdmin.files?.[0];
 
+
             if (!file) {
 
                 if (mainImagePreview) {
@@ -465,14 +557,20 @@ if (mainImageAdmin) {
                 return;
             }
 
+
             const url =
                 URL.createObjectURL(file);
 
+
             if (mainImagePreviewImg) {
-                mainImagePreviewImg.src = url;
+
+                mainImagePreviewImg.src =
+                    url;
             }
 
+
             if (mainImagePreview) {
+
                 mainImagePreview.style.display =
                     "block";
             }
@@ -485,13 +583,17 @@ if (mainImageAdmin) {
    VARIANT UI
    ========================================================= */
 
-function createVariantElement(variant = {}) {
+function createVariantElement(
+    variant = {}
+) {
 
     const wrapper =
         document.createElement("div");
 
+
     wrapper.className =
         "admin-variant";
+
 
     wrapper.innerHTML = `
 
@@ -603,10 +705,12 @@ function createVariantElement(variant = {}) {
             ".variant-sizes"
         );
 
+
     const addSizeButton =
         wrapper.querySelector(
             ".add-size-button"
         );
+
 
     const removeVariantButton =
         wrapper.querySelector(
@@ -614,16 +718,21 @@ function createVariantElement(variant = {}) {
         );
 
 
-    if (Array.isArray(variant.sizes)) {
+    if (
+        Array.isArray(
+            variant.sizes
+        )
+    ) {
 
-        variant.sizes.forEach(size => {
+        variant.sizes.forEach(
+            size => {
 
-            addSizeElement(
-                sizesContainer,
-                size
-            );
-
-        });
+                addSizeElement(
+                    sizesContainer,
+                    size
+                );
+            }
+        );
     }
 
 
@@ -665,6 +774,7 @@ function addSizeElement(
     const row =
         document.createElement("div");
 
+
     row.className =
         "admin-size-row";
 
@@ -697,9 +807,7 @@ function addSizeElement(
             placeholder="Price"
             min="0"
             step="0.01"
-            value="${
-                size.price ?? ""
-            }"
+            value="${size.price ?? ""}"
             required
         >
 
@@ -710,9 +818,7 @@ function addSizeElement(
             placeholder="Stock"
             min="0"
             step="1"
-            value="${
-                size.stock ?? 0
-            }"
+            value="${size.stock ?? 0}"
             required
         >
 
@@ -727,17 +833,24 @@ function addSizeElement(
     `;
 
 
-    row.querySelector(
-        ".remove-size-button"
-    ).addEventListener(
+    const removeButton =
+        row.querySelector(
+            ".remove-size-button"
+        );
+
+
+    removeButton.addEventListener(
         "click",
         () => {
+
             row.remove();
         }
     );
 
 
-    container.appendChild(row);
+    container.appendChild(
+        row
+    );
 }
 
 
@@ -748,7 +861,9 @@ function addSizeElement(
 function clearVariants() {
 
     if (variantsContainer) {
-        variantsContainer.innerHTML = "";
+
+        variantsContainer.innerHTML =
+            "";
     }
 }
 
@@ -756,8 +871,11 @@ function clearVariants() {
 function addNewVariant() {
 
     createVariantElement({
+
         name: "",
+
         image_url: "",
+
         sizes: [
             {
                 size: "",
@@ -784,7 +902,10 @@ if (addVariantButton) {
 
 async function uploadProductImage(file) {
 
-    if (!file) return null;
+    if (!file) {
+        return null;
+    }
+
 
     const extension =
         file.name
@@ -831,7 +952,10 @@ async function uploadProductImage(file) {
 
 async function uploadVariantImage(file) {
 
-    if (!file) return null;
+    if (!file) {
+        return null;
+    }
+
 
     const extension =
         file.name
@@ -885,20 +1009,33 @@ function collectProductForm() {
     const name =
         productNameAdmin.value.trim();
 
+
     const basePrice =
         Number(
             basePriceAdmin.value || 0
         );
+
 
     const description =
         descriptionAdmin.value.trim();
 
 
     if (!name) {
+
         throw new Error(
             "Product name দিন।"
         );
     }
+
+
+    /* Payment Settings */
+
+    const allowCod =
+        !!allowCodAdmin?.checked;
+
+
+    const allowAdvance =
+        !!allowAdvanceAdmin?.checked;
 
 
     const variantElements =
@@ -950,9 +1087,7 @@ function collectProductForm() {
             if (!variantName) {
 
                 throw new Error(
-                    `Variant ${
-                        index + 1
-                    }-এর নাম দিন।`
+                    `Variant ${index + 1}-এর নাম দিন।`
                 );
             }
 
@@ -1010,9 +1145,7 @@ function collectProductForm() {
                     if (!sizeName) {
 
                         throw new Error(
-                            `"${variantName}" এর Size ${
-                                sizeIndex + 1
-                            }-এর নাম দিন।`
+                            `"${variantName}" এর Size ${sizeIndex + 1}-এর নাম দিন।`
                         );
                     }
 
@@ -1034,33 +1167,55 @@ function collectProductForm() {
 
 
                     sizes.push({
-                        id: sizeId || null,
-                        size: sizeName,
-                        price,
-                        stock,
-                        active: true
-                    });
 
+                        id:
+                            sizeId || null,
+
+                        size:
+                            sizeName,
+
+                        price,
+
+                        stock,
+
+                        active:
+                            true
+                    });
                 }
             );
 
 
             variants.push({
-                id: id || null,
-                name: variantName,
+
+                id:
+                    id || null,
+
+                name:
+                    variantName,
+
                 imageFile,
-                image_url: existingImage,
+
+                image_url:
+                    existingImage,
+
                 sizes
             });
-
         }
     );
 
 
     return {
+
         name,
+
         basePrice,
+
         description,
+
+        allowCod,
+
+        allowAdvance,
+
         variants
     };
 }
@@ -1068,7 +1223,6 @@ function collectProductForm() {
 
 /* =========================================================
    SAVE PRODUCT
-   ADD + EDIT
    ========================================================= */
 
 async function saveProduct(event) {
@@ -1090,7 +1244,8 @@ async function saveProduct(event) {
     clearAlert();
 
 
-    saveProductButton.disabled = true;
+    saveProductButton.disabled =
+        true;
 
 
     const isEditing =
@@ -1109,12 +1264,29 @@ async function saveProduct(event) {
             collectProductForm();
 
 
+        /*
+         * কমপক্ষে একটি payment method
+         * অবশ্যই ON থাকতে হবে।
+         */
+
+        if (
+            !product.allowCod &&
+            !product.allowAdvance
+        ) {
+
+            throw new Error(
+                "কমপক্ষে একটি payment method ON করুন।"
+            );
+        }
+
+
         /* =========================================
            MAIN IMAGE
            ========================================= */
 
         let mainImageUrl =
-            existingMainImageUrl || null;
+            existingMainImageUrl ||
+            null;
 
 
         const mainImageFile =
@@ -1141,10 +1313,24 @@ async function saveProduct(event) {
             } = await sb
                 .from("products")
                 .update({
-                    name: product.name,
-                    description: product.description,
-                    base_price: product.basePrice,
-                    main_image_url: mainImageUrl
+
+                    name:
+                        product.name,
+
+                    description:
+                        product.description,
+
+                    base_price:
+                        product.basePrice,
+
+                    main_image_url:
+                        mainImageUrl,
+
+                    allow_cod:
+                        product.allowCod,
+
+                    allow_advance:
+                        product.allowAdvance
                 })
                 .eq(
                     "id",
@@ -1196,6 +1382,7 @@ async function saveProduct(event) {
                             "product_variants"
                         )
                         .insert({
+
                             product_id:
                                 editingProductId,
 
@@ -1205,7 +1392,8 @@ async function saveProduct(event) {
                             image_url:
                                 variantImageUrl,
 
-                            active: true
+                            active:
+                                true
                         })
                         .select("id")
                         .single();
@@ -1246,13 +1434,15 @@ async function saveProduct(event) {
                             "product_variants"
                         )
                         .update({
+
                             name:
                                 variant.name,
 
                             image_url:
                                 variantImageUrl,
 
-                            active: true
+                            active:
+                                true
                         })
                         .eq(
                             "id",
@@ -1286,6 +1476,7 @@ async function saveProduct(event) {
                                 "variant_sizes"
                             )
                             .update({
+
                                 size:
                                     size.size,
 
@@ -1295,7 +1486,8 @@ async function saveProduct(event) {
                                 stock:
                                     size.stock,
 
-                                active: true
+                                active:
+                                    true
                             })
                             .eq(
                                 "id",
@@ -1313,6 +1505,7 @@ async function saveProduct(event) {
 
                     }
 
+
                     /* NEW SIZE */
 
                     else {
@@ -1324,6 +1517,7 @@ async function saveProduct(event) {
                                 "variant_sizes"
                             )
                             .insert({
+
                                 variant_id:
                                     variantId,
 
@@ -1336,7 +1530,8 @@ async function saveProduct(event) {
                                 stock:
                                     size.stock,
 
-                                active: true
+                                active:
+                                    true
                             });
 
 
@@ -1349,7 +1544,7 @@ async function saveProduct(event) {
 
 
             showAlert(
-                "Product এবং Stock সফলভাবে update হয়েছে।",
+                "Product, Stock এবং Payment Settings সফলভাবে update হয়েছে।",
                 "success"
             );
         }
@@ -1367,6 +1562,7 @@ async function saveProduct(event) {
             } = await sb
                 .from("products")
                 .insert({
+
                     name:
                         product.name,
 
@@ -1379,7 +1575,14 @@ async function saveProduct(event) {
                     main_image_url:
                         mainImageUrl,
 
-                    active: true
+                    allow_cod:
+                        product.allowCod,
+
+                    allow_advance:
+                        product.allowAdvance,
+
+                    active:
+                        true
                 })
                 .select("id")
                 .single();
@@ -1421,6 +1624,7 @@ async function saveProduct(event) {
                         "product_variants"
                     )
                     .insert({
+
                         product_id:
                             productId,
 
@@ -1430,7 +1634,8 @@ async function saveProduct(event) {
                         image_url:
                             variantImageUrl,
 
-                        active: true
+                        active:
+                            true
                     })
                     .select("id")
                     .single();
@@ -1453,6 +1658,7 @@ async function saveProduct(event) {
                             "variant_sizes"
                         )
                         .insert({
+
                             variant_id:
                                 variantData.id,
 
@@ -1465,7 +1671,8 @@ async function saveProduct(event) {
                             stock:
                                 size.stock,
 
-                            active: true
+                            active:
+                                true
                         });
 
 
@@ -1484,7 +1691,7 @@ async function saveProduct(event) {
 
 
         /*
-         * Save সফল হওয়ার পর form reset
+         * Save successful
          */
 
         resetProductForm();
@@ -1495,13 +1702,10 @@ async function saveProduct(event) {
         await loadStats();
 
 
-        /*
-         * Products section-এ দেখাবে
-         */
-
         openSection(
             "productsSectionAdmin"
         );
+
 
     } catch (error) {
 
@@ -1510,19 +1714,22 @@ async function saveProduct(event) {
             error
         );
 
+
         showAlert(
             error.message ||
             "Product save করতে সমস্যা হয়েছে।",
             "error"
         );
 
+
     } finally {
 
         saveProductButton.disabled =
             false;
 
+
         saveProductButton.textContent =
-            editingProductId
+            productForm?.dataset.mode === "edit"
                 ? "Update Product"
                 : "Save Product";
     }
@@ -1541,42 +1748,72 @@ function resetProductForm() {
 
 
     if (productForm) {
+
         productForm.reset();
-        productForm.dataset.mode = "add";
+
+        productForm.dataset.mode =
+            "add";
     }
 
 
     /*
-     * নতুন product-এ image required
+     * নতুন product-এ main image required
      */
 
     if (mainImageAdmin) {
-        mainImageAdmin.required = true;
+
+        mainImageAdmin.required =
+            true;
     }
 
 
     if (mainImagePreview) {
+
         mainImagePreview.style.display =
             "none";
     }
 
 
     if (mainImagePreviewImg) {
-        mainImagePreviewImg.src = "";
+
+        mainImagePreviewImg.src =
+            "";
     }
+
+
+    /*
+     * Default payment:
+     *
+     * COD ON
+     * Advance OFF
+     */
+
+    if (allowCodAdmin) {
+
+        allowCodAdmin.checked =
+            true;
+    }
+
+
+    if (allowAdvanceAdmin) {
+
+        allowAdvanceAdmin.checked =
+            false;
+    }
+
+
+    checkPaymentMethods();
 
 
     clearVariants();
 
 
-    /*
-     * নতুন Product-এর জন্য
-     * 1 Variant + 1 Size
-     */
-
     createVariantElement({
+
         name: "",
+
         image_url: "",
+
         sizes: [
             {
                 size: "",
@@ -1637,6 +1874,8 @@ async function editProduct(productId) {
                 description,
                 base_price,
                 main_image_url,
+                allow_cod,
+                allow_advance,
                 active,
                 product_variants (
                     id,
@@ -1669,16 +1908,14 @@ async function editProduct(productId) {
 
 
         existingMainImageUrl =
-            data.main_image_url || "";
+            data.main_image_url ||
+            "";
 
-
-        /*
-         * Edit mode-এ main image
-         * নতুন করে দেওয়া বাধ্যতামূলক নয়।
-         */
 
         if (mainImageAdmin) {
-            mainImageAdmin.required = false;
+
+            mainImageAdmin.required =
+                false;
         }
 
 
@@ -1693,6 +1930,33 @@ async function editProduct(productId) {
         descriptionAdmin.value =
             data.description || "";
 
+
+        /*
+         * Payment settings
+         */
+
+        if (allowCodAdmin) {
+
+            allowCodAdmin.checked =
+                data.allow_cod ??
+                true;
+        }
+
+
+        if (allowAdvanceAdmin) {
+
+            allowAdvanceAdmin.checked =
+                data.allow_advance ??
+                false;
+        }
+
+
+        checkPaymentMethods();
+
+
+        /*
+         * Main image
+         */
 
         if (
             mainImagePreviewImg &&
@@ -1713,11 +1977,16 @@ async function editProduct(productId) {
         }
 
 
+        /*
+         * Variants
+         */
+
         clearVariants();
 
 
         const variants =
-            data.product_variants || [];
+            data.product_variants ||
+            [];
 
 
         variants.forEach(
@@ -1735,15 +2004,15 @@ async function editProduct(productId) {
                         variant.image_url,
 
                     sizes:
-                        variant.variant_sizes || []
+                        variant.variant_sizes ||
+                        []
                 });
             }
         );
 
 
         /*
-         * কোনো variant না থাকলে
-         * default variant তৈরি হবে।
+         * No variant হলে default
          */
 
         if (!variants.length) {
@@ -1758,7 +2027,8 @@ async function editProduct(productId) {
                     {
                         size: "",
                         price:
-                            data.base_price || 0,
+                            data.base_price ||
+                            0,
                         stock: 0
                     }
                 ]
@@ -1784,7 +2054,9 @@ async function editProduct(productId) {
 
 
         window.scrollTo({
+
             top: 0,
+
             behavior: "smooth"
         });
 
@@ -1796,6 +2068,7 @@ async function editProduct(productId) {
             error
         );
 
+
         showAlert(
             error.message ||
             "Product load করতে সমস্যা হয়েছে।",
@@ -1806,8 +2079,7 @@ async function editProduct(productId) {
 
 
 /*
- * onclick="editProduct(...)"
- * থেকে function access করার জন্য
+ * HTML onclick থেকে access
  */
 
 window.editProduct =
@@ -1820,7 +2092,9 @@ window.editProduct =
 
 async function loadProducts() {
 
-    if (!adminProductsList) return;
+    if (!adminProductsList) {
+        return;
+    }
 
 
     adminProductsList.innerHTML = `
@@ -1841,6 +2115,8 @@ async function loadProducts() {
             description,
             base_price,
             main_image_url,
+            allow_cod,
+            allow_advance,
             active,
             created_at,
             product_variants (
@@ -1872,6 +2148,7 @@ async function loadProducts() {
             error
         );
 
+
         adminProductsList.innerHTML = `
             <div class="admin-empty">
                 ${escapeHTML(
@@ -1879,6 +2156,7 @@ async function loadProducts() {
                 )}
             </div>
         `;
+
 
         return;
     }
@@ -1898,7 +2176,9 @@ async function loadProducts() {
 
 function renderProducts() {
 
-    if (!adminProductsList) return;
+    if (!adminProductsList) {
+        return;
+    }
 
 
     if (!currentProducts.length) {
@@ -1908,6 +2188,7 @@ function renderProducts() {
                 কোনো Product নেই।
             </div>
         `;
+
 
         return;
     }
@@ -1956,6 +2237,40 @@ function renderProducts() {
                     product.active === false
                         ? "Inactive"
                         : "Active";
+
+
+                const codEnabled =
+                    product.allow_cod ??
+                    true;
+
+
+                const advanceEnabled =
+                    product.allow_advance ??
+                    false;
+
+
+                let paymentText =
+                    "No payment method";
+
+
+                if (
+                    codEnabled &&
+                    advanceEnabled
+                ) {
+
+                    paymentText =
+                        "COD + bKash/Nagad";
+
+                } else if (codEnabled) {
+
+                    paymentText =
+                        "COD only";
+
+                } else if (advanceEnabled) {
+
+                    paymentText =
+                        "bKash/Nagad only";
+                }
 
 
                 return `
@@ -2016,6 +2331,16 @@ function renderProducts() {
                             </div>
 
 
+                            <div class="admin-product-meta">
+                                Payment:
+                                <strong>
+                                    ${escapeHTML(
+                                        paymentText
+                                    )}
+                                </strong>
+                            </div>
+
+
                             <div class="admin-product-status ${
                                 product.active === false
                                     ? "inactive"
@@ -2048,12 +2373,14 @@ function renderProducts() {
 
 
 /* =========================================================
-   ORDERS
+   LOAD ORDERS
    ========================================================= */
 
 async function loadOrders() {
 
-    if (!adminOrdersList) return;
+    if (!adminOrdersList) {
+        return;
+    }
 
 
     adminOrdersList.innerHTML = `
@@ -2084,6 +2411,7 @@ async function loadOrders() {
             error
         );
 
+
         adminOrdersList.innerHTML = `
             <div class="admin-empty">
                 ${escapeHTML(
@@ -2091,6 +2419,7 @@ async function loadOrders() {
                 )}
             </div>
         `;
+
 
         return;
     }
@@ -2105,19 +2434,59 @@ async function loadOrders() {
 
 
 /* =========================================================
+   PAYMENT LABEL
+   ========================================================= */
+
+function getPaymentMethodLabel(
+    paymentMethod
+) {
+
+    const method =
+        String(
+            paymentMethod || ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (method === "cod") {
+
+        return "Cash on Delivery";
+    }
+
+
+    if (method === "bkash") {
+
+        return "bKash Send Money";
+    }
+
+
+    if (method === "nagad") {
+
+        return "Nagad Send Money";
+    }
+
+
+    if (!method) {
+
+        return "Not specified";
+    }
+
+
+    return paymentMethod;
+}
+
+
+/* =========================================================
    RENDER ORDERS
    ========================================================= */
 
 function renderOrders() {
 
-    if (!adminOrdersList) return;
+    if (!adminOrdersList) {
+        return;
+    }
 
-
-    /*
-     * IMPORTANT:
-     * এখানে currentOrderFilter অনুযায়ী
-     * orders filter করা হচ্ছে।
-     */
 
     const filteredOrders =
         currentOrderFilter === "all"
@@ -2126,13 +2495,10 @@ function renderOrders() {
                 order =>
                     normalizeOrderStatus(
                         order.status
-                    ) === currentOrderFilter
+                    ) ===
+                    currentOrderFilter
             );
 
-
-    /* =========================================
-       EMPTY FILTER RESULT
-       ========================================= */
 
     if (!filteredOrders.length) {
 
@@ -2146,7 +2512,7 @@ function renderOrders() {
         ) {
 
             message =
-                "কোনো Pending Order নেই।";
+                "কোনো Pending Order নেই.";
 
         } else if (
             currentOrderFilter ===
@@ -2164,13 +2530,10 @@ function renderOrders() {
             </div>
         `;
 
+
         return;
     }
 
-
-    /* =========================================
-       RENDER FILTERED ORDERS
-       ========================================= */
 
     adminOrdersList.innerHTML =
         filteredOrders
@@ -2183,7 +2546,24 @@ function renderOrders() {
 
 
                 const completed =
-                    status === "completed";
+                    status ===
+                    "completed";
+
+
+                const paymentMethod =
+                    getPaymentMethodLabel(
+                        order.payment_method
+                    );
+
+
+                const paymentAccount =
+                    order.payment_account ||
+                    "";
+
+
+                const transactionId =
+                    order.transaction_id ||
+                    "";
 
 
                 return `
@@ -2270,18 +2650,73 @@ function renderOrders() {
                             </div>
 
 
+                            <div class="order-payment">
+
+                                <strong>
+                                    Payment:
+                                </strong>
+
+                                ${escapeHTML(
+                                    paymentMethod
+                                )}
+
+                            </div>
+
+
+                            ${
+                                paymentAccount
+                                    ? `
+                                        <div class="order-payment-account">
+
+                                            <strong>
+                                                Account:
+                                            </strong>
+
+                                            ${escapeHTML(
+                                                paymentAccount
+                                            )}
+
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                transactionId
+                                    ? `
+                                        <div class="order-transaction-id">
+
+                                            <strong>
+                                                TrxID:
+                                            </strong>
+
+                                            ${escapeHTML(
+                                                transactionId
+                                            )}
+
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
                             <div class="order-total">
+
                                 Total:
                                 ৳${money(
                                     order.total_price
                                 )}
+
                             </div>
 
 
                             <div class="order-date">
+
                                 ${formatDate(
                                     order.created_at
                                 )}
+
                             </div>
 
                         </div>
@@ -2345,71 +2780,53 @@ function setupOrderFilters() {
     }
 
 
-    filterButtons.forEach(button => {
+    filterButtons.forEach(
+        button => {
 
-        button.addEventListener(
-            "click",
-            () => {
-
-                /*
-                 * data-order-filter থেকে
-                 * filter value নেওয়া হচ্ছে।
-                 */
-
-                currentOrderFilter =
-                    String(
-                        button.dataset.orderFilter ||
-                        "all"
-                    )
-                        .trim()
-                        .toLowerCase();
-
-
-                /*
-                 * শুধু valid filter রাখছি।
-                 */
-
-                if (
-                    ![
-                        "all",
-                        "pending",
-                        "completed"
-                    ].includes(
-                        currentOrderFilter
-                    )
-                ) {
+            button.addEventListener(
+                "click",
+                () => {
 
                     currentOrderFilter =
-                        "all";
-                }
+                        String(
+                            button.dataset.orderFilter ||
+                            "all"
+                        )
+                            .trim()
+                            .toLowerCase();
 
 
-                /*
-                 * Active button update
-                 */
+                    if (
+                        ![
+                            "all",
+                            "pending",
+                            "completed"
+                        ].includes(
+                            currentOrderFilter
+                        )
+                    ) {
 
-                filterButtons.forEach(
-                    btn => {
-
-                        btn.classList.toggle(
-                            "active",
-                            btn === button
-                        );
-
+                        currentOrderFilter =
+                            "all";
                     }
-                );
 
 
-                /*
-                 * নতুন filter অনুযায়ী
-                 * orders render
-                 */
+                    filterButtons.forEach(
+                        btn => {
 
-                renderOrders();
-            }
-        );
+                            btn.classList.toggle(
+                                "active",
+                                btn === button
+                            );
+                        }
+                    );
 
-    });
+
+                    renderOrders();
+                }
+            );
+        }
+    );
 }
 
 
@@ -2417,13 +2834,16 @@ function setupOrderFilters() {
    COMPLETE ORDER
    ========================================================= */
 
-async function completeOrder(orderId) {
+async function completeOrder(
+    orderId
+) {
 
     if (
         !confirm(
             "এই Order-টি Completed হিসেবে mark করবেন?"
         )
     ) {
+
         return;
     }
 
@@ -2452,23 +2872,11 @@ async function completeOrder(orderId) {
     }
 
 
-    /*
-     * loadOrders() করার পর
-     * currentOrderFilter বজায় থাকবে।
-     *
-     * তাই Pending filter চালু থাকলে
-     * completed order সেখান থেকে চলে যাবে।
-     */
-
     await loadOrders();
 
     await loadStats();
 }
 
-
-/*
- * HTML onclick থেকে access
- */
 
 window.completeOrder =
     completeOrder;
@@ -2565,7 +2973,8 @@ async function loadStats() {
                     o =>
                         normalizeOrderStatus(
                             o.status
-                        ) === "pending"
+                        ) ===
+                        "pending"
                 )
                 .length;
 
@@ -2576,7 +2985,8 @@ async function loadStats() {
                     o =>
                         normalizeOrderStatus(
                             o.status
-                        ) === "completed"
+                        ) ===
+                        "completed"
                 )
                 .length;
 
@@ -2604,9 +3014,13 @@ async function loadStats() {
 async function loadEverything() {
 
     await Promise.all([
+
         loadProducts(),
+
         loadOrders(),
+
         loadStats()
+
     ]);
 }
 
@@ -2648,21 +3062,27 @@ if (productForm) {
 
 document.querySelectorAll(
     ".admin-nav-btn"
-).forEach(button => {
+).forEach(
+    button => {
 
-    button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+            "click",
+            () => {
 
-            const section =
-                button.dataset.section;
+                const section =
+                    button.dataset.section;
 
-            if (section) {
-                openSection(section);
+
+                if (section) {
+
+                    openSection(
+                        section
+                    );
+                }
             }
-        }
-    );
-});
+        );
+    }
+);
 
 
 /* =========================================================
@@ -2671,21 +3091,27 @@ document.querySelectorAll(
 
 document.querySelectorAll(
     "[data-open-section]"
-).forEach(button => {
+).forEach(
+    button => {
 
-    button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+            "click",
+            () => {
 
-            const section =
-                button.dataset.openSection;
+                const section =
+                    button.dataset.openSection;
 
-            if (section) {
-                openSection(section);
+
+                if (section) {
+
+                    openSection(
+                        section
+                    );
+                }
             }
-        }
-    );
-});
+        );
+    }
+);
 
 
 /* =========================================================
