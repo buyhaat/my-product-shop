@@ -17,11 +17,15 @@ const sb = window.supabase.createClient(
 const $ = (id) => document.getElementById(id);
 
 const money = (value) => {
+
     const n = Number(value || 0);
+
     return `৳${n.toLocaleString("en-BD")}`;
 };
 
+
 const escapeHTML = (value) => {
+
     return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -103,7 +107,10 @@ const saveStoreSettingsButton = $("saveStoreSettingsButton");
    ========================================================= */
 
 let editingProductId = null;
+
 let allOrders = [];
+
+let currentOrderFilter = "all";
 
 
 /* =========================================================
@@ -111,41 +118,51 @@ let allOrders = [];
    ========================================================= */
 
 function showLoginMessage(message, type = "error") {
+
     if (!loginMessage) return;
 
     loginMessage.textContent = message;
 
     loginMessage.className = "login-message";
 
-    if (type === "success") {
-        loginMessage.style.color = "#16a34a";
-    } else {
-        loginMessage.style.color = "#dc2626";
-    }
+    loginMessage.style.color =
+        type === "success"
+            ? "#16a34a"
+            : "#dc2626";
 }
 
 
 function showProductAlert(message, type = "info") {
+
     if (!productFormAlert) return;
 
     productFormAlert.textContent = message;
-    productFormAlert.className = `form-alert ${type}`;
+
+    productFormAlert.className =
+        `form-alert ${type}`;
 }
 
 
 function clearProductAlert() {
+
     if (!productFormAlert) return;
 
     productFormAlert.textContent = "";
-    productFormAlert.className = "form-alert";
+
+    productFormAlert.className =
+        "form-alert";
 }
 
 
 function showSettingsAlert(message, type = "info") {
+
     if (!storeSettingsAlert) return;
 
-    storeSettingsAlert.textContent = message;
-    storeSettingsAlert.className = `form-alert ${type}`;
+    storeSettingsAlert.textContent =
+        message;
+
+    storeSettingsAlert.className =
+        `form-alert ${type}`;
 }
 
 
@@ -154,16 +171,25 @@ function showSettingsAlert(message, type = "info") {
    ========================================================= */
 
 async function isAdmin(user) {
+
     if (!user) return false;
 
-    const { data, error } = await sb
+    const {
+        data,
+        error
+    } = await sb
         .from("admin_users")
         .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
     if (error) {
-        console.error("Admin check error:", error);
+
+        console.error(
+            "Admin check error:",
+            error
+        );
+
         return false;
     }
 
@@ -172,23 +198,40 @@ async function isAdmin(user) {
 
 
 async function loginAdmin(event) {
+
     event.preventDefault();
 
-    const email = loginEmail.value.trim();
-    const password = loginPassword.value;
+    const email =
+        loginEmail.value.trim();
+
+    const password =
+        loginPassword.value;
 
     if (!email || !password) {
-        showLoginMessage("Email এবং password দিন।");
+
+        showLoginMessage(
+            "Email এবং password দিন।"
+        );
+
         return;
     }
 
     loginButton.disabled = true;
-    loginButton.textContent = "Logging in...";
 
-    showLoginMessage("Login হচ্ছে...", "success");
+    loginButton.textContent =
+        "Logging in...";
+
+    showLoginMessage(
+        "Login হচ্ছে...",
+        "success"
+    );
 
     try {
-        const { data, error } = await sb.auth.signInWithPassword({
+
+        const {
+            data,
+            error
+        } = await sb.auth.signInWithPassword({
             email,
             password
         });
@@ -198,62 +241,98 @@ async function loginAdmin(event) {
         }
 
         if (!data.user) {
-            throw new Error("User পাওয়া যায়নি।");
+            throw new Error(
+                "User পাওয়া যায়নি।"
+            );
         }
 
-        const admin = await isAdmin(data.user);
+        const admin =
+            await isAdmin(data.user);
 
         if (!admin) {
+
             await sb.auth.signOut();
-            throw new Error("এই account-এর Admin access নেই।");
+
+            throw new Error(
+                "এই account-এর Admin access নেই।"
+            );
         }
 
-        showLoginMessage("Login successful!", "success");
+        showLoginMessage(
+            "Login successful!",
+            "success"
+        );
 
-        await showDashboard(data.user);
+        await showDashboard(
+            data.user
+        );
 
     } catch (error) {
+
         console.error(error);
 
         showLoginMessage(
-            error.message || "Login করতে সমস্যা হয়েছে।"
+            error.message ||
+            "Login করতে সমস্যা হয়েছে।"
         );
+
     } finally {
+
         loginButton.disabled = false;
-        loginButton.textContent = "Login";
+
+        loginButton.textContent =
+            "Login";
     }
 }
 
 
 async function checkExistingSession() {
+
     try {
+
         const {
-            data: { session }
+            data: {
+                session
+            }
         } = await sb.auth.getSession();
 
         if (!session?.user) {
+
             showLoginScreen();
+
             return;
         }
 
-        const admin = await isAdmin(session.user);
+        const admin =
+            await isAdmin(session.user);
 
         if (!admin) {
+
             await sb.auth.signOut();
+
             showLoginScreen();
+
             return;
         }
 
-        await showDashboard(session.user);
+        await showDashboard(
+            session.user
+        );
 
     } catch (error) {
-        console.error("Session error:", error);
+
+        console.error(
+            "Session error:",
+            error
+        );
+
         showLoginScreen();
     }
 }
 
 
 function showLoginScreen() {
+
     if (adminLogin) {
         adminLogin.style.display = "";
     }
@@ -264,27 +343,47 @@ function showLoginScreen() {
 }
 
 
+/* =========================================================
+   SHOW DASHBOARD
+   ========================================================= */
+
 async function showDashboard(user) {
+
     if (adminLogin) {
         adminLogin.style.display = "none";
     }
 
     if (adminDashboard) {
-        adminDashboard.style.display = "";
+        adminDashboard.style.display = "block";
     }
 
     if (adminUserEmail) {
-        adminUserEmail.textContent = user.email || "";
+        adminUserEmail.textContent =
+            user.email || "";
     }
 
     resetProductForm();
 
-    await Promise.all([
+    /*
+       Dashboard visible করার পর
+       আলাদা আলাদা request চালানো হচ্ছে।
+
+       কোনো একটি request fail করলেও
+       অন্যগুলো বন্ধ হবে না।
+    */
+
+    await Promise.allSettled([
+
         loadStats(),
+
         loadProducts(),
+
         loadOrders(),
+
         loadStoreSettings()
+
     ]);
+
 }
 
 
@@ -293,18 +392,29 @@ async function showDashboard(user) {
    ========================================================= */
 
 async function logoutAdmin() {
-    const { error } = await sb.auth.signOut();
+
+    const {
+        error
+    } = await sb.auth.signOut();
 
     if (error) {
+
         console.error(error);
-        alert("Logout করতে সমস্যা হয়েছে।");
+
+        alert(
+            "Logout করতে সমস্যা হয়েছে।"
+        );
+
         return;
     }
 
     showLoginScreen();
 
-    if (loginEmail) loginEmail.value = "";
-    if (loginPassword) loginPassword.value = "";
+    if (loginEmail)
+        loginEmail.value = "";
+
+    if (loginPassword)
+        loginPassword.value = "";
 
     showLoginMessage("");
 }
@@ -314,39 +424,87 @@ async function logoutAdmin() {
    NAVIGATION
    ========================================================= */
 
-function openSection(sectionId) {
-    document.querySelectorAll(".admin-section").forEach(section => {
-        section.classList.remove("active");
-    });
+async function openSection(sectionId) {
+
+    document
+        .querySelectorAll(".admin-section")
+        .forEach(section => {
+
+            section.classList.remove(
+                "active"
+            );
+
+        });
+
 
     const target = $(sectionId);
 
     if (target) {
-        target.classList.add("active");
+
+        target.classList.add(
+            "active"
+        );
     }
 
-    document.querySelectorAll(".admin-nav-btn").forEach(button => {
-        button.classList.remove("active");
 
-        if (button.dataset.section === sectionId) {
-            button.classList.add("active");
-        }
-    });
+    document
+        .querySelectorAll(".admin-nav-btn")
+        .forEach(button => {
 
-    if (sectionId === "dashboardSection") {
-        loadStats();
+            button.classList.remove(
+                "active"
+            );
+
+            if (
+                button.dataset.section ===
+                sectionId
+            ) {
+
+                button.classList.add(
+                    "active"
+                );
+            }
+
+        });
+
+
+    /*
+       Section অনুযায়ী fresh data.
+    */
+
+    if (
+        sectionId ===
+        "dashboardSection"
+    ) {
+
+        await loadStats();
     }
 
-    if (sectionId === "productsSectionAdmin") {
-        loadProducts();
+
+    if (
+        sectionId ===
+        "productsSectionAdmin"
+    ) {
+
+        await loadProducts();
     }
 
-    if (sectionId === "ordersSectionAdmin") {
-        loadOrders();
+
+    if (
+        sectionId ===
+        "ordersSectionAdmin"
+    ) {
+
+        await loadOrders();
     }
 
-    if (sectionId === "settingsSectionAdmin") {
-        loadStoreSettings();
+
+    if (
+        sectionId ===
+        "settingsSectionAdmin"
+    ) {
+
+        await loadStoreSettings();
     }
 }
 
@@ -356,6 +514,7 @@ function openSection(sectionId) {
    ========================================================= */
 
 function resetProductForm() {
+
     editingProductId = null;
 
     if (productForm) {
@@ -363,23 +522,33 @@ function resetProductForm() {
     }
 
     if (productFormTitle) {
-        productFormTitle.textContent = "Add Product";
+
+        productFormTitle.textContent =
+            "Add Product";
     }
 
     if (saveProductButton) {
-        saveProductButton.textContent = "Save Product";
+
+        saveProductButton.textContent =
+            "Save Product";
     }
 
     if (variantsContainer) {
-        variantsContainer.innerHTML = "";
+
+        variantsContainer.innerHTML =
+            "";
     }
 
     if (mainImagePreview) {
-        mainImagePreview.style.display = "none";
+
+        mainImagePreview.style.display =
+            "none";
     }
 
     if (mainImagePreviewImg) {
-        mainImagePreviewImg.src = "";
+
+        mainImagePreviewImg.src =
+            "";
     }
 
     if (allowCodAdmin) {
@@ -397,16 +566,29 @@ function resetProductForm() {
 
 
 function checkPaymentMethodsAdmin() {
-    if (!allowCodAdmin || !allowAdvanceAdmin) return;
 
-    const cod = allowCodAdmin.checked;
-    const advance = allowAdvanceAdmin.checked;
+    if (
+        !allowCodAdmin ||
+        !allowAdvanceAdmin
+    ) {
+        return;
+    }
+
+    const cod =
+        allowCodAdmin.checked;
+
+    const advance =
+        allowAdvanceAdmin.checked;
 
     if (paymentWarningAdmin) {
+
         paymentWarningAdmin.style.display =
-            (!cod && !advance) ? "block" : "none";
+            (!cod && !advance)
+                ? "block"
+                : "none";
 
         if (!cod && !advance) {
+
             paymentWarningAdmin.textContent =
                 "কমপক্ষে একটি payment method নির্বাচন করুন।";
         }
@@ -419,18 +601,25 @@ function checkPaymentMethodsAdmin() {
    ========================================================= */
 
 function previewMainImage() {
-    const file = mainImageAdmin?.files?.[0];
+
+    const file =
+        mainImageAdmin?.files?.[0];
 
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
+    const url =
+        URL.createObjectURL(file);
 
     if (mainImagePreviewImg) {
-        mainImagePreviewImg.src = url;
+
+        mainImagePreviewImg.src =
+            url;
     }
 
     if (mainImagePreview) {
-        mainImagePreview.style.display = "block";
+
+        mainImagePreview.style.display =
+            "block";
     }
 }
 
@@ -439,23 +628,36 @@ function previewMainImage() {
    IMAGE UPLOAD
    ========================================================= */
 
-async function uploadImage(file, folder = "products") {
+async function uploadImage(
+    file,
+    folder = "products"
+) {
+
     if (!file) return null;
 
     const extension =
-        file.name.split(".").pop().toLowerCase() || "jpg";
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase() || "jpg";
 
     const fileName =
         `${folder}/${Date.now()}-${Math.random()
             .toString(36)
             .substring(2, 10)}.${extension}`;
 
-    const { error } = await sb.storage
+    const {
+        error
+    } = await sb.storage
         .from("product-images")
-        .upload(fileName, file, {
-            cacheControl: "3600",
-            upsert: false
-        });
+        .upload(
+            fileName,
+            file,
+            {
+                cacheControl: "3600",
+                upsert: false
+            }
+        );
 
     if (error) {
         throw error;
@@ -465,7 +667,9 @@ async function uploadImage(file, folder = "products") {
         data: publicData
     } = sb.storage
         .from("product-images")
-        .getPublicUrl(fileName);
+        .getPublicUrl(
+            fileName
+        );
 
     return publicData.publicUrl;
 }
@@ -475,97 +679,159 @@ async function uploadImage(file, folder = "products") {
    VARIANTS
    ========================================================= */
 
-function addVariant(variantData = null) {
+function addVariant(
+    variantData = null
+) {
+
     if (!variantsContainer) return;
 
-    const variant = document.createElement("div");
+    const variant =
+        document.createElement("div");
 
-    variant.className = "admin-variant";
+    variant.className =
+        "admin-variant";
 
     variant.innerHTML = `
+
         <div class="variant-header">
+
             <strong>Variant</strong>
-            <button type="button"
-                    class="remove-variant-button">
+
+            <button
+                type="button"
+                class="remove-variant-button"
+            >
                 Remove
             </button>
+
         </div>
 
+
         <div class="form-group">
+
             <label>Variant Name</label>
+
             <input
                 type="text"
                 class="variant-name"
                 placeholder="যেমন: Black"
-                value="${escapeHTML(variantData?.name || "")}"
+                value="${escapeHTML(
+                    variantData?.name || ""
+                )}"
             >
+
         </div>
 
+
         <div class="form-group">
+
             <label>Variant Image</label>
+
             <input
                 type="file"
                 class="variant-image"
                 accept="image/*"
             >
+
         </div>
+
 
         ${
             variantData?.image_url
                 ? `
-                <div class="variant-existing-image">
-                    <img
-                        src="${escapeHTML(variantData.image_url)}"
-                        alt="Variant"
-                        style="max-width:100px;border-radius:8px;"
-                    >
-                </div>
+                    <div class="variant-existing-image">
+
+                        <img
+                            src="${escapeHTML(
+                                variantData.image_url
+                            )}"
+                            alt="Variant"
+                        >
+
+                    </div>
                 `
                 : ""
         }
 
+
         <div class="variant-sizes">
+
             <div class="sizes-title">
                 <strong>Sizes / Stock</strong>
             </div>
+
         </div>
 
-        <button type="button"
-                class="add-size-button">
+
+        <button
+            type="button"
+            class="add-size-button"
+        >
             + Add Size
         </button>
+
     `;
 
-    variantsContainer.appendChild(variant);
+    variantsContainer.appendChild(
+        variant
+    );
+
 
     const sizesContainer =
-        variant.querySelector(".variant-sizes");
+        variant.querySelector(
+            ".variant-sizes"
+        );
 
-    if (variantData?.variant_sizes?.length) {
+
+    if (
+        variantData?.variant_sizes?.length
+    ) {
+
         variantData.variant_sizes
-            .filter(size => size.active !== false)
+            .filter(
+                size =>
+                    size.active !== false
+            )
             .forEach(size => {
-                addSizeRow(sizesContainer, size);
+
+                addSizeRow(
+                    sizesContainer,
+                    size
+                );
+
             });
+
     } else {
-        addSizeRow(sizesContainer);
+
+        addSizeRow(
+            sizesContainer
+        );
     }
 }
 
 
-function addSizeRow(container, sizeData = null) {
+function addSizeRow(
+    container,
+    sizeData = null
+) {
+
     if (!container) return;
 
-    const row = document.createElement("div");
+    const row =
+        document.createElement("div");
 
-    row.className = "admin-size-row";
+    row.className =
+        "admin-size-row";
 
     row.innerHTML = `
+
         <input
             type="text"
             class="size-name"
             placeholder="Size"
-            value="${escapeHTML(sizeData?.size_name || "")}"
+            value="${escapeHTML(
+                sizeData?.size_name || ""
+            )}"
         >
 
         <input
@@ -585,10 +851,13 @@ function addSizeRow(container, sizeData = null) {
             value="${sizeData?.price ?? ""}"
         >
 
-        <button type="button"
-                class="remove-size-button">
+        <button
+            type="button"
+            class="remove-size-button"
+        >
             ×
         </button>
+
     `;
 
     container.appendChild(row);
@@ -600,75 +869,129 @@ function addSizeRow(container, sizeData = null) {
    ========================================================= */
 
 function collectVariants() {
-    if (!variantsContainer) return [];
+
+    if (!variantsContainer)
+        return [];
 
     const variantElements =
-        variantsContainer.querySelectorAll(".admin-variant");
+        variantsContainer
+            .querySelectorAll(
+                ".admin-variant"
+            );
 
     const variants = [];
 
-    variantElements.forEach(variantElement => {
 
-        const name =
+    variantElements.forEach(
+        variantElement => {
+
+            const name =
+                variantElement
+                    .querySelector(
+                        ".variant-name"
+                    )
+                    ?.value
+                    .trim() || "";
+
+
+            const imageFile =
+                variantElement
+                    .querySelector(
+                        ".variant-image"
+                    )
+                    ?.files?.[0] || null;
+
+
+            const existingImage =
+                variantElement
+                    .querySelector(
+                        ".variant-existing-image img"
+                    )
+                    ?.getAttribute("src") ||
+                null;
+
+
+            const sizes = [];
+
+
             variantElement
-                .querySelector(".variant-name")
-                ?.value
-                .trim() || "";
+                .querySelectorAll(
+                    ".admin-size-row"
+                )
+                .forEach(row => {
 
-        const imageFile =
-            variantElement
-                .querySelector(".variant-image")
-                ?.files?.[0] || null;
-
-        const existingImage =
-            variantElement
-                .querySelector(".variant-existing-image img")
-                ?.getAttribute("src") || null;
-
-        const sizes = [];
-
-        variantElement
-            .querySelectorAll(".admin-size-row")
-            .forEach(row => {
-
-                const sizeName =
-                    row.querySelector(".size-name")
+                    const sizeName =
+                        row.querySelector(
+                            ".size-name"
+                        )
                         ?.value
                         .trim() || "";
 
-                const stock =
-                    Number(
-                        row.querySelector(".size-stock")
-                            ?.value || 0
-                    );
 
-                const priceValue =
-                    row.querySelector(".size-price")
+                    const stock =
+                        Number(
+                            row.querySelector(
+                                ".size-stock"
+                            )
+                            ?.value || 0
+                        );
+
+
+                    const priceValue =
+                        row.querySelector(
+                            ".size-price"
+                        )
                         ?.value;
 
-                const price =
-                    priceValue === "" || priceValue == null
-                        ? null
-                        : Number(priceValue);
 
-                if (sizeName) {
-                    sizes.push({
-                        size_name: sizeName,
-                        stock,
-                        price
-                    });
-                }
-            });
+                    const price =
+                        priceValue === "" ||
+                        priceValue == null
+                            ? null
+                            : Number(
+                                priceValue
+                            );
 
-        if (name || imageFile || existingImage || sizes.length) {
-            variants.push({
-                name,
-                imageFile,
-                image_url: existingImage,
-                sizes
-            });
+
+                    if (sizeName) {
+
+                        sizes.push({
+                            size_name:
+                                sizeName,
+                            stock,
+                            price
+                        });
+
+                    }
+
+                });
+
+
+            if (
+                name ||
+                imageFile ||
+                existingImage ||
+                sizes.length
+            ) {
+
+                variants.push({
+
+                    name,
+
+                    imageFile,
+
+                    image_url:
+                        existingImage,
+
+                    sizes
+
+                });
+
+            }
+
         }
-    });
+    );
+
 
     return variants;
 }
@@ -679,74 +1002,115 @@ function collectVariants() {
    ========================================================= */
 
 async function saveProduct(event) {
+
     event.preventDefault();
 
     clearProductAlert();
 
+
     const name =
-        productNameAdmin?.value.trim() || "";
+        productNameAdmin?.value.trim() ||
+        "";
+
 
     const regularPrice =
-        Number(regularPriceAdmin?.value || 0);
+        Number(
+            regularPriceAdmin?.value || 0
+        );
+
 
     const salePrice =
-        Number(basePriceAdmin?.value || 0);
+        Number(
+            basePriceAdmin?.value || 0
+        );
+
 
     const description =
-        descriptionAdmin?.value.trim() || "";
+        descriptionAdmin?.value.trim() ||
+        "";
+
 
     const allowCod =
         !!allowCodAdmin?.checked;
 
+
     const allowAdvance =
         !!allowAdvanceAdmin?.checked;
 
+
     if (!name) {
+
         showProductAlert(
             "Product name দিন।",
             "error"
         );
+
         return;
     }
 
+
     if (salePrice <= 0) {
+
         showProductAlert(
             "Sale price সঠিকভাবে দিন।",
             "error"
         );
+
         return;
     }
+
 
     if (
         regularPrice > 0 &&
         salePrice > regularPrice
     ) {
+
         showProductAlert(
             "Sale price regular price-এর চেয়ে বেশি হতে পারবে না।",
             "error"
         );
+
         return;
     }
 
-    if (!allowCod && !allowAdvance) {
+
+    if (
+        !allowCod &&
+        !allowAdvance
+    ) {
+
         showProductAlert(
             "কমপক্ষে একটি payment method নির্বাচন করুন।",
             "error"
         );
+
         return;
     }
 
-    saveProductButton.disabled = true;
-    saveProductButton.textContent = "Saving...";
+
+    const wasEditing =
+        !!editingProductId;
+
+
+    saveProductButton.disabled =
+        true;
+
+    saveProductButton.textContent =
+        "Saving...";
+
 
     try {
 
         let mainImageUrl = null;
 
+
         const mainImageFile =
-            mainImageAdmin?.files?.[0] || null;
+            mainImageAdmin?.files?.[0] ||
+            null;
+
 
         if (mainImageFile) {
+
             showProductAlert(
                 "Main image upload হচ্ছে...",
                 "info"
@@ -757,91 +1121,146 @@ async function saveProduct(event) {
                     mainImageFile,
                     "products"
                 );
+
         } else if (editingProductId) {
 
-            const { data, error } =
-                await sb
-                    .from("products")
-                    .select("main_image_url")
-                    .eq("id", editingProductId)
-                    .single();
+            const {
+                data,
+                error
+            } = await sb
+                .from("products")
+                .select(
+                    "main_image_url"
+                )
+                .eq(
+                    "id",
+                    editingProductId
+                )
+                .single();
 
             if (error) throw error;
 
             mainImageUrl =
-                data?.main_image_url || null;
+                data?.main_image_url ||
+                null;
         }
 
+
         const productData = {
+
             name,
+
             regular_price:
                 regularPrice > 0
                     ? regularPrice
                     : null,
-            base_price: salePrice,
+
+            base_price:
+                salePrice,
+
             description,
-            main_image_url: mainImageUrl,
-            allow_cod: allowCod,
-            allow_advance: allowAdvance,
-            active: true
+
+            main_image_url:
+                mainImageUrl,
+
+            allow_cod:
+                allowCod,
+
+            allow_advance:
+                allowAdvance,
+
+            active:
+                true
         };
+
 
         let productId;
 
+
         if (editingProductId) {
 
-            const { error } =
-                await sb
-                    .from("products")
-                    .update(productData)
-                    .eq("id", editingProductId);
+            const {
+                error
+            } = await sb
+                .from("products")
+                .update(
+                    productData
+                )
+                .eq(
+                    "id",
+                    editingProductId
+                );
 
             if (error) throw error;
 
-            productId = editingProductId;
+            productId =
+                editingProductId;
 
-            await deactivateOldVariants(productId);
+            await deactivateOldVariants(
+                productId
+            );
 
         } else {
 
-            const { data, error } =
-                await sb
-                    .from("products")
-                    .insert(productData)
-                    .select("id")
-                    .single();
+            const {
+                data,
+                error
+            } = await sb
+                .from("products")
+                .insert(
+                    productData
+                )
+                .select("id")
+                .single();
 
             if (error) throw error;
 
-            productId = data.id;
+            productId =
+                data.id;
         }
 
-        const variants = collectVariants();
+
+        const variants =
+            collectVariants();
+
 
         await saveVariants(
             productId,
             variants
         );
 
+
         showProductAlert(
-            editingProductId
+            wasEditing
                 ? "Product successfully updated!"
                 : "Product successfully added!",
             "success"
         );
 
+
         resetProductForm();
 
-        await Promise.all([
+
+        await Promise.allSettled([
+
             loadProducts(),
+
             loadStats()
+
         ]);
 
-        openSection("productsSectionAdmin");
+
+        await openSection(
+            "productsSectionAdmin"
+        );
+
 
     } catch (error) {
 
-        console.error("Save product error:", error);
+        console.error(
+            "Save product error:",
+            error
+        );
 
         showProductAlert(
             error.message ||
@@ -851,9 +1270,11 @@ async function saveProduct(event) {
 
     } finally {
 
-        saveProductButton.disabled = false;
+        saveProductButton.disabled =
+            false;
+
         saveProductButton.textContent =
-            editingProductId
+            wasEditing
                 ? "Update Product"
                 : "Save Product";
     }
@@ -864,42 +1285,62 @@ async function saveProduct(event) {
    DEACTIVATE OLD VARIANTS
    ========================================================= */
 
-async function deactivateOldVariants(productId) {
+async function deactivateOldVariants(
+    productId
+) {
 
-    const { data: oldVariants, error } =
-        await sb
-            .from("product_variants")
-            .select("id")
-            .eq("product_id", productId);
+    const {
+        data: oldVariants,
+        error
+    } = await sb
+        .from("product_variants")
+        .select("id")
+        .eq(
+            "product_id",
+            productId
+        );
 
     if (error) {
         throw error;
     }
 
-    if (!oldVariants?.length) return;
+    if (!oldVariants?.length)
+        return;
 
-    for (const variant of oldVariants) {
 
-        const { error: sizeError } =
-            await sb
-                .from("variant_sizes")
-                .update({
-                    active: false
-                })
-                .eq("variant_id", variant.id);
+    for (
+        const variant of oldVariants
+    ) {
+
+        const {
+            error: sizeError
+        } = await sb
+            .from("variant_sizes")
+            .update({
+                active: false
+            })
+            .eq(
+                "variant_id",
+                variant.id
+            );
 
         if (sizeError) {
             throw sizeError;
         }
     }
 
-    const { error: variantError } =
-        await sb
-            .from("product_variants")
-            .update({
-                active: false
-            })
-            .eq("product_id", productId);
+
+    const {
+        error: variantError
+    } = await sb
+        .from("product_variants")
+        .update({
+            active: false
+        })
+        .eq(
+            "product_id",
+            productId
+        );
 
     if (variantError) {
         throw variantError;
@@ -911,12 +1352,19 @@ async function deactivateOldVariants(productId) {
    SAVE VARIANTS
    ========================================================= */
 
-async function saveVariants(productId, variants) {
+async function saveVariants(
+    productId,
+    variants
+) {
 
-    for (const variant of variants) {
+    for (
+        const variant of variants
+    ) {
 
         let imageUrl =
-            variant.image_url || null;
+            variant.image_url ||
+            null;
+
 
         if (variant.imageFile) {
 
@@ -927,46 +1375,81 @@ async function saveVariants(productId, variants) {
                 );
         }
 
+
         const variantData = {
-            product_id: productId,
-            name: variant.name || null,
-            image_url: imageUrl,
-            active: true
+
+            product_id:
+                productId,
+
+            name:
+                variant.name || null,
+
+            image_url:
+                imageUrl,
+
+            active:
+                true
         };
+
 
         const {
             data: savedVariant,
             error: variantError
         } = await sb
             .from("product_variants")
-            .insert(variantData)
+            .insert(
+                variantData
+            )
             .select("id")
             .single();
+
 
         if (variantError) {
             throw variantError;
         }
 
-        if (!variant.sizes?.length) {
+
+        if (!variant.sizes?.length)
             continue;
-        }
+
 
         const sizeRows =
-            variant.sizes.map(size => ({
-                variant_id: savedVariant.id,
-                size_name: size.size_name,
-                stock: Number(size.stock || 0),
-                price:
-                    size.price == null
-                        ? null
-                        : Number(size.price),
-                active: true
-            }));
+            variant.sizes.map(
+                size => ({
 
-        const { error: sizeError } =
-            await sb
-                .from("variant_sizes")
-                .insert(sizeRows);
+                    variant_id:
+                        savedVariant.id,
+
+                    size_name:
+                        size.size_name,
+
+                    stock:
+                        Number(
+                            size.stock || 0
+                        ),
+
+                    price:
+                        size.price == null
+                            ? null
+                            : Number(
+                                size.price
+                            ),
+
+                    active:
+                        true
+
+                })
+            );
+
+
+        const {
+            error: sizeError
+        } = await sb
+            .from("variant_sizes")
+            .insert(
+                sizeRows
+            );
+
 
         if (sizeError) {
             throw sizeError;
@@ -979,78 +1462,111 @@ async function saveVariants(productId, variants) {
    EDIT PRODUCT
    ========================================================= */
 
-async function editProduct(productId) {
+async function editProduct(
+    productId
+) {
 
     try {
 
-        openSection("addProductSection");
+        await openSection(
+            "addProductSection"
+        );
+
 
         showProductAlert(
             "Product information loading...",
             "info"
         );
 
-        const { data, error } =
-            await sb
-                .from("products")
-                .select(`
+
+        const {
+            data,
+            error
+        } = await sb
+            .from("products")
+            .select(`
+
+                id,
+                name,
+                regular_price,
+                base_price,
+                description,
+                main_image_url,
+                allow_cod,
+                allow_advance,
+                active,
+
+                product_variants (
+
                     id,
                     name,
-                    regular_price,
-                    base_price,
-                    description,
-                    main_image_url,
-                    allow_cod,
-                    allow_advance,
+                    image_url,
                     active,
-                    product_variants (
+
+                    variant_sizes (
+
                         id,
-                        name,
-                        image_url,
-                        active,
-                        variant_sizes (
-                            id,
-                            size_name,
-                            stock,
-                            price,
-                            active
-                        )
+                        size_name,
+                        stock,
+                        price,
+                        active
+
                     )
-                `)
-                .eq("id", productId)
-                .single();
+
+                )
+
+            `)
+            .eq(
+                "id",
+                productId
+            )
+            .single();
+
 
         if (error) throw error;
 
-        editingProductId = data.id;
+
+        editingProductId =
+            data.id;
+
 
         if (productFormTitle) {
+
             productFormTitle.textContent =
                 "Edit Product";
         }
 
+
         if (saveProductButton) {
+
             saveProductButton.textContent =
                 "Update Product";
         }
 
+
         productNameAdmin.value =
             data.name || "";
+
 
         regularPriceAdmin.value =
             data.regular_price ?? "";
 
+
         basePriceAdmin.value =
             data.base_price ?? "";
+
 
         descriptionAdmin.value =
             data.description || "";
 
+
         allowCodAdmin.checked =
             data.allow_cod !== false;
 
+
         allowAdvanceAdmin.checked =
             data.allow_advance === true;
+
 
         if (data.main_image_url) {
 
@@ -1061,35 +1577,60 @@ async function editProduct(productId) {
                 "block";
         }
 
-        variantsContainer.innerHTML = "";
+
+        variantsContainer.innerHTML =
+            "";
+
 
         const activeVariants =
-            (data.product_variants || [])
-                .filter(v => v.active !== false);
+            (
+                data.product_variants ||
+                []
+            )
+            .filter(
+                v =>
+                    v.active !== false
+            );
 
-        activeVariants.forEach(variant => {
 
-            addVariant({
-                ...variant,
-                variant_sizes:
-                    (variant.variant_sizes || [])
-                        .filter(size =>
-                            size.active !== false
+        activeVariants.forEach(
+            variant => {
+
+                addVariant({
+
+                    ...variant,
+
+                    variant_sizes:
+                        (
+                            variant.variant_sizes ||
+                            []
                         )
-            });
+                        .filter(
+                            size =>
+                                size.active !== false
+                        )
 
-        });
+                });
+
+            }
+        );
+
 
         checkPaymentMethodsAdmin();
+
 
         showProductAlert(
             "Product edit করার জন্য প্রস্তুত।",
             "info"
         );
 
+
     } catch (error) {
 
-        console.error("Edit product error:", error);
+        console.error(
+            "Edit product error:",
+            error
+        );
 
         showProductAlert(
             error.message ||
@@ -1106,183 +1647,352 @@ async function editProduct(productId) {
 
 async function loadProducts() {
 
-    if (!adminProductsList) return;
+    if (!adminProductsList)
+        return;
+
 
     adminProductsList.innerHTML =
-        `<p>Products loading...</p>`;
+        `<div class="admin-loading">
+            Products loading...
+        </div>`;
+
 
     try {
 
-        const { data, error } =
-            await sb
-                .from("products")
-                .select(`
+        const {
+            data,
+            error
+        } = await sb
+            .from("products")
+            .select(`
+
+                id,
+                name,
+                regular_price,
+                base_price,
+                description,
+                main_image_url,
+                active,
+
+                product_variants (
+
                     id,
                     name,
-                    regular_price,
-                    base_price,
-                    description,
-                    main_image_url,
                     active,
-                    product_variants (
-                        id,
-                        name,
-                        active,
-                        variant_sizes (
-                            stock,
-                            active
-                        )
+
+                    variant_sizes (
+                        stock,
+                        active
                     )
-                `)
-                .order("created_at", {
+
+                )
+
+            `)
+            .order(
+                "created_at",
+                {
                     ascending: false
-                });
+                }
+            );
+
 
         if (error) throw error;
+
 
         if (!data?.length) {
 
             adminProductsList.innerHTML =
-                `<p>No products found.</p>`;
+                `<div class="empty-admin">
+                    No products found.
+                </div>`;
 
             return;
         }
 
-        adminProductsList.innerHTML =
-            data.map(product => {
 
-                const variants =
-                    (product.product_variants || [])
-                        .filter(v =>
-                            v.active !== false
+        adminProductsList.innerHTML =
+            data.map(
+                product => {
+
+                    const variants =
+                        (
+                            product.product_variants ||
+                            []
+                        )
+                        .filter(
+                            v =>
+                                v.active !== false
                         );
 
-                let stock = 0;
 
-                variants.forEach(variant => {
+                    let stock = 0;
 
-                    (variant.variant_sizes || [])
-                        .filter(size =>
-                            size.active !== false
-                        )
-                        .forEach(size => {
-                            stock += Number(
-                                size.stock || 0
+
+                    variants.forEach(
+                        variant => {
+
+                            (
+                                variant.variant_sizes ||
+                                []
+                            )
+                            .filter(
+                                size =>
+                                    size.active !== false
+                            )
+                            .forEach(
+                                size => {
+
+                                    stock +=
+                                        Number(
+                                            size.stock || 0
+                                        );
+
+                                }
                             );
-                        });
-                });
 
-                const image =
-                    product.main_image_url
-                        ? `
-                            <img
-                                src="${escapeHTML(product.main_image_url)}"
-                                alt="${escapeHTML(product.name)}"
-                                style="
-                                    width:70px;
-                                    height:70px;
-                                    object-fit:cover;
-                                    border-radius:8px;
-                                "
-                            >
-                        `
-                        : `
-                            <div
-                                style="
-                                    width:70px;
-                                    height:70px;
-                                    border-radius:8px;
-                                    background:#eee;
-                                    display:flex;
-                                    align-items:center;
-                                    justify-content:center;
-                                "
-                            >
-                                No Image
+                        }
+                    );
+
+
+                    const image =
+                        product.main_image_url
+
+                            ? `
+                                <div class="admin-product-image">
+
+                                    <img
+                                        src="${escapeHTML(
+                                            product.main_image_url
+                                        )}"
+                                        alt="${escapeHTML(
+                                            product.name
+                                        )}"
+                                    >
+
+                                </div>
+                            `
+
+                            : `
+                                <div class="admin-product-image">
+
+                                    <div class="no-image">
+                                        No Image
+                                    </div>
+
+                                </div>
+                            `;
+
+
+                    const status =
+                        product.active !== false
+                            ? "Active"
+                            : "Inactive";
+
+
+                    return `
+
+                        <div class="admin-product-card">
+
+                            ${image}
+
+
+                            <div class="admin-product-info">
+
+                                <h3>
+                                    ${escapeHTML(
+                                        product.name
+                                    )}
+                                </h3>
+
+
+                                <div class="admin-product-price">
+
+                                    ${
+                                        product.regular_price
+                                            ? `
+                                                <span class="admin-regular-price">
+                                                    ${money(
+                                                        product.regular_price
+                                                    )}
+                                                </span>
+                                            `
+                                            : ""
+                                    }
+
+                                    <span class="admin-sale-price">
+                                        ${money(
+                                            product.base_price
+                                        )}
+                                    </span>
+
+                                </div>
+
+
+                                <div class="admin-product-meta">
+                                    Stock:
+                                    <strong>
+                                        ${stock}
+                                    </strong>
+                                </div>
+
+
+                                <span
+                                    class="admin-product-status ${
+                                        product.active !== false
+                                            ? "active"
+                                            : "inactive"
+                                    }"
+                                >
+                                    ${status}
+                                </span>
+
                             </div>
-                        `;
 
-                const status =
-                    product.active !== false
-                        ? "Active"
-                        : "Inactive";
 
-                return `
-                    <div
-                        class="admin-product-card"
-                        style="
-                            display:flex;
-                            gap:15px;
-                            align-items:center;
-                            padding:15px;
-                            border-bottom:1px solid #ddd;
-                        "
-                    >
+                            <div class="admin-product-actions">
 
-                        ${image}
+                                <button
+                                    type="button"
+                                    class="admin-edit-button edit-product-button"
+                                    data-edit-id="${escapeHTML(
+                                        product.id
+                                    )}"
+                                >
+                                    Edit
+                                </button>
 
-                        <div style="flex:1;">
-
-                            <h3 style="margin:0 0 5px;">
-                                ${escapeHTML(product.name)}
-                            </h3>
-
-                            <div>
-                                Sale:
-                                <strong>
-                                    ${money(product.base_price)}
-                                </strong>
                             </div>
-
-                            ${
-                                product.regular_price
-                                    ? `
-                                        <div>
-                                            Regular:
-                                            <s>
-                                                ${money(product.regular_price)}
-                                            </s>
-                                        </div>
-                                    `
-                                    : ""
-                            }
-
-                            <div>
-                                Stock:
-                                <strong>${stock}</strong>
-                            </div>
-
-                            <small>
-                                ${status}
-                            </small>
 
                         </div>
 
-                        <button
-                            type="button"
-                            class="edit-product-button"
-                            data-edit-id="${product.id}"
-                        >
-                            Edit
-                        </button>
+                    `;
 
-                    </div>
-                `;
+                }
+            ).join("");
 
-            }).join("");
 
     } catch (error) {
 
-        console.error("Load products error:", error);
+        console.error(
+            "Load products error:",
+            error
+        );
+
 
         adminProductsList.innerHTML =
-            `<p style="color:red;">
+            `<div class="admin-error">
                 ${escapeHTML(
                     error.message ||
                     "Products load করতে সমস্যা হয়েছে।"
                 )}
-            </p>`;
+            </div>`;
     }
+}
+
+
+/* =========================================================
+   NORMALIZE ORDER STATUS
+   ========================================================= */
+
+function normalizeOrderStatus(
+    status
+) {
+
+    const value =
+        String(
+            status || "pending"
+        )
+        .trim()
+        .toLowerCase();
+
+
+    /*
+       আগের database-এর pending order
+       এখন New হিসেবে দেখানো হবে।
+    */
+
+    if (
+        value === "pending" ||
+        value === "new"
+    ) {
+
+        return "new";
+    }
+
+
+    if (
+        value === "shipped" ||
+        value === "sent" ||
+        value === "dispatched"
+    ) {
+
+        return "shipped";
+    }
+
+
+    if (
+        value === "received" ||
+        value === "delivered"
+    ) {
+
+        return "received";
+    }
+
+
+    if (
+        value === "rejected" ||
+        value === "declined"
+    ) {
+
+        return "rejected";
+    }
+
+
+    if (
+        value === "completed" ||
+        value === "complete"
+    ) {
+
+        return "completed";
+    }
+
+
+    return value || "new";
+}
+
+
+/* =========================================================
+   ORDER STATUS LABEL
+   ========================================================= */
+
+function getOrderStatusLabel(
+    status
+) {
+
+    const labels = {
+
+        new:
+            "New",
+
+        shipped:
+            "Shipped",
+
+        received:
+            "Received",
+
+        rejected:
+            "Rejected",
+
+        completed:
+            "Completed"
+
+    };
+
+
+    return (
+        labels[status] ||
+        status
+    );
 }
 
 
@@ -1292,100 +2002,211 @@ async function loadProducts() {
 
 async function loadStats() {
 
+    /*
+       আগে loading state দেওয়া হচ্ছে।
+       এতে পুরোনো 00/0 অবস্থায় আটকে থাকার
+       সমস্যা কমবে।
+    */
+
+    if (statProducts)
+        statProducts.textContent =
+            "…";
+
+    if (statStock)
+        statStock.textContent =
+            "…";
+
+    if (statPendingOrders)
+        statPendingOrders.textContent =
+            "…";
+
+    if (statCompletedOrders)
+        statCompletedOrders.textContent =
+            "…";
+
+
     try {
 
         const [
             productsResult,
-            variantsResult,
             sizesResult,
             ordersResult
         ] = await Promise.all([
 
             sb
                 .from("products")
-                .select("id, active"),
-
-            sb
-                .from("product_variants")
-                .select("id, active"),
+                .select(
+                    "id, active"
+                ),
 
             sb
                 .from("variant_sizes")
-                .select("stock, active"),
+                .select(
+                    "stock, active"
+                ),
 
             sb
                 .from("orders")
-                .select("id, status")
+                .select(
+                    "id, status"
+                )
+
         ]);
 
-        if (productsResult.error)
+
+        if (
+            productsResult.error
+        ) {
+
             throw productsResult.error;
+        }
 
-        if (variantsResult.error)
-            throw variantsResult.error;
 
-        if (sizesResult.error)
+        if (
+            sizesResult.error
+        ) {
+
             throw sizesResult.error;
+        }
 
-        if (ordersResult.error)
+
+        if (
+            ordersResult.error
+        ) {
+
             throw ordersResult.error;
+        }
+
 
         const products =
             productsResult.data || [];
 
+
         const sizes =
             sizesResult.data || [];
+
 
         const orders =
             ordersResult.data || [];
 
+
         const totalProducts =
             products.filter(
-                p => p.active !== false
+                p =>
+                    p.active !== false
             ).length;
+
 
         const totalStock =
             sizes
-                .filter(s => s.active !== false)
+                .filter(
+                    s =>
+                        s.active !== false
+                )
                 .reduce(
-                    (sum, s) =>
-                        sum + Number(s.stock || 0),
+                    (
+                        sum,
+                        s
+                    ) =>
+                        sum +
+                        Number(
+                            s.stock || 0
+                        ),
                     0
                 );
 
-        const pending =
+
+        /*
+           New = pending/new
+        */
+
+        const newOrders =
             orders.filter(
-                o =>
-                    String(o.status || "")
-                        .toLowerCase() === "pending"
+                order =>
+                    normalizeOrderStatus(
+                        order.status
+                    ) === "new"
             ).length;
 
-        const completed =
+
+        const completedOrders =
             orders.filter(
-                o =>
-                    String(o.status || "")
-                        .toLowerCase() === "completed"
+                order =>
+                    normalizeOrderStatus(
+                        order.status
+                    ) === "completed"
             ).length;
 
-        if (statProducts)
+
+        /*
+           DOM-এ সরাসরি number বসানো।
+        */
+
+        if (statProducts) {
+
             statProducts.textContent =
-                totalProducts;
+                String(
+                    totalProducts
+                );
+        }
 
-        if (statStock)
+
+        if (statStock) {
+
             statStock.textContent =
-                totalStock;
+                String(
+                    totalStock
+                );
+        }
 
-        if (statPendingOrders)
+
+        if (statPendingOrders) {
+
             statPendingOrders.textContent =
-                pending;
+                String(
+                    newOrders
+                );
+        }
 
-        if (statCompletedOrders)
+
+        if (statCompletedOrders) {
+
             statCompletedOrders.textContent =
-                completed;
+                String(
+                    completedOrders
+                );
+
+
+        }
 
     } catch (error) {
 
-        console.error("Stats error:", error);
+        console.error(
+            "Stats error:",
+            error
+        );
+
+
+        /*
+           Error হলে 00 না দেখিয়ে
+           আসল error indication থাকবে।
+        */
+
+        if (statProducts)
+            statProducts.textContent =
+                "0";
+
+        if (statStock)
+            statStock.textContent =
+                "0";
+
+        if (statPendingOrders)
+            statPendingOrders.textContent =
+                "0";
+
+        if (statCompletedOrders)
+            statCompletedOrders.textContent =
+                "0";
     }
 }
 
@@ -1396,38 +2217,64 @@ async function loadStats() {
 
 async function loadOrders() {
 
-    if (!adminOrdersList) return;
+    if (!adminOrdersList)
+        return;
+
 
     adminOrdersList.innerHTML =
-        `<p>Orders loading...</p>`;
+        `<div class="admin-loading">
+            Orders loading...
+        </div>`;
+
 
     try {
 
-        const { data, error } =
-            await sb
-                .from("orders")
-                .select("*")
-                .order("created_at", {
+        const {
+            data,
+            error
+        } = await sb
+            .from("orders")
+            .select("*")
+            .order(
+                "created_at",
+                {
                     ascending: false
-                });
+                }
+            );
+
 
         if (error) throw error;
 
-        allOrders = data || [];
 
-        renderOrders(allOrders);
+        allOrders =
+            data || [];
+
+
+        /*
+           Current filter ধরে আবার render।
+        */
+
+        filterOrders(
+            currentOrderFilter,
+            false
+        );
+
 
     } catch (error) {
 
-        console.error("Load orders error:", error);
+        console.error(
+            "Load orders error:",
+            error
+        );
+
 
         adminOrdersList.innerHTML =
-            `<p style="color:red;">
+            `<div class="admin-error">
                 ${escapeHTML(
                     error.message ||
                     "Orders load করতে সমস্যা হয়েছে।"
                 )}
-            </p>`;
+            </div>`;
     }
 }
 
@@ -1436,251 +2283,623 @@ async function loadOrders() {
    RENDER ORDERS
    ========================================================= */
 
-function renderOrders(orders) {
+function renderOrders(
+    orders
+) {
 
-    if (!adminOrdersList) return;
+    if (!adminOrdersList)
+        return;
+
 
     if (!orders?.length) {
 
+        const message =
+            currentOrderFilter === "all"
+                ? "No orders found."
+                : `এই filter-এ কোনো order নেই।`;
+
+
         adminOrdersList.innerHTML =
-            `<p>No orders found.</p>`;
+            `<div class="order-empty">
+                ${escapeHTML(message)}
+            </div>`;
+
 
         return;
     }
 
+
     adminOrdersList.innerHTML =
-        orders.map(order => {
+        orders.map(
+            order => {
 
-            const status =
-                String(order.status || "pending")
-                    .toLowerCase();
 
-            const date =
-                order.created_at
-                    ? new Date(
-                        order.created_at
-                    ).toLocaleString("en-BD")
-                    : "";
+                const status =
+                    normalizeOrderStatus(
+                        order.status
+                    );
 
-            const customerName =
-                order.customer_name ||
-                order.name ||
-                "Unknown";
 
-            const phone =
-                order.phone ||
-                order.customer_phone ||
-                "";
+                const statusLabel =
+                    getOrderStatusLabel(
+                        status
+                    );
 
-            const address =
-                order.address ||
-                "";
 
-            const productName =
-                order.product_name ||
-                order.product ||
-                "";
+                const date =
+                    order.created_at
+                        ? new Date(
+                            order.created_at
+                        ).toLocaleString(
+                            "en-BD"
+                        )
+                        : "";
 
-            const variantName =
-                order.variant_name ||
-                "";
 
-            const sizeName =
-                order.size_name ||
-                "";
+                const customerName =
+                    order.customer_name ||
+                    order.name ||
+                    "Unknown";
 
-            const quantity =
-                order.quantity || 1;
 
-            const amount =
-                order.total_amount ??
-                order.total ??
-                order.amount ??
-                0;
+                const phone =
+                    order.phone ||
+                    order.customer_phone ||
+                    "";
 
-            const paymentMethod =
-                order.payment_method ||
-                "";
 
-            const transactionId =
-                order.transaction_id ||
-                "";
+                const address =
+                    order.address ||
+                    "";
 
-            return `
-                <div
-                    class="admin-order-card"
-                    style="
-                        padding:15px;
-                        border-bottom:1px solid #ddd;
-                        margin-bottom:10px;
-                    "
-                >
+
+                const productName =
+                    order.product_name ||
+                    order.product ||
+                    "";
+
+
+                const variantName =
+                    order.variant_name ||
+                    "";
+
+
+                const sizeName =
+                    order.size_name ||
+                    "";
+
+
+                const quantity =
+                    order.quantity ||
+                    1;
+
+
+                const amount =
+                    order.total_amount ??
+                    order.total ??
+                    order.amount ??
+                    0;
+
+
+                const paymentMethod =
+                    order.payment_method ||
+                    "";
+
+
+                const transactionId =
+                    order.transaction_id ||
+                    "";
+
+
+                return `
 
                     <div
-                        style="
-                            display:flex;
-                            justify-content:space-between;
-                            gap:10px;
-                        "
+                        class="admin-order-card"
                     >
 
-                        <strong>
-                            Order #${escapeHTML(order.id)}
-                        </strong>
 
-                        <strong>
-                            ${escapeHTML(status)}
-                        </strong>
+                        <div class="order-main">
+
+                            <div class="order-title">
+
+                                Order #
+                                ${escapeHTML(
+                                    order.id
+                                )}
+
+                            </div>
+
+
+                            <div class="order-customer">
+
+                                Customer:
+                                ${escapeHTML(
+                                    customerName
+                                )}
+
+                            </div>
+
+
+                            ${
+                                phone
+                                    ? `
+                                        <div class="order-phone">
+                                            <strong>Phone:</strong>
+                                            ${escapeHTML(
+                                                phone
+                                            )}
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                address
+                                    ? `
+                                        <div class="order-address">
+                                            <strong>Address:</strong>
+                                            ${escapeHTML(
+                                                address
+                                            )}
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                productName
+                                    ? `
+                                        <div class="order-product">
+                                            <strong>Product:</strong>
+                                            ${escapeHTML(
+                                                productName
+                                            )}
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                variantName
+                                    ? `
+                                        <div class="order-variant">
+                                            <strong>Variant:</strong>
+                                            ${escapeHTML(
+                                                variantName
+                                            )}
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                sizeName
+                                    ? `
+                                        <div class="order-variant">
+                                            <strong>Size:</strong>
+                                            ${escapeHTML(
+                                                sizeName
+                                            )}
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
+                            <div style="margin-top:5px;">
+
+                                <strong>
+                                    Quantity:
+                                </strong>
+
+                                ${escapeHTML(
+                                    quantity
+                                )}
+
+                            </div>
+
+
+                            <div class="order-total">
+
+                                ${money(
+                                    amount
+                                )}
+
+                            </div>
+
+
+                            ${
+                                paymentMethod ||
+                                transactionId
+                                    ? `
+                                        <div class="order-payment">
+
+                                            ${
+                                                paymentMethod
+                                                    ? `
+                                                        <div>
+                                                            <strong>
+                                                                Payment:
+                                                            </strong>
+
+                                                            ${escapeHTML(
+                                                                paymentMethod
+                                                            )}
+                                                        </div>
+                                                    `
+                                                    : ""
+                                            }
+
+
+                                            ${
+                                                transactionId
+                                                    ? `
+                                                        <div>
+                                                            <strong>
+                                                                Transaction ID:
+                                                            </strong>
+
+                                                            ${escapeHTML(
+                                                                transactionId
+                                                            )}
+                                                        </div>
+                                                    `
+                                                    : ""
+                                            }
+
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                date
+                                    ? `
+                                        <div class="order-date">
+                                            ${escapeHTML(
+                                                date
+                                            )}
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+                        </div>
+
+
+                        <div class="order-actions">
+
+
+                            <span
+                                class="
+                                    order-status
+                                    ${escapeHTML(
+                                        status
+                                    )}
+                                "
+                            >
+                                ${escapeHTML(
+                                    statusLabel
+                                )}
+                            </span>
+
+
+                            ${
+                                status === "new"
+                                    ? `
+                                        <button
+                                            type="button"
+                                            class="order-status-button"
+                                            data-order-id="${escapeHTML(
+                                                order.id
+                                            )}"
+                                            data-new-status="shipped"
+                                        >
+                                            📦 Mark Shipped
+                                        </button>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                status === "shipped"
+                                    ? `
+                                        <button
+                                            type="button"
+                                            class="order-status-button"
+                                            data-order-id="${escapeHTML(
+                                                order.id
+                                            )}"
+                                            data-new-status="received"
+                                        >
+                                            ✅ Mark Received
+                                        </button>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                status === "received"
+                                    ? `
+
+                                        <button
+                                            type="button"
+                                            class="order-status-button"
+                                            data-order-id="${escapeHTML(
+                                                order.id
+                                            )}"
+                                            data-new-status="completed"
+                                        >
+                                            🏁 Mark Completed
+                                        </button>
+
+
+                                        <button
+                                            type="button"
+                                            class="order-status-button"
+                                            data-order-id="${escapeHTML(
+                                                order.id
+                                            )}"
+                                            data-new-status="rejected"
+                                        >
+                                            ❌ Mark Rejected
+                                        </button>
+
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                status === "completed"
+                                    ? `
+                                        <button
+                                            type="button"
+                                            class="delete-order-button"
+                                            data-order-id="${escapeHTML(
+                                                order.id
+                                            )}"
+                                        >
+                                            🗑️ Delete Order
+                                        </button>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                status === "rejected"
+                                    ? `
+                                        <div
+                                            style="
+                                                color:#c00000;
+                                                font-size:12px;
+                                                font-weight:700;
+                                            "
+                                        >
+                                            Order Rejected
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+
+                        </div>
 
                     </div>
 
-                    <hr>
+                `;
 
-                    <div>
-                        <strong>Customer:</strong>
-                        ${escapeHTML(customerName)}
-                    </div>
-
-                    <div>
-                        <strong>Phone:</strong>
-                        ${escapeHTML(phone)}
-                    </div>
-
-                    <div>
-                        <strong>Address:</strong>
-                        ${escapeHTML(address)}
-                    </div>
-
-                    <div>
-                        <strong>Product:</strong>
-                        ${escapeHTML(productName)}
-                    </div>
-
-                    ${
-                        variantName
-                            ? `
-                                <div>
-                                    <strong>Variant:</strong>
-                                    ${escapeHTML(variantName)}
-                                </div>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        sizeName
-                            ? `
-                                <div>
-                                    <strong>Size:</strong>
-                                    ${escapeHTML(sizeName)}
-                                </div>
-                            `
-                            : ""
-                    }
-
-                    <div>
-                        <strong>Quantity:</strong>
-                        ${escapeHTML(quantity)}
-                    </div>
-
-                    <div>
-                        <strong>Total:</strong>
-                        ${money(amount)}
-                    </div>
-
-                    ${
-                        paymentMethod
-                            ? `
-                                <div>
-                                    <strong>Payment:</strong>
-                                    ${escapeHTML(paymentMethod)}
-                                </div>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        transactionId
-                            ? `
-                                <div>
-                                    <strong>Transaction ID:</strong>
-                                    ${escapeHTML(transactionId)}
-                                </div>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        date
-                            ? `
-                                <div>
-                                    <small>${escapeHTML(date)}</small>
-                                </div>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        status !== "completed"
-                            ? `
-                                <button
-                                    type="button"
-                                    class="complete-order-button"
-                                    data-order-id="${escapeHTML(order.id)}"
-                                >
-                                    Mark Completed
-                                </button>
-                            `
-                            : ""
-                    }
-
-                </div>
-            `;
-
-        }).join("");
+            }
+        ).join("");
 }
 
 
 /* =========================================================
-   COMPLETE ORDER
+   UPDATE ORDER STATUS
    ========================================================= */
 
-async function completeOrder(orderId) {
+async function updateOrderStatus(
+    orderId,
+    newStatus
+) {
 
-    if (!orderId) return;
+    if (
+        !orderId ||
+        !newStatus
+    ) {
+        return;
+    }
+
+
+    const labels = {
+
+        shipped:
+            "Shipped",
+
+        received:
+            "Received",
+
+        rejected:
+            "Rejected",
+
+        completed:
+            "Completed"
+
+    };
+
+
+    const label =
+        labels[newStatus] ||
+        newStatus;
+
 
     const confirmed =
         confirm(
-            "এই order-টি completed হিসেবে mark করবেন?"
+            `এই order-টি "${label}" হিসেবে update করবেন?`
         );
 
-    if (!confirmed) return;
+
+    if (!confirmed)
+        return;
+
 
     try {
 
-        const { error } =
-            await sb
-                .from("orders")
-                .update({
-                    status: "completed"
-                })
-                .eq("id", orderId);
+        const {
+            error
+        } = await sb
+            .from("orders")
+            .update({
+                status:
+                    newStatus
+            })
+            .eq(
+                "id",
+                orderId
+            );
 
-        if (error) throw error;
 
-        await loadOrders();
-        await loadStats();
+        if (error) {
+
+            throw error;
+        }
+
+
+        await Promise.allSettled([
+
+            loadOrders(),
+
+            loadStats()
+
+        ]);
+
 
     } catch (error) {
 
         console.error(
-            "Complete order error:",
+            "Order status update error:",
             error
         );
 
+
         alert(
             error.message ||
-            "Order update করতে সমস্যা হয়েছে।"
+            "Order status update করতে সমস্যা হয়েছে।"
+        );
+    }
+}
+
+
+/* =========================================================
+   DELETE COMPLETED ORDER
+   ========================================================= */
+
+async function deleteCompletedOrder(
+    orderId
+) {
+
+    if (!orderId)
+        return;
+
+
+    const order =
+        allOrders.find(
+            item =>
+                String(item.id) ===
+                String(orderId)
+        );
+
+
+    if (!order) {
+
+        alert(
+            "Order পাওয়া যায়নি।"
+        );
+
+        return;
+    }
+
+
+    const status =
+        normalizeOrderStatus(
+            order.status
+        );
+
+
+    /*
+       শুধু Completed order delete.
+    */
+
+    if (
+        status !==
+        "completed"
+    ) {
+
+        alert(
+            "শুধু Completed order delete করা যাবে।"
+        );
+
+        return;
+    }
+
+
+    const confirmed =
+        confirm(
+            "এই Completed order স্থায়ীভাবে delete করবেন?"
+        );
+
+
+    if (!confirmed)
+        return;
+
+
+    try {
+
+        const {
+            error
+        } = await sb
+            .from("orders")
+            .delete()
+            .eq(
+                "id",
+                orderId
+            );
+
+
+        if (error) {
+
+            throw error;
+        }
+
+
+        await Promise.allSettled([
+
+            loadOrders(),
+
+            loadStats()
+
+        ]);
+
+
+    } catch (error) {
+
+        console.error(
+            "Delete order error:",
+            error
+        );
+
+
+        alert(
+            error.message ||
+            "Order delete করতে সমস্যা হয়েছে।"
         );
     }
 }
@@ -1690,20 +2909,80 @@ async function completeOrder(orderId) {
    ORDER FILTER
    ========================================================= */
 
-function filterOrders(filter) {
+function filterOrders(
+    filter,
+    updateButtons = true
+) {
 
-    if (filter === "all") {
-        renderOrders(allOrders);
+    currentOrderFilter =
+        String(
+            filter || "all"
+        )
+        .trim()
+        .toLowerCase();
+
+
+    if (updateButtons) {
+
+        document
+            .querySelectorAll(
+                "[data-order-filter]"
+            )
+            .forEach(button => {
+
+                const buttonFilter =
+                    String(
+                        button.dataset.orderFilter ||
+                        "all"
+                    )
+                    .toLowerCase();
+
+
+                button.classList.toggle(
+                    "active",
+                    buttonFilter ===
+                    currentOrderFilter
+                );
+
+            });
+    }
+
+
+    if (
+        currentOrderFilter ===
+        "all"
+    ) {
+
+        renderOrders(
+            allOrders
+        );
+
         return;
     }
 
+
     const filtered =
-        allOrders.filter(order =>
-            String(order.status || "pending")
-                .toLowerCase() === filter
+        allOrders.filter(
+            order => {
+
+                const status =
+                    normalizeOrderStatus(
+                        order.status
+                    );
+
+
+                return (
+                    status ===
+                    currentOrderFilter
+                );
+
+            }
         );
 
-    renderOrders(filtered);
+
+    renderOrders(
+        filtered
+    );
 }
 
 
@@ -1715,44 +2994,61 @@ async function loadStoreSettings() {
 
     try {
 
-        const { data, error } =
-            await sb
-                .from("store_settings")
-                .select("*")
-                .eq("id", 1)
-                .maybeSingle();
+        const {
+            data,
+            error
+        } = await sb
+            .from("store_settings")
+            .select("*")
+            .eq(
+                "id",
+                1
+            )
+            .maybeSingle();
 
-        if (error) throw error;
 
-        if (!data) return;
+        if (error)
+            throw error;
+
+
+        if (!data)
+            return;
+
 
         if (aboutUsAdmin)
             aboutUsAdmin.value =
                 data.about_us || "";
 
+
         if (contactPhoneAdmin)
             contactPhoneAdmin.value =
                 data.contact_phone || "";
+
 
         if (contactWhatsappAdmin)
             contactWhatsappAdmin.value =
                 data.contact_whatsapp || "";
 
+
         if (contactEmailAdmin)
             contactEmailAdmin.value =
                 data.contact_email || "";
+
 
         if (contactAddressAdmin)
             contactAddressAdmin.value =
                 data.contact_address || "";
 
+
         if (contactFacebookAdmin)
             contactFacebookAdmin.value =
                 data.contact_facebook || "";
 
+
         if (contactInstagramAdmin)
             contactInstagramAdmin.value =
                 data.contact_instagram || "";
+
 
     } catch (error) {
 
@@ -1760,6 +3056,7 @@ async function loadStoreSettings() {
             "Settings load error:",
             error
         );
+
 
         showSettingsAlert(
             error.message ||
@@ -1770,55 +3067,82 @@ async function loadStoreSettings() {
 }
 
 
-async function saveStoreSettings(event) {
+async function saveStoreSettings(
+    event
+) {
 
     event.preventDefault();
 
+
     if (saveStoreSettingsButton) {
-        saveStoreSettingsButton.disabled = true;
+
+        saveStoreSettingsButton.disabled =
+            true;
+
         saveStoreSettingsButton.textContent =
             "Saving...";
     }
 
+
     try {
 
         const settings = {
+
             id: 1,
+
             about_us:
-                aboutUsAdmin?.value.trim() || "",
+                aboutUsAdmin?.value.trim() ||
+                "",
 
             contact_phone:
-                contactPhoneAdmin?.value.trim() || "",
+                contactPhoneAdmin?.value.trim() ||
+                "",
 
             contact_whatsapp:
-                contactWhatsappAdmin?.value.trim() || "",
+                contactWhatsappAdmin?.value.trim() ||
+                "",
 
             contact_email:
-                contactEmailAdmin?.value.trim() || "",
+                contactEmailAdmin?.value.trim() ||
+                "",
 
             contact_address:
-                contactAddressAdmin?.value.trim() || "",
+                contactAddressAdmin?.value.trim() ||
+                "",
 
             contact_facebook:
-                contactFacebookAdmin?.value.trim() || "",
+                contactFacebookAdmin?.value.trim() ||
+                "",
 
             contact_instagram:
-                contactInstagramAdmin?.value.trim() || ""
+                contactInstagramAdmin?.value.trim() ||
+                ""
+
         };
 
-        const { error } =
-            await sb
-                .from("store_settings")
-                .upsert(settings, {
-                    onConflict: "id"
-                });
 
-        if (error) throw error;
+        const {
+            error
+        } = await sb
+            .from("store_settings")
+            .upsert(
+                settings,
+                {
+                    onConflict:
+                        "id"
+                }
+            );
+
+
+        if (error)
+            throw error;
+
 
         showSettingsAlert(
             "Settings successfully saved!",
             "success"
         );
+
 
     } catch (error) {
 
@@ -1827,18 +3151,23 @@ async function saveStoreSettings(event) {
             error
         );
 
+
         showSettingsAlert(
             error.message ||
             "Settings save করতে সমস্যা হয়েছে।",
             "error"
         );
 
+
     } finally {
 
         if (saveStoreSettingsButton) {
-            saveStoreSettingsButton.disabled = false;
+
+            saveStoreSettingsButton.disabled =
+                false;
+
             saveStoreSettingsButton.textContent =
-                "Save Settings";
+                "Save Store Settings";
         }
     }
 }
@@ -1850,8 +3179,11 @@ async function saveStoreSettings(event) {
 
 function setupEventListeners() {
 
-    /* Login */
+
+    /* LOGIN */
+
     if (loginForm) {
+
         loginForm.addEventListener(
             "submit",
             loginAdmin
@@ -1859,8 +3191,10 @@ function setupEventListeners() {
     }
 
 
-    /* Logout */
+    /* LOGOUT */
+
     if (logoutButton) {
+
         logoutButton.addEventListener(
             "click",
             logoutAdmin
@@ -1868,50 +3202,68 @@ function setupEventListeners() {
     }
 
 
-    /* Navigation */
+    /* NAVIGATION */
+
     document
-        .querySelectorAll(".admin-nav-btn")
+        .querySelectorAll(
+            ".admin-nav-btn"
+        )
         .forEach(button => {
 
             button.addEventListener(
                 "click",
-                () => {
+                async () => {
 
                     const section =
                         button.dataset.section;
 
+
                     if (section) {
-                        openSection(section);
+
+                        await openSection(
+                            section
+                        );
                     }
+
                 }
             );
 
         });
 
 
-    /* Quick actions */
+    /* QUICK ACTIONS */
+
     document
-        .querySelectorAll(".quick-action-btn")
+        .querySelectorAll(
+            ".quick-action-btn"
+        )
         .forEach(button => {
 
             button.addEventListener(
                 "click",
-                () => {
+                async () => {
 
                     const section =
                         button.dataset.openSection;
 
+
                     if (section) {
-                        openSection(section);
+
+                        await openSection(
+                            section
+                        );
                     }
+
                 }
             );
 
         });
 
 
-    /* Product save */
+    /* PRODUCT SAVE */
+
     if (productForm) {
+
         productForm.addEventListener(
             "submit",
             saveProduct
@@ -1919,8 +3271,10 @@ function setupEventListeners() {
     }
 
 
-    /* Product reset */
+    /* PRODUCT RESET */
+
     if (resetProductButton) {
+
         resetProductButton.addEventListener(
             "click",
             resetProductForm
@@ -1928,17 +3282,22 @@ function setupEventListeners() {
     }
 
 
-    /* Add variant */
+    /* ADD VARIANT */
+
     if (addVariantButton) {
+
         addVariantButton.addEventListener(
             "click",
-            () => addVariant()
+            () =>
+                addVariant()
         );
     }
 
 
-    /* Main image */
+    /* MAIN IMAGE */
+
     if (mainImageAdmin) {
+
         mainImageAdmin.addEventListener(
             "change",
             previewMainImage
@@ -1946,15 +3305,19 @@ function setupEventListeners() {
     }
 
 
-    /* Payment */
+    /* PAYMENT */
+
     if (allowCodAdmin) {
+
         allowCodAdmin.addEventListener(
             "change",
             checkPaymentMethodsAdmin
         );
     }
 
+
     if (allowAdvanceAdmin) {
+
         allowAdvanceAdmin.addEventListener(
             "change",
             checkPaymentMethodsAdmin
@@ -1962,7 +3325,8 @@ function setupEventListeners() {
     }
 
 
-    /* Product list */
+    /* PRODUCT LIST */
+
     if (adminProductsList) {
 
         adminProductsList.addEventListener(
@@ -1974,41 +3338,57 @@ function setupEventListeners() {
                         ".edit-product-button"
                     );
 
-                if (!button) return;
+
+                if (!button)
+                    return;
+
 
                 const productId =
                     button.dataset.editId;
 
+
                 if (productId) {
-                    editProduct(productId);
+
+                    editProduct(
+                        productId
+                    );
                 }
+
             }
         );
     }
 
 
-    /* Variant / Size buttons */
+    /* VARIANTS / SIZES */
+
     if (variantsContainer) {
 
         variantsContainer.addEventListener(
             "click",
             event => {
 
+
                 const removeVariantButton =
                     event.target.closest(
                         ".remove-variant-button"
                     );
 
-                if (removeVariantButton) {
+
+                if (
+                    removeVariantButton
+                ) {
 
                     const variant =
                         removeVariantButton.closest(
                             ".admin-variant"
                         );
 
+
                     if (variant) {
+
                         variant.remove();
                     }
+
 
                     return;
                 }
@@ -2019,6 +3399,7 @@ function setupEventListeners() {
                         ".add-size-button"
                     );
 
+
                 if (addSizeButton) {
 
                     const variant =
@@ -2026,16 +3407,20 @@ function setupEventListeners() {
                             ".admin-variant"
                         );
 
+
                     const sizesContainer =
                         variant?.querySelector(
                             ".variant-sizes"
                         );
 
+
                     if (sizesContainer) {
+
                         addSizeRow(
                             sizesContainer
                         );
                     }
+
 
                     return;
                 }
@@ -2046,14 +3431,19 @@ function setupEventListeners() {
                         ".remove-size-button"
                     );
 
-                if (removeSizeButton) {
+
+                if (
+                    removeSizeButton
+                ) {
 
                     const row =
                         removeSizeButton.closest(
                             ".admin-size-row"
                         );
 
+
                     if (row) {
+
                         row.remove();
                     }
                 }
@@ -2063,32 +3453,87 @@ function setupEventListeners() {
     }
 
 
-    /* Orders */
+    /* =====================================================
+       ORDERS
+       ===================================================== */
+
     if (adminOrdersList) {
 
         adminOrdersList.addEventListener(
             "click",
             event => {
 
-                const button =
+
+                /*
+                   Status button
+                */
+
+                const statusButton =
                     event.target.closest(
-                        ".complete-order-button"
+                        ".order-status-button"
                     );
 
-                if (!button) return;
 
-                const orderId =
-                    button.dataset.orderId;
+                if (statusButton) {
 
-                if (orderId) {
-                    completeOrder(orderId);
+                    const orderId =
+                        statusButton.dataset.orderId;
+
+
+                    const newStatus =
+                        statusButton.dataset.newStatus;
+
+
+                    if (
+                        orderId &&
+                        newStatus
+                    ) {
+
+                        updateOrderStatus(
+                            orderId,
+                            newStatus
+                        );
+                    }
+
+
+                    return;
                 }
+
+
+                /*
+                   Delete button
+                */
+
+                const deleteButton =
+                    event.target.closest(
+                        ".delete-order-button"
+                    );
+
+
+                if (deleteButton) {
+
+                    const orderId =
+                        deleteButton.dataset.orderId;
+
+
+                    if (orderId) {
+
+                        deleteCompletedOrder(
+                            orderId
+                        );
+                    }
+
+                }
+
             }
         );
     }
 
 
-    /* Order filter */
+    /* =====================================================
+       ORDER FILTER BUTTONS
+       ===================================================== */
+
     document
         .querySelectorAll(
             "[data-order-filter]"
@@ -2100,18 +3545,23 @@ function setupEventListeners() {
                 () => {
 
                     const filter =
-                        button.dataset.orderFilter;
+                        button.dataset.orderFilter ||
+                        "all";
+
 
                     filterOrders(
-                        filter || "all"
+                        filter,
+                        true
                     );
+
                 }
             );
 
         });
 
 
-    /* Settings */
+    /* SETTINGS */
+
     if (storeSettingsForm) {
 
         storeSettingsForm.addEventListener(
@@ -2128,9 +3578,16 @@ function setupEventListeners() {
    ========================================================= */
 
 sb.auth.onAuthStateChange(
-    async (event, session) => {
+    async (
+        event,
+        session
+    ) => {
 
-        if (event === "SIGNED_OUT") {
+        if (
+            event ===
+            "SIGNED_OUT"
+        ) {
+
             showLoginScreen();
         }
 
