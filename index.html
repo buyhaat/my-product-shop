@@ -420,6 +420,124 @@
     }
 
     /* =====================================================
+       CONTACT / ABOUT SECTION
+    ====================================================== */
+
+    .contact-section {
+      max-width: 1250px;
+      margin: 0 auto 45px;
+      padding: 0 18px;
+    }
+
+    .contact-box {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 25px;
+    }
+
+    .contact-header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .contact-title {
+      font-size: 25px;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 5px;
+    }
+
+    .contact-subtitle {
+      color: #777;
+      font-size: 13px;
+    }
+
+    .about-box {
+      background: #fff8f5;
+      border: 1px solid #ffe0d3;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 18px;
+    }
+
+    .about-title {
+      color: #f4511e;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .about-text {
+      color: #555;
+      font-size: 14px;
+      white-space: pre-line;
+      word-break: break-word;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+      padding: 13px;
+      border: 1px solid #e7e7e7;
+      border-radius: 9px;
+      background: #fff;
+      text-decoration: none;
+      color: #222;
+      transition: .15s ease;
+    }
+
+    .contact-item:hover {
+      border-color: #f4511e;
+      background: #fffaf8;
+    }
+
+    .contact-icon {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #fff2ed;
+      font-size: 18px;
+    }
+
+    .contact-content {
+      min-width: 0;
+    }
+
+    .contact-label {
+      display: block;
+      color: #888;
+      font-size: 11px;
+      margin-bottom: 1px;
+    }
+
+    .contact-value {
+      display: block;
+      color: #333;
+      font-size: 13px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #contactSection {
+      display: none;
+    }
+
+    /* =====================================================
        ORDER MODAL
     ====================================================== */
 
@@ -671,8 +789,6 @@
       background: #f6f6f6;
       text-decoration: line-through;
     }
-
-    /* Variant image option */
 
     .variant-option {
       min-width: 76px;
@@ -1026,6 +1142,10 @@
       .products-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
+
+      .contact-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 800px) {
@@ -1156,6 +1276,30 @@
         margin-top: 8px;
         padding: 8px;
         font-size: 13px;
+      }
+
+      /* Contact */
+
+      .contact-section {
+        padding: 0 12px;
+        margin-bottom: 30px;
+      }
+
+      .contact-box {
+        padding: 17px;
+      }
+
+      .contact-title {
+        font-size: 22px;
+      }
+
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .contact-item {
+        padding: 11px;
       }
 
       /* Mobile Order Modal */
@@ -1464,6 +1608,240 @@
 
 
   <!-- =====================================================
+       CONTACT / ABOUT
+  ====================================================== -->
+
+  <section
+    id="contactSection"
+    class="contact-section"
+  >
+
+    <div class="contact-box">
+
+      <div class="contact-header">
+
+        <h2 class="contact-title">
+          যোগাযোগ করুন
+        </h2>
+
+        <p class="contact-subtitle">
+          আমাদের সাথে যোগাযোগ করতে নিচের তথ্যগুলো ব্যবহার করুন।
+        </p>
+
+      </div>
+
+
+      <!-- ABOUT US -->
+
+      <div
+        id="aboutBox"
+        class="about-box"
+        style="display:none;"
+      >
+
+        <div class="about-title">
+          আমাদের সম্পর্কে
+        </div>
+
+        <div
+          id="aboutUsText"
+          class="about-text"
+        ></div>
+
+      </div>
+
+
+      <!-- CONTACT ITEMS -->
+
+      <div class="contact-grid">
+
+        <!-- PHONE -->
+
+        <a
+          id="contactPhoneItem"
+          class="contact-item"
+          href="#"
+          style="display:none;"
+        >
+
+          <div class="contact-icon">
+            📞
+          </div>
+
+          <div class="contact-content">
+
+            <span class="contact-label">
+              ফোন
+            </span>
+
+            <span
+              id="contactPhoneText"
+              class="contact-value"
+            ></span>
+
+          </div>
+
+        </a>
+
+
+        <!-- WHATSAPP -->
+
+        <a
+          id="contactWhatsappItem"
+          class="contact-item"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display:none;"
+        >
+
+          <div class="contact-icon">
+            💬
+          </div>
+
+          <div class="contact-content">
+
+            <span class="contact-label">
+              WhatsApp
+            </span>
+
+            <span
+              id="contactWhatsappText"
+              class="contact-value"
+            ></span>
+
+          </div>
+
+        </a>
+
+
+        <!-- EMAIL -->
+
+        <a
+          id="contactEmailItem"
+          class="contact-item"
+          href="#"
+          style="display:none;"
+        >
+
+          <div class="contact-icon">
+            📧
+          </div>
+
+          <div class="contact-content">
+
+            <span class="contact-label">
+              Email
+            </span>
+
+            <span
+              id="contactEmailText"
+              class="contact-value"
+            ></span>
+
+          </div>
+
+        </a>
+
+
+        <!-- ADDRESS -->
+
+        <a
+          id="contactAddressItem"
+          class="contact-item"
+          href="#"
+          style="display:none;"
+        >
+
+          <div class="contact-icon">
+            📍
+          </div>
+
+          <div class="contact-content">
+
+            <span class="contact-label">
+              ঠিকানা
+            </span>
+
+            <span
+              id="contactAddressText"
+              class="contact-value"
+            ></span>
+
+          </div>
+
+        </a>
+
+
+        <!-- FACEBOOK -->
+
+        <a
+          id="contactFacebookItem"
+          class="contact-item"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display:none;"
+        >
+
+          <div class="contact-icon">
+            📘
+          </div>
+
+          <div class="contact-content">
+
+            <span class="contact-label">
+              Facebook
+            </span>
+
+            <span
+              id="contactFacebookText"
+              class="contact-value"
+            ></span>
+
+          </div>
+
+        </a>
+
+
+        <!-- INSTAGRAM -->
+
+        <a
+          id="contactInstagramItem"
+          class="contact-item"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display:none;"
+        >
+
+          <div class="contact-icon">
+            📸
+          </div>
+
+          <div class="contact-content">
+
+            <span class="contact-label">
+              Instagram
+            </span>
+
+            <span
+              id="contactInstagramText"
+              class="contact-value"
+            ></span>
+
+          </div>
+
+        </a>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
        ORDER MODAL
   ====================================================== -->
 
@@ -1474,8 +1852,6 @@
   >
 
     <div class="modal-content">
-
-      <!-- MODAL HEADER -->
 
       <div class="modal-header">
 
@@ -1503,14 +1879,10 @@
       </div>
 
 
-      <!-- ORDER FORM -->
-
       <form
         id="orderForm"
         class="order-form"
       >
-
-        <!-- PRODUCT SUMMARY -->
 
         <div class="product-selection-box">
 
@@ -1581,8 +1953,6 @@
         </div>
 
 
-        <!-- Hidden values used by app.js -->
-
         <input
           type="hidden"
           id="productName"
@@ -1609,15 +1979,11 @@
         >
 
 
-        <!-- VARIANT -->
-
         <div
           id="variantArea"
           class="variant-area"
         ></div>
 
-
-        <!-- SIZE -->
 
         <div
           id="sizeArea"
@@ -1625,14 +1991,10 @@
         ></div>
 
 
-        <!-- CUSTOMER INFORMATION -->
-
         <div class="form-section-title">
           আপনার তথ্য
         </div>
 
-
-        <!-- NAME -->
 
         <div class="form-group">
 
@@ -1654,8 +2016,6 @@
 
         </div>
 
-
-        <!-- PHONE -->
 
         <div class="form-group">
 
@@ -1679,14 +2039,10 @@
         </div>
 
 
-        <!-- LOCATION -->
-
         <div class="form-section-title">
           ডেলিভারি ঠিকানা
         </div>
 
-
-        <!-- DISTRICT + UPAZILA -->
 
         <div class="location-grid">
 
@@ -1734,8 +2090,6 @@
         </div>
 
 
-        <!-- ADDRESS -->
-
         <div class="form-group">
 
           <label
@@ -1755,8 +2109,6 @@
 
         </div>
 
-
-        <!-- QUANTITY -->
 
         <div class="form-section-title">
           পণ্যের পরিমাণ
@@ -1823,10 +2175,6 @@
         </div>
 
 
-        <!-- =========================
-             PAYMENT
-        ========================== -->
-
         <div class="payment-section">
 
           <div class="form-section-title">
@@ -1837,8 +2185,6 @@
             id="paymentMethodList"
             class="payment-method-list"
           >
-
-            <!-- COD -->
 
             <div
               id="codPaymentOption"
@@ -1862,8 +2208,6 @@
             </div>
 
 
-            <!-- bKash -->
-
             <div
               id="bkashPaymentOption"
               class="payment-method-option"
@@ -1885,8 +2229,6 @@
 
             </div>
 
-
-            <!-- Nagad -->
 
             <div
               id="nagadPaymentOption"
@@ -1916,8 +2258,6 @@
             আপনার পণ্যের জন্য যে পেমেন্ট পদ্ধতিগুলো চালু আছে সেগুলোই এখানে দেখানো হবে।
           </div>
 
-
-          <!-- PAYMENT DETAILS -->
 
           <div
             id="paymentDetails"
@@ -1982,8 +2322,6 @@
           </div>
 
 
-          <!-- NO PAYMENT WARNING -->
-
           <div
             id="paymentWarning"
             class="payment-warning"
@@ -1993,8 +2331,6 @@
 
         </div>
 
-
-        <!-- TOTAL -->
 
         <div class="order-total-box">
 
@@ -2012,15 +2348,11 @@
         </div>
 
 
-        <!-- MESSAGE -->
-
         <div
           id="orderMessage"
           class="order-message"
         ></div>
 
-
-        <!-- SUBMIT -->
 
         <button
           type="submit"
@@ -2096,6 +2428,355 @@
   <script src="config.js"></script>
 
   <script src="app.js?v=5"></script>
+
+
+  <!-- =====================================================
+       LOAD STORE CONTACT INFORMATION
+  ====================================================== -->
+
+  <script>
+
+    async function loadHomeStoreSettings() {
+
+      try {
+
+        if (
+          typeof SUPABASE_URL === "undefined" ||
+          typeof SUPABASE_ANON_KEY === "undefined"
+        ) {
+          console.error("Supabase configuration not found.");
+          return;
+        }
+
+        const supabaseClient =
+          window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+          );
+
+
+        const { data, error } = await supabaseClient
+          .from("store_settings")
+          .select(`
+            about_us,
+            contact_phone,
+            contact_whatsapp,
+            contact_email,
+            contact_address,
+            contact_facebook,
+            contact_instagram
+          `)
+          .eq("id", 1)
+          .maybeSingle();
+
+
+        if (error) {
+
+          console.error(
+            "Store settings load error:",
+            error
+          );
+
+          return;
+        }
+
+
+        if (!data) {
+          return;
+        }
+
+
+        let hasAnyContactInfo = false;
+
+
+        /* =========================
+           ABOUT US
+        ========================== */
+
+        if (
+          data.about_us &&
+          data.about_us.trim()
+        ) {
+
+          const aboutBox =
+            document.getElementById("aboutBox");
+
+          const aboutText =
+            document.getElementById("aboutUsText");
+
+          aboutText.textContent =
+            data.about_us.trim();
+
+          aboutBox.style.display = "block";
+
+          hasAnyContactInfo = true;
+        }
+
+
+        /* =========================
+           PHONE
+        ========================== */
+
+        if (
+          data.contact_phone &&
+          data.contact_phone.trim()
+        ) {
+
+          const value =
+            data.contact_phone.trim();
+
+          const item =
+            document.getElementById(
+              "contactPhoneItem"
+            );
+
+          const text =
+            document.getElementById(
+              "contactPhoneText"
+            );
+
+          text.textContent = value;
+
+          item.href =
+            "tel:" +
+            value.replace(/[^\d+]/g, "");
+
+          item.style.display = "flex";
+
+          hasAnyContactInfo = true;
+        }
+
+
+        /* =========================
+           WHATSAPP
+        ========================== */
+
+        if (
+          data.contact_whatsapp &&
+          data.contact_whatsapp.trim()
+        ) {
+
+          const value =
+            data.contact_whatsapp.trim();
+
+          const item =
+            document.getElementById(
+              "contactWhatsappItem"
+            );
+
+          const text =
+            document.getElementById(
+              "contactWhatsappText"
+            );
+
+          text.textContent = value;
+
+          let whatsappNumber =
+            value.replace(/\D/g, "");
+
+          /*
+             Bangladesh number:
+             01XXXXXXXXX
+             automatically becomes:
+             8801XXXXXXXXX
+          */
+
+          if (
+            whatsappNumber.startsWith("01") &&
+            whatsappNumber.length === 11
+          ) {
+
+            whatsappNumber =
+              "88" + whatsappNumber;
+
+          }
+
+          item.href =
+            "https://wa.me/" +
+            whatsappNumber;
+
+          item.style.display = "flex";
+
+          hasAnyContactInfo = true;
+        }
+
+
+        /* =========================
+           EMAIL
+        ========================== */
+
+        if (
+          data.contact_email &&
+          data.contact_email.trim()
+        ) {
+
+          const value =
+            data.contact_email.trim();
+
+          const item =
+            document.getElementById(
+              "contactEmailItem"
+            );
+
+          const text =
+            document.getElementById(
+              "contactEmailText"
+            );
+
+          text.textContent = value;
+
+          item.href =
+            "mailto:" +
+            value;
+
+          item.style.display = "flex";
+
+          hasAnyContactInfo = true;
+        }
+
+
+        /* =========================
+           ADDRESS
+        ========================== */
+
+        if (
+          data.contact_address &&
+          data.contact_address.trim()
+        ) {
+
+          const value =
+            data.contact_address.trim();
+
+          const item =
+            document.getElementById(
+              "contactAddressItem"
+            );
+
+          const text =
+            document.getElementById(
+              "contactAddressText"
+            );
+
+          text.textContent = value;
+
+          item.href =
+            "https://www.google.com/maps/search/?api=1&query=" +
+            encodeURIComponent(value);
+
+          item.target = "_blank";
+
+          item.style.display = "flex";
+
+          hasAnyContactInfo = true;
+        }
+
+
+        /* =========================
+           FACEBOOK
+        ========================== */
+
+        if (
+          data.contact_facebook &&
+          data.contact_facebook.trim()
+        ) {
+
+          const value =
+            data.contact_facebook.trim();
+
+          const item =
+            document.getElementById(
+              "contactFacebookItem"
+            );
+
+          const text =
+            document.getElementById(
+              "contactFacebookText"
+            );
+
+          text.textContent = value;
+
+          item.href = value;
+
+          item.style.display = "flex";
+
+          hasAnyContactInfo = true;
+        }
+
+
+        /* =========================
+           INSTAGRAM
+        ========================== */
+
+        if (
+          data.contact_instagram &&
+          data.contact_instagram.trim()
+        ) {
+
+          const value =
+            data.contact_instagram.trim();
+
+          const item =
+            document.getElementById(
+              "contactInstagramItem"
+            );
+
+          const text =
+            document.getElementById(
+              "contactInstagramText"
+            );
+
+          text.textContent = value;
+
+          item.href = value;
+
+          item.style.display = "flex";
+
+          hasAnyContactInfo = true;
+        }
+
+
+        /* =========================
+           SHOW CONTACT SECTION
+        ========================== */
+
+        if (hasAnyContactInfo) {
+
+          document.getElementById(
+            "contactSection"
+          ).style.display = "block";
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Failed to load store settings:",
+          error
+        );
+
+      }
+
+    }
+
+
+    /*
+       Load after page is ready.
+    */
+
+    if (document.readyState === "loading") {
+
+      document.addEventListener(
+        "DOMContentLoaded",
+        loadHomeStoreSettings
+      );
+
+    } else {
+
+      loadHomeStoreSettings();
+
+    }
+
+  </script>
 
 </body>
 </html>
