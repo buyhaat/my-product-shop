@@ -8,128 +8,230 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>My Shop</title>
-
   <meta
     name="description"
-    content="Browse products and place your order."
+    content="অনলাইনে আপনার পছন্দের পণ্য কিনুন"
   >
 
+  <title>My Shop</title>
+
   <link rel="stylesheet" href="style.css">
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Supabase configuration -->
-  <script src="config.js"></script>
 </head>
 
 <body>
 
-  <!-- =========================
-       HEADER
-  ========================== -->
+  <!-- =========================================
+       TOP BAR
+  ========================================== -->
 
-  <header class="site-header">
+  <div class="top-bar">
+    <div class="container top-bar-inner">
 
-    <div class="container nav">
+      <div class="top-links">
+        <a href="#">Save More on App</a>
+        <a href="#">Become a Seller</a>
+        <a href="#">Help & Support</a>
+      </div>
 
-      <a
-        href="#"
-        class="logo"
-      >
-        <span class="logo-mark">S</span>
-        <span>My Shop</span>
+      <div class="top-right">
+        <span>Welcome to our shop!</span>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- =========================================
+       MAIN HEADER
+  ========================================== -->
+
+  <header class="main-header">
+
+    <div class="container header-inner">
+
+      <!-- LOGO -->
+
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🛒</span>
+        <span class="logo-text">My Shop</span>
       </a>
 
 
-      <nav class="nav-links">
+      <!-- SEARCH -->
 
-        <a href="#products">
-          Products
-        </a>
+      <div class="search-box">
 
-        <a href="#about">
-          About
-        </a>
+        <input
+          type="search"
+          id="searchInput"
+          placeholder="Search in My Shop"
+          autocomplete="off"
+        >
 
-      </nav>
+        <button
+          type="button"
+          id="searchButton"
+          aria-label="Search"
+        >
+          🔍
+        </button>
+
+      </div>
+
+
+      <!-- CART -->
+
+      <button
+        type="button"
+        class="cart-button"
+        id="cartButton"
+      >
+
+        <span class="cart-icon">🛒</span>
+
+        <span class="cart-count" id="cartCount">
+          0
+        </span>
+
+      </button>
 
     </div>
 
   </header>
 
 
-  <!-- =========================
-       HERO
-  ========================== -->
+  <!-- =========================================
+       CATEGORY NAVIGATION
+  ========================================== -->
+
+  <nav class="category-nav">
+
+    <div class="container category-nav-inner">
+
+      <button
+        type="button"
+        class="category-menu-button"
+        id="categoryMenuButton"
+      >
+        ☰
+        <span>Categories</span>
+      </button>
+
+      <div
+        class="category-list"
+        id="categoryList"
+      >
+        <!-- Categories will be loaded by app.js -->
+      </div>
+
+    </div>
+
+  </nav>
+
+
+  <!-- =========================================
+       HERO SECTION
+  ========================================== -->
 
   <main>
 
-    <section class="hero">
+    <section class="hero-section">
 
-      <div class="container hero-content">
+      <div class="container hero-grid">
 
-        <span class="hero-badge">
-          ONLINE SHOP
-        </span>
+        <!-- CATEGORY SIDEBAR -->
 
-        <h1>
-          আপনার পছন্দের<br>
-          Product সহজেই অর্ডার করুন
-        </h1>
-
-        <p>
-          আমাদের available products দেখুন,
-          আপনার পছন্দের variant ও size নির্বাচন করুন
-          এবং সরাসরি order করুন।
-        </p>
-
-        <a
-          href="#products"
-          class="primary hero-button"
+        <aside
+          class="hero-categories"
+          id="heroCategories"
         >
-          Shop Now
-        </a>
+
+          <div class="hero-categories-title">
+            Categories
+          </div>
+
+          <div
+            id="heroCategoryList"
+            class="hero-category-list"
+          >
+            <!-- Categories -->
+          </div>
+
+        </aside>
+
+
+        <!-- BANNER -->
+
+        <div class="hero-banner">
+
+          <div class="hero-banner-content">
+
+            <span class="banner-small-text">
+              Welcome to
+            </span>
+
+            <h1>
+              My Shop
+            </h1>
+
+            <p>
+              আপনার পছন্দের পণ্য এখন আরও সহজে
+            </p>
+
+            <button
+              type="button"
+              class="shop-now-button"
+              id="shopNowButton"
+            >
+              Shop Now
+            </button>
+
+          </div>
+
+          <div class="hero-decoration">
+            🛍️
+          </div>
+
+        </div>
 
       </div>
 
     </section>
 
 
-    <!-- =========================
-         PRODUCTS
-    ========================== -->
+    <!-- =========================================
+         FLASH SALE
+    ========================================== -->
 
-    <section
-      id="products"
-      class="products-section"
-    >
+    <section class="section flash-sale-section">
 
       <div class="container">
 
-        <div class="section-heading">
+        <div class="section-header">
 
-          <div>
+          <div class="section-title-wrap">
 
-            <span class="section-label">
-              OUR PRODUCTS
-            </span>
+            <span class="section-accent"></span>
 
             <h2>
-              Available Products
+              Flash Sale
             </h2>
 
           </div>
 
+          <a
+            href="#productsSection"
+            class="view-all"
+          >
+            View All →
+          </a>
+
         </div>
 
 
-        <!-- Products will load here -->
-
         <div
-          id="products"
-          class="product-grid"
+          class="flash-sale-products"
+          id="flashSaleProducts"
         >
 
           <div class="loading-card">
@@ -143,31 +245,107 @@
     </section>
 
 
-    <!-- =========================
-         ABOUT
-    ========================== -->
+    <!-- =========================================
+         CATEGORIES
+    ========================================== -->
+
+    <section class="section categories-section">
+
+      <div class="container">
+
+        <div class="section-header">
+
+          <div class="section-title-wrap">
+
+            <span class="section-accent"></span>
+
+            <h2>
+              Categories
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="category-cards"
+          id="categoryCards"
+        >
+          <!-- Category cards -->
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================================
+         PRODUCTS
+    ========================================== -->
 
     <section
-      id="about"
-      class="about-section"
+      class="section products-section"
+      id="productsSection"
     >
 
       <div class="container">
 
-        <div class="about-card">
+        <div class="section-header">
 
-          <span class="section-label">
-            ABOUT US
-          </span>
+          <div class="section-title-wrap">
 
-          <h2>
-            সহজ এবং নির্ভরযোগ্য Shopping
-          </h2>
+            <span class="section-accent"></span>
+
+            <h2>
+              Just For You
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <!-- SEARCH RESULT -->
+
+        <div
+          class="search-result-info"
+          id="searchResultInfo"
+        ></div>
+
+
+        <!-- PRODUCT GRID -->
+
+        <div
+          class="product-grid"
+          id="products"
+        >
+
+          <div class="loading-card">
+            Products loading...
+          </div>
+
+        </div>
+
+
+        <!-- NO PRODUCT -->
+
+        <div
+          class="no-products"
+          id="noProducts"
+          style="display:none;"
+        >
+
+          <div class="no-products-icon">
+            📦
+          </div>
+
+          <h3>
+            কোনো পণ্য পাওয়া যায়নি
+          </h3>
 
           <p>
-            আপনার পছন্দের product নির্বাচন করুন,
-            প্রয়োজনীয় তথ্য দিয়ে order করুন।
-            আপনার order আমাদের কাছে পৌঁছে যাবে।
+            অন্য কিছু search করে দেখুন।
           </p>
 
         </div>
@@ -179,21 +357,24 @@
   </main>
 
 
-  <!-- =========================
-       ORDER MODAL
-  ========================== -->
+  <!-- =========================================
+       PRODUCT / ORDER MODAL
+  ========================================== -->
 
   <div
+    class="modal"
     id="orderModal"
-    class="modal hidden"
+    aria-hidden="true"
   >
 
-    <div class="modal-box">
+    <div class="modal-overlay"></div>
+
+    <div class="modal-content">
 
       <button
-        id="closeModal"
-        class="modal-close"
         type="button"
+        class="modal-close"
+        id="closeModal"
         aria-label="Close"
       >
         ×
@@ -202,117 +383,30 @@
 
       <div class="modal-header">
 
-        <span class="section-label">
-          PLACE ORDER
+        <span class="modal-label">
+          ORDER NOW
         </span>
 
         <h2>
-          আপনার Order Information
+          আপনার অর্ডারের তথ্য
         </h2>
 
-        <p id="selectedProduct">
-          Product
-        </p>
+      </div>
 
+
+      <!-- SELECTED PRODUCT -->
+
+      <div
+        class="selected-product"
+        id="selectedProduct"
+      >
+        Product
       </div>
 
 
       <form id="orderForm">
 
-        <!-- Customer Name -->
-
-        <div class="form-group">
-
-          <label for="customerName">
-            আপনার নাম
-          </label>
-
-          <input
-            type="text"
-            id="customerName"
-            placeholder="আপনার নাম লিখুন"
-            required
-          >
-
-        </div>
-
-
-        <!-- Phone -->
-
-        <div class="form-group">
-
-          <label for="phone">
-            মোবাইল নম্বর
-          </label>
-
-          <input
-            type="tel"
-            id="phone"
-            placeholder="01XXXXXXXXX"
-            inputmode="tel"
-            required
-          >
-
-        </div>
-
-
-        <!-- Address -->
-
-        <div class="form-group">
-
-          <label for="address">
-            ঠিকানা
-          </label>
-
-          <textarea
-            id="address"
-            rows="3"
-            placeholder="আপনার বিস্তারিত ঠিকানা লিখুন"
-            required
-          ></textarea>
-
-        </div>
-
-
-        <!-- District + Upazila -->
-
-        <div class="form-row">
-
-          <div class="form-group">
-
-            <label for="district">
-              জেলা
-            </label>
-
-            <input
-              type="text"
-              id="district"
-              placeholder="জেলা"
-              required
-            >
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="upazila">
-              উপজেলা
-            </label>
-
-            <input
-              type="text"
-              id="upazila"
-              placeholder="উপজেলা"
-              required
-            >
-
-          </div>
-
-        </div>
-
-
-        <!-- Hidden Product Information -->
+        <!-- HIDDEN PRODUCT INFORMATION -->
 
         <input
           type="hidden"
@@ -334,8 +428,103 @@
           id="unitPrice"
         >
 
+        <input
+          type="hidden"
+          id="variantSizeId"
+        >
 
-        <!-- Quantity -->
+
+        <!-- CUSTOMER NAME -->
+
+        <div class="form-group">
+
+          <label for="customerName">
+            আপনার নাম
+          </label>
+
+          <input
+            type="text"
+            id="customerName"
+            placeholder="আপনার নাম লিখুন"
+            required
+          >
+
+        </div>
+
+
+        <!-- PHONE -->
+
+        <div class="form-group">
+
+          <label for="phone">
+            মোবাইল নম্বর
+          </label>
+
+          <input
+            type="tel"
+            id="phone"
+            placeholder="01XXXXXXXXX"
+            inputmode="numeric"
+            required
+          >
+
+        </div>
+
+
+        <!-- DISTRICT -->
+
+        <div class="form-group">
+
+          <label for="district">
+            জেলা
+          </label>
+
+          <input
+            type="text"
+            id="district"
+            placeholder="আপনার জেলা"
+            required
+          >
+
+        </div>
+
+
+        <!-- UPAZILA -->
+
+        <div class="form-group">
+
+          <label for="upazila">
+            উপজেলা
+          </label>
+
+          <input
+            type="text"
+            id="upazila"
+            placeholder="আপনার উপজেলা"
+            required
+          >
+
+        </div>
+
+
+        <!-- ADDRESS -->
+
+        <div class="form-group">
+
+          <label for="address">
+            সম্পূর্ণ ঠিকানা
+          </label>
+
+          <textarea
+            id="address"
+            placeholder="বাড়ি/গ্রাম/রাস্তার ঠিকানা"
+            required
+          ></textarea>
+
+        </div>
+
+
+        <!-- QUANTITY -->
 
         <div class="form-group">
 
@@ -355,17 +544,52 @@
         </div>
 
 
-        <!-- Total -->
+        <!-- ORDER SUMMARY -->
 
-        <div
-          id="orderTotal"
-          class="order-total"
-        >
-          Product Total: ৳0
+        <div class="order-summary">
+
+          <div class="summary-row">
+
+            <span>
+              Unit Price
+            </span>
+
+            <strong id="displayUnitPrice">
+              ৳0
+            </strong>
+
+          </div>
+
+
+          <div class="summary-row">
+
+            <span>
+              Quantity
+            </span>
+
+            <strong id="displayQuantity">
+              1
+            </strong>
+
+          </div>
+
+
+          <div class="summary-row total-row">
+
+            <span>
+              Total
+            </span>
+
+            <strong id="orderTotal">
+              ৳0
+            </strong>
+
+          </div>
+
         </div>
 
 
-        <!-- Message -->
+        <!-- MESSAGE -->
 
         <div
           id="orderMessage"
@@ -373,13 +597,13 @@
         ></div>
 
 
-        <!-- Submit -->
+        <!-- SUBMIT -->
 
         <button
           type="submit"
-          class="primary submit-order"
+          class="submit-order"
         >
-          Confirm Order
+          অর্ডার করুন
         </button>
 
       </form>
@@ -389,36 +613,200 @@
   </div>
 
 
-  <!-- =========================
-       FOOTER
-  ========================== -->
+  <!-- =========================================
+       CART SIDEBAR
+  ========================================== -->
 
-  <footer>
+  <aside
+    class="cart-sidebar"
+    id="cartSidebar"
+    aria-hidden="true"
+  >
 
-    <div class="container footer-content">
+    <div class="cart-sidebar-header">
 
-      <div>
+      <h2>
+        Shopping Cart
+      </h2>
 
-        <strong>
-          My Shop
+      <button
+        type="button"
+        id="closeCart"
+        class="close-cart"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <div
+      class="cart-items"
+      id="cartItems"
+    >
+
+      <div class="empty-cart">
+        <div>🛒</div>
+        <p>Your cart is empty</p>
+      </div>
+
+    </div>
+
+
+    <div class="cart-footer">
+
+      <div class="cart-total-row">
+
+        <span>
+          Total
+        </span>
+
+        <strong id="cartTotal">
+          ৳0
         </strong>
 
+      </div>
+
+      <button
+        type="button"
+        class="checkout-button"
+        id="checkoutButton"
+      >
+        Checkout
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- CART OVERLAY -->
+
+  <div
+    class="cart-overlay"
+    id="cartOverlay"
+  ></div>
+
+
+  <!-- =========================================
+       MOBILE BOTTOM NAVIGATION
+  ========================================== -->
+
+  <nav class="mobile-bottom-nav">
+
+    <a
+      href="index.html"
+      class="mobile-nav-item active"
+    >
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+    <button
+      type="button"
+      class="mobile-nav-item"
+      id="mobileCategoryButton"
+    >
+      <span>☰</span>
+      <small>Categories</small>
+    </button>
+
+    <button
+      type="button"
+      class="mobile-nav-item"
+      id="mobileCartButton"
+    >
+      <span class="mobile-cart-icon">
+        🛒
+        <b id="mobileCartCount">0</b>
+      </span>
+      <small>Cart</small>
+    </button>
+
+    <a
+      href="#productsSection"
+      class="mobile-nav-item"
+    >
+      <span>♡</span>
+      <small>Products</small>
+    </a>
+
+  </nav>
+
+
+  <!-- =========================================
+       FOOTER
+  ========================================== -->
+
+  <footer class="site-footer">
+
+    <div class="container footer-grid">
+
+      <div class="footer-column">
+
+        <div class="footer-logo">
+          🛒 My Shop
+        </div>
+
         <p>
-          Quality products, simple ordering.
+          আপনার বিশ্বস্ত অনলাইন শপ।
         </p>
 
       </div>
 
-      <div>
-        © 2026 My Shop
+
+      <div class="footer-column">
+
+        <h3>
+          Customer Care
+        </h3>
+
+        <a href="#">
+          Help Center
+        </a>
+
+        <a href="#">
+          Contact Us
+        </a>
+
       </div>
+
+
+      <div class="footer-column">
+
+        <h3>
+          Quick Links
+        </h3>
+
+        <a href="#productsSection">
+          Products
+        </a>
+
+        <a href="#">
+          About Us
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <div class="footer-bottom">
+
+      © 2026 My Shop. All rights reserved.
 
     </div>
 
   </footer>
 
 
-  <!-- App JavaScript -->
+  <!-- =========================================
+       SUPABASE
+  ========================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="config.js"></script>
 
   <script src="app.js"></script>
 
