@@ -765,6 +765,38 @@
 
 
         /* =========================
+           STORE SETTINGS
+        ========================= */
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .settings-full-field {
+            grid-column: 1 / -1;
+        }
+
+        .settings-info-box {
+            background: #f8f8f8;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            padding: 13px 15px;
+            margin-bottom: 18px;
+            color: #666;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .settings-section-title {
+            font-size: 16px;
+            font-weight: 800;
+            margin: 0 0 14px;
+        }
+
+
+        /* =========================
            EMPTY / ERROR
         ========================= */
 
@@ -821,7 +853,12 @@
                 grid-template-columns: 1fr;
             }
 
-            .full-field {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-field,
+            .settings-full-field {
                 grid-column: auto;
             }
 
@@ -1090,6 +1127,15 @@
                     🧾 Orders
                 </button>
 
+
+                <button
+                    type="button"
+                    class="admin-nav-btn"
+                    data-section="settingsSectionAdmin"
+                >
+                    ⚙️ Store Settings
+                </button>
+
             </aside>
 
 
@@ -1223,6 +1269,15 @@
                                 data-open-section="ordersSectionAdmin"
                             >
                                 🧾 Orders দেখুন
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="quick-action-btn"
+                                data-open-section="settingsSectionAdmin"
+                            >
+                                ⚙️ Store Settings
                             </button>
 
 
@@ -1658,6 +1713,189 @@
 
                         </div>
 
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     STORE SETTINGS
+                ================================================== -->
+
+                <section
+                    id="settingsSectionAdmin"
+                    class="admin-section"
+                >
+
+                    <h1 class="admin-page-title">
+                        Store Settings
+                    </h1>
+
+                    <p class="admin-page-subtitle">
+                        আপনার Shop-এর তথ্য ও Customer Contact Information পরিচালনা করুন
+                    </p>
+
+
+                    <div class="admin-card">
+
+                        <div
+                            id="storeSettingsAlert"
+                            class="form-alert"
+                        ></div>
+
+
+                        <div class="settings-info-box">
+
+                            এখানকার তথ্য Customer-facing Home Page-এর
+                            <strong>About Us</strong> এবং
+                            <strong>Contact Us</strong> section-এ দেখানো হবে।
+                            পরে এই তথ্য Admin Panel থেকেই পরিবর্তন করা যাবে।
+
+                        </div>
+
+
+                        <form id="storeSettingsForm">
+
+
+                            <div class="settings-grid">
+
+
+                                <!-- ABOUT US -->
+
+                                <div class="admin-field settings-full-field">
+
+                                    <label
+                                        for="aboutUsAdmin"
+                                        class="settings-section-title"
+                                    >
+                                        About Us
+                                    </label>
+
+                                    <textarea
+                                        id="aboutUsAdmin"
+                                        placeholder="আপনার Shop সম্পর্কে লিখুন..."
+                                        style="min-height:140px;"
+                                    ></textarea>
+
+                                </div>
+
+
+                                <!-- PHONE -->
+
+                                <div class="admin-field">
+
+                                    <label for="contactPhoneAdmin">
+                                        📞 Phone Number
+                                    </label>
+
+                                    <input
+                                        type="tel"
+                                        id="contactPhoneAdmin"
+                                        placeholder="যেমন: 01XXXXXXXXX"
+                                    >
+
+                                </div>
+
+
+                                <!-- WHATSAPP -->
+
+                                <div class="admin-field">
+
+                                    <label for="contactWhatsappAdmin">
+                                        💬 WhatsApp Number
+                                    </label>
+
+                                    <input
+                                        type="tel"
+                                        id="contactWhatsappAdmin"
+                                        placeholder="যেমন: 01XXXXXXXXX"
+                                    >
+
+                                </div>
+
+
+                                <!-- EMAIL -->
+
+                                <div class="admin-field">
+
+                                    <label for="contactEmailAdmin">
+                                        ✉️ Email
+                                    </label>
+
+                                    <input
+                                        type="email"
+                                        id="contactEmailAdmin"
+                                        placeholder="আপনার Shop-এর Email"
+                                    >
+
+                                </div>
+
+
+                                <!-- ADDRESS -->
+
+                                <div class="admin-field">
+
+                                    <label for="contactAddressAdmin">
+                                        📍 Address
+                                    </label>
+
+                                    <textarea
+                                        id="contactAddressAdmin"
+                                        placeholder="আপনার Shop-এর ঠিকানা..."
+                                        style="min-height:100px;"
+                                    ></textarea>
+
+                                </div>
+
+
+                                <!-- FACEBOOK -->
+
+                                <div class="admin-field">
+
+                                    <label for="contactFacebookAdmin">
+                                        Facebook Page
+                                    </label>
+
+                                    <input
+                                        type="url"
+                                        id="contactFacebookAdmin"
+                                        placeholder="Facebook Page URL"
+                                    >
+
+                                </div>
+
+
+                                <!-- INSTAGRAM -->
+
+                                <div class="admin-field">
+
+                                    <label for="contactInstagramAdmin">
+                                        Instagram
+                                    </label>
+
+                                    <input
+                                        type="url"
+                                        id="contactInstagramAdmin"
+                                        placeholder="Instagram URL"
+                                    >
+
+                                </div>
+
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                id="saveStoreSettingsButton"
+                                class="admin-btn admin-btn-primary"
+                            >
+                                💾 Save Store Settings
+                            </button>
+
+
+                        </form>
 
                     </div>
 
