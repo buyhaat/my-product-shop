@@ -6,6 +6,13 @@ const sb = createClient(
 );
 
 // ===============================
+// DOM HELPER
+// ===============================
+
+const $ = (id) => document.getElementById(id);
+
+
+// ===============================
 // GLOBAL STATE
 // ===============================
 
@@ -40,67 +47,82 @@ async function loadProduct() {
 
   showLoading(true);
 
-  const { data, error } = await sb
-    .from("products")
-    .select(`
-      id,
-      name,
-      description,
-      main_image_url,
-      base_price,
-      regular_price,
-      active,
-      allow_cod,
-      allow_advance,
-      created_at,
-      product_variants (
+  try {
+
+    const { data, error } = await sb
+      .from("products")
+      .select(`
         id,
         name,
-        image_url,
+        description,
+        main_image_url,
+        base_price,
+        regular_price,
         active,
+        allow_cod,
+        allow_advance,
         created_at,
-        variant_sizes (
+        product_variants (
           id,
-          size,
-          price,
-          stock,
+          name,
+          image_url,
           active,
-          created_at
+          created_at,
+          variant_sizes (
+            id,
+            size,
+            price,
+            stock,
+            active,
+            created_at
+          )
         )
-      )
-    `)
-    .eq("id", productId)
-    .eq("active", true)
-    .maybeSingle();
+      `)
+      .eq("id", productId)
+      .eq("active", true)
+      .maybeSingle();
 
-  if (error) {
+    if (error) {
+
+      console.error(
+        "Product loading error:",
+        error
+      );
+
+      showError(
+        "পণ্যের তথ্য লোড করতে সমস্যা হয়েছে।\n\n" +
+        error.message
+      );
+
+      return;
+    }
+
+    if (!data) {
+
+      showError(
+        "এই পণ্যটি পাওয়া যায়নি অথবা বর্তমানে Active নেই।"
+      );
+
+      return;
+    }
+
+    product = normalizeProduct(data);
+
+    initializeProduct();
+
+    showLoading(false);
+
+  } catch (error) {
 
     console.error(
-      "Product loading error:",
+      "Unexpected product error:",
       error
     );
 
     showError(
-      "পণ্যের তথ্য লোড করতে সমস্যা হয়েছে।"
+      "পেজ লোড করার সময় একটি সমস্যা হয়েছে।"
     );
-
-    return;
   }
-
-  if (!data) {
-
-    showError(
-      "এই পণ্যটি পাওয়া যায়নি অথবা বর্তমানে Active নেই।"
-    );
-
-    return;
-  }
-
-  product = normalizeProduct(data);
-
-  initializeProduct();
-
-  showLoading(false);
 }
 
 
@@ -382,6 +404,8 @@ function setupVariants() {
 
     selectedVariant =
       null;
+
+    renderSizes();
 
     return;
   }
@@ -913,6 +937,9 @@ function setupPaymentMethods() {
     container.innerHTML =
       "<div style='color:#777;'>কোনো পেমেন্ট পদ্ধতি সেট করা হয়নি।</div>";
 
+    selectedPaymentMethod =
+      null;
+
     return;
   }
 
@@ -1280,65 +1307,124 @@ async function submitOrder() {
     "অর্ডার দেওয়া হচ্ছে...";
 
 
-  const { data, error } =
-    await sb.rpc(
-      "place_order",
-      {
-        p_customer_name:
-          name,
+  try {
 
-        p_phone:
-          phone,
+    const { data, error } =
+      await sb.rpc(
+        "place_order",
+        {
+          p_customer_name:
+            name,
 
-        p_address:
-          address,
+          p_phone:
+            phone,
 
-        p_district:
-          district,
+          p_address:
+            address,
 
-        p_upazila:
-          upazila,
+          p_district:
+            district,
 
-        p_product_name:
-          product.name || "",
+          p_upazila:
+            upazila,
 
-        p_variant_name:
-          variantName,
+          p_product_name:
+            product.name || "",
 
-        p_size_name:
-          sizeName,
+          p_variant_name:
+            variantName,
 
-        p_variant_size_id:
-          variantSizeId,
+          p_size_name:
+            sizeName,
 
-        p_quantity:
-          quantity,
+          p_variant_size_id:
+            variantSizeId,
 
-        p_product_price:
-          price,
+          p_quantity:
+            quantity,
 
-        p_payment_method:
-          selectedPaymentMethod,
+          p_product_price:
+            price,
 
-        p_payment_account:
-          selectedPaymentMethod ===
-          "advance"
-            ? paymentAccount
-            : null,
+          p_payment_method:
+            selectedPaymentMethod,
 
-        p_transaction_id:
-          selectedPaymentMethod ===
-          "advance"
-            ? transactionId
-            : null
-      }
+          p_payment_account:
+            selectedPaymentMethod ===
+            "advance"
+              ? paymentAccount
+              : null,
+
+          p_transaction_id:
+            selectedPaymentMethod ===
+            "advance"
+              ? transactionId
+              : null
+        }
+      );
+
+
+    if (error) {
+
+      console.error(
+        "Order submission error:",
+        error
+      );
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        originalText;
+
+      showFormAlert(
+        getOrderErrorMessage(error),
+        "error"
+      );
+
+      return;
+    }
+
+
+    button.textContent =
+      "অর্ডার সফল হয়েছে ✓";
+
+
+    showFormAlert(
+      "আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে। ধন্যবাদ!",
+      "success"
     );
 
 
-  if (error) {
+    $("customerName").value =
+      "";
+
+    $("customerPhone").value =
+      "";
+
+    $("customerAddress").value =
+      "";
+
+    $("customerDistrict").value =
+      "";
+
+    $("customerUpazila").value =
+      "";
+
+    $("paymentAccount").value =
+      "";
+
+    $("transactionId").value =
+      "";
+
+    quantity = 1;
+
+    updateProductState();
+
+  } catch (error) {
 
     console.error(
-      "Order submission error:",
+      "Unexpected order error:",
       error
     );
 
@@ -1349,48 +1435,10 @@ async function submitOrder() {
       originalText;
 
     showFormAlert(
-      getOrderErrorMessage(error),
+      "অর্ডার দেওয়ার সময় একটি সমস্যা হয়েছে।",
       "error"
     );
-
-    return;
   }
-
-
-  button.textContent =
-    "অর্ডার সফল হয়েছে ✓";
-
-
-  showFormAlert(
-    "আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে। ধন্যবাদ!",
-    "success"
-  );
-
-
-  $("customerName").value =
-    "";
-
-  $("customerPhone").value =
-    "";
-
-  $("customerAddress").value =
-    "";
-
-  $("customerDistrict").value =
-    "";
-
-  $("customerUpazila").value =
-    "";
-
-  $("paymentAccount").value =
-    "";
-
-  $("transactionId").value =
-    "";
-
-  quantity = 1;
-
-  updateProductState();
 }
 
 
@@ -1624,6 +1672,9 @@ function showLoading(
   const error =
     $("errorBox");
 
+  if (!loading || !page || !error) {
+    return;
+  }
 
   if (isLoading) {
 
@@ -1648,17 +1699,37 @@ function showError(
   message
 ) {
 
-  $("loading").style.display =
-    "none";
+  const loading =
+    $("loading");
 
-  $("productPage").style.display =
-    "none";
+  const page =
+    $("productPage");
 
-  $("errorBox").style.display =
-    "block";
+  const errorBox =
+    $("errorBox");
 
-  $("errorMessage").textContent =
-    message;
+  const errorMessage =
+    $("errorMessage");
+
+  if (loading) {
+    loading.style.display =
+      "none";
+  }
+
+  if (page) {
+    page.style.display =
+      "none";
+  }
+
+  if (errorBox) {
+    errorBox.style.display =
+      "block";
+  }
+
+  if (errorMessage) {
+    errorMessage.textContent =
+      message;
+  }
 }
 
 
