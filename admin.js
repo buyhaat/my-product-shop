@@ -2,6 +2,7 @@
    MY SHOP ADMIN PANEL
    Login + Dashboard + Add Product + Edit Product
    + Variants + Sizes + Stock + Orders + Settings
+   + Realtime New Order Detection
    ========================================================= */
 
 const sb = window.supabase.createClient(
@@ -15,6 +16,7 @@ const sb = window.supabase.createClient(
    ========================================================= */
 
 const $ = (id) => document.getElementById(id);
+
 
 const money = (value) => {
 
@@ -112,18 +114,29 @@ let allOrders = [];
 
 let currentOrderFilter = "all";
 
+let ordersRealtimeChannel = null;
+
+let ordersRefreshTimer = null;
+
+let adminIsLoggedIn = false;
+
 
 /* =========================================================
    ALERTS
    ========================================================= */
 
-function showLoginMessage(message, type = "error") {
+function showLoginMessage(
+    message,
+    type = "error"
+) {
 
     if (!loginMessage) return;
 
-    loginMessage.textContent = message;
+    loginMessage.textContent =
+        message;
 
-    loginMessage.className = "login-message";
+    loginMessage.className =
+        "login-message";
 
     loginMessage.style.color =
         type === "success"
@@ -132,11 +145,15 @@ function showLoginMessage(message, type = "error") {
 }
 
 
-function showProductAlert(message, type = "info") {
+function showProductAlert(
+    message,
+    type = "info"
+) {
 
     if (!productFormAlert) return;
 
-    productFormAlert.textContent = message;
+    productFormAlert.textContent =
+        message;
 
     productFormAlert.className =
         `form-alert ${type}`;
@@ -147,14 +164,18 @@ function clearProductAlert() {
 
     if (!productFormAlert) return;
 
-    productFormAlert.textContent = "";
+    productFormAlert.textContent =
+        "";
 
     productFormAlert.className =
         "form-alert";
 }
 
 
-function showSettingsAlert(message, type = "info") {
+function showSettingsAlert(
+    message,
+    type = "info"
+) {
 
     if (!storeSettingsAlert) return;
 
@@ -180,7 +201,10 @@ async function isAdmin(user) {
     } = await sb
         .from("admin_users")
         .select("user_id")
-        .eq("user_id", user.id)
+        .eq(
+            "user_id",
+            user.id
+        )
         .maybeSingle();
 
     if (error) {
@@ -216,7 +240,8 @@ async function loginAdmin(event) {
         return;
     }
 
-    loginButton.disabled = true;
+    loginButton.disabled =
+        true;
 
     loginButton.textContent =
         "Logging in...";
@@ -232,8 +257,11 @@ async function loginAdmin(event) {
             data,
             error
         } = await sb.auth.signInWithPassword({
+
             email,
+
             password
+
         });
 
         if (error) {
@@ -241,13 +269,16 @@ async function loginAdmin(event) {
         }
 
         if (!data.user) {
+
             throw new Error(
                 "User পাওয়া যায়নি।"
             );
         }
 
         const admin =
-            await isAdmin(data.user);
+            await isAdmin(
+                data.user
+            );
 
         if (!admin) {
 
@@ -278,7 +309,8 @@ async function loginAdmin(event) {
 
     } finally {
 
-        loginButton.disabled = false;
+        loginButton.disabled =
+            false;
 
         loginButton.textContent =
             "Login";
@@ -304,7 +336,9 @@ async function checkExistingSession() {
         }
 
         const admin =
-            await isAdmin(session.user);
+            await isAdmin(
+                session.user
+            );
 
         if (!admin) {
 
@@ -333,12 +367,21 @@ async function checkExistingSession() {
 
 function showLoginScreen() {
 
+    adminIsLoggedIn =
+        false;
+
+    stopOrderRealtime();
+
     if (adminLogin) {
-        adminLogin.style.display = "";
+
+        adminLogin.style.display =
+            "";
     }
 
     if (adminDashboard) {
-        adminDashboard.style.display = "none";
+
+        adminDashboard.style.display =
+            "none";
     }
 }
 
@@ -349,28 +392,29 @@ function showLoginScreen() {
 
 async function showDashboard(user) {
 
+    adminIsLoggedIn =
+        true;
+
     if (adminLogin) {
-        adminLogin.style.display = "none";
+
+        adminLogin.style.display =
+            "none";
     }
 
     if (adminDashboard) {
-        adminDashboard.style.display = "block";
+
+        adminDashboard.style.display =
+            "block";
     }
 
     if (adminUserEmail) {
+
         adminUserEmail.textContent =
             user.email || "";
     }
 
     resetProductForm();
 
-    /*
-       Dashboard visible করার পর
-       আলাদা আলাদা request চালানো হচ্ছে।
-
-       কোনো একটি request fail করলেও
-       অন্যগুলো বন্ধ হবে না।
-    */
 
     await Promise.allSettled([
 
@@ -384,6 +428,20 @@ async function showDashboard(user) {
 
     ]);
 
+
+    /*
+       Login সফল হওয়ার পরেই
+       নতুন order-এর Realtime listener চালু হবে।
+    */
+
+    startOrderRealtime();
+
+    /*
+       Realtime কোনো কারণে কাজ না করলে
+       10 সেকেন্ড পরপর orders refresh হবে।
+    */
+
+    startOrderPolling();
 }
 
 
@@ -392,6 +450,10 @@ async function showDashboard(user) {
    ========================================================= */
 
 async function logoutAdmin() {
+
+    stopOrderRealtime();
+
+    stopOrderPolling();
 
     const {
         error
@@ -424,10 +486,14 @@ async function logoutAdmin() {
    NAVIGATION
    ========================================================= */
 
-async function openSection(sectionId) {
+async function openSection(
+    sectionId
+) {
 
     document
-        .querySelectorAll(".admin-section")
+        .querySelectorAll(
+            ".admin-section"
+        )
         .forEach(section => {
 
             section.classList.remove(
@@ -437,7 +503,9 @@ async function openSection(sectionId) {
         });
 
 
-    const target = $(sectionId);
+    const target =
+        $(sectionId);
+
 
     if (target) {
 
@@ -448,7 +516,9 @@ async function openSection(sectionId) {
 
 
     document
-        .querySelectorAll(".admin-nav-btn")
+        .querySelectorAll(
+            ".admin-nav-btn"
+        )
         .forEach(button => {
 
             button.classList.remove(
@@ -468,16 +538,18 @@ async function openSection(sectionId) {
         });
 
 
-    /*
-       Section অনুযায়ী fresh data.
-    */
-
     if (
         sectionId ===
         "dashboardSection"
     ) {
 
-        await loadStats();
+        await Promise.allSettled([
+
+            loadStats(),
+
+            loadOrders()
+
+        ]);
     }
 
 
@@ -515,9 +587,11 @@ async function openSection(sectionId) {
 
 function resetProductForm() {
 
-    editingProductId = null;
+    editingProductId =
+        null;
 
     if (productForm) {
+
         productForm.reset();
     }
 
@@ -552,11 +626,15 @@ function resetProductForm() {
     }
 
     if (allowCodAdmin) {
-        allowCodAdmin.checked = true;
+
+        allowCodAdmin.checked =
+            true;
     }
 
     if (allowAdvanceAdmin) {
-        allowAdvanceAdmin.checked = false;
+
+        allowAdvanceAdmin.checked =
+            false;
     }
 
     clearProductAlert();
@@ -603,7 +681,9 @@ function checkPaymentMethodsAdmin() {
 function previewMainImage() {
 
     const file =
-        mainImageAdmin?.files?.[0];
+        mainImageAdmin
+            ?.files
+            ?.[0];
 
     if (!file) return;
 
@@ -633,18 +713,21 @@ async function uploadImage(
     folder = "products"
 ) {
 
-    if (!file) return null;
+    if (!file)
+        return null;
 
     const extension =
         file.name
             .split(".")
             .pop()
-            .toLowerCase() || "jpg";
+            .toLowerCase() ||
+        "jpg";
 
     const fileName =
         `${folder}/${Date.now()}-${Math.random()
             .toString(36)
             .substring(2, 10)}.${extension}`;
+
 
     const {
         error
@@ -654,14 +737,19 @@ async function uploadImage(
             fileName,
             file,
             {
-                cacheControl: "3600",
-                upsert: false
+                cacheControl:
+                    "3600",
+                upsert:
+                    false
             }
         );
 
+
     if (error) {
+
         throw error;
     }
+
 
     const {
         data: publicData
@@ -670,6 +758,7 @@ async function uploadImage(
         .getPublicUrl(
             fileName
         );
+
 
     return publicData.publicUrl;
 }
@@ -683,13 +772,19 @@ function addVariant(
     variantData = null
 ) {
 
-    if (!variantsContainer) return;
+    if (!variantsContainer)
+        return;
+
 
     const variant =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     variant.className =
         "admin-variant";
+
 
     variant.innerHTML = `
 
@@ -772,6 +867,7 @@ function addVariant(
 
     `;
 
+
     variantsContainer.appendChild(
         variant
     );
@@ -792,14 +888,16 @@ function addVariant(
                 size =>
                     size.active !== false
             )
-            .forEach(size => {
+            .forEach(
+                size => {
 
-                addSizeRow(
-                    sizesContainer,
-                    size
-                );
+                    addSizeRow(
+                        sizesContainer,
+                        size
+                    );
 
-            });
+                }
+            );
 
     } else {
 
@@ -815,13 +913,19 @@ function addSizeRow(
     sizeData = null
 ) {
 
-    if (!container) return;
+    if (!container)
+        return;
+
 
     const row =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     row.className =
         "admin-size-row";
+
 
     row.innerHTML = `
 
@@ -860,7 +964,10 @@ function addSizeRow(
 
     `;
 
-    container.appendChild(row);
+
+    container.appendChild(
+        row
+    );
 }
 
 
@@ -873,11 +980,13 @@ function collectVariants() {
     if (!variantsContainer)
         return [];
 
+
     const variantElements =
         variantsContainer
             .querySelectorAll(
                 ".admin-variant"
             );
+
 
     const variants = [];
 
@@ -891,7 +1000,8 @@ function collectVariants() {
                         ".variant-name"
                     )
                     ?.value
-                    .trim() || "";
+                    .trim() ||
+                "";
 
 
             const imageFile =
@@ -899,7 +1009,9 @@ function collectVariants() {
                     .querySelector(
                         ".variant-image"
                     )
-                    ?.files?.[0] || null;
+                    ?.files
+                    ?.[0] ||
+                null;
 
 
             const existingImage =
@@ -907,7 +1019,9 @@ function collectVariants() {
                     .querySelector(
                         ".variant-existing-image img"
                     )
-                    ?.getAttribute("src") ||
+                    ?.getAttribute(
+                        "src"
+                    ) ||
                 null;
 
 
@@ -918,53 +1032,60 @@ function collectVariants() {
                 .querySelectorAll(
                     ".admin-size-row"
                 )
-                .forEach(row => {
+                .forEach(
+                    row => {
 
-                    const sizeName =
-                        row.querySelector(
-                            ".size-name"
-                        )
-                        ?.value
-                        .trim() || "";
-
-
-                    const stock =
-                        Number(
+                        const sizeName =
                             row.querySelector(
-                                ".size-stock"
+                                ".size-name"
                             )
-                            ?.value || 0
-                        );
+                            ?.value
+                            .trim() ||
+                            "";
 
 
-                    const priceValue =
-                        row.querySelector(
-                            ".size-price"
-                        )
-                        ?.value;
-
-
-                    const price =
-                        priceValue === "" ||
-                        priceValue == null
-                            ? null
-                            : Number(
-                                priceValue
+                        const stock =
+                            Number(
+                                row.querySelector(
+                                    ".size-stock"
+                                )
+                                ?.value ||
+                                0
                             );
 
 
-                    if (sizeName) {
+                        const priceValue =
+                            row.querySelector(
+                                ".size-price"
+                            )
+                            ?.value;
 
-                        sizes.push({
-                            size_name:
-                                sizeName,
-                            stock,
-                            price
-                        });
+
+                        const price =
+                            priceValue === "" ||
+                            priceValue == null
+                                ? null
+                                : Number(
+                                    priceValue
+                                );
+
+
+                        if (sizeName) {
+
+                            sizes.push({
+
+                                size_name:
+                                    sizeName,
+
+                                stock,
+
+                                price
+
+                            });
+                        }
 
                     }
-
-                });
+                );
 
 
             if (
@@ -986,7 +1107,6 @@ function collectVariants() {
                     sizes
 
                 });
-
             }
 
         }
@@ -1001,7 +1121,9 @@ function collectVariants() {
    SAVE PRODUCT
    ========================================================= */
 
-async function saveProduct(event) {
+async function saveProduct(
+    event
+) {
 
     event.preventDefault();
 
@@ -1009,24 +1131,32 @@ async function saveProduct(event) {
 
 
     const name =
-        productNameAdmin?.value.trim() ||
+        productNameAdmin
+            ?.value
+            .trim() ||
         "";
 
 
     const regularPrice =
         Number(
-            regularPriceAdmin?.value || 0
+            regularPriceAdmin
+                ?.value ||
+            0
         );
 
 
     const salePrice =
         Number(
-            basePriceAdmin?.value || 0
+            basePriceAdmin
+                ?.value ||
+            0
         );
 
 
     const description =
-        descriptionAdmin?.value.trim() ||
+        descriptionAdmin
+            ?.value
+            .trim() ||
         "";
 
 
@@ -1101,11 +1231,14 @@ async function saveProduct(event) {
 
     try {
 
-        let mainImageUrl = null;
+        let mainImageUrl =
+            null;
 
 
         const mainImageFile =
-            mainImageAdmin?.files?.[0] ||
+            mainImageAdmin
+                ?.files
+                ?.[0] ||
             null;
 
 
@@ -1138,7 +1271,10 @@ async function saveProduct(event) {
                 )
                 .single();
 
-            if (error) throw error;
+
+            if (error)
+                throw error;
+
 
             mainImageUrl =
                 data?.main_image_url ||
@@ -1191,10 +1327,14 @@ async function saveProduct(event) {
                     editingProductId
                 );
 
-            if (error) throw error;
+
+            if (error)
+                throw error;
+
 
             productId =
                 editingProductId;
+
 
             await deactivateOldVariants(
                 productId
@@ -1213,7 +1353,10 @@ async function saveProduct(event) {
                 .select("id")
                 .single();
 
-            if (error) throw error;
+
+            if (error)
+                throw error;
+
 
             productId =
                 data.id;
@@ -1262,6 +1405,7 @@ async function saveProduct(event) {
             error
         );
 
+
         showProductAlert(
             error.message ||
             "Product save করতে সমস্যা হয়েছে।",
@@ -1300,9 +1444,10 @@ async function deactivateOldVariants(
             productId
         );
 
-    if (error) {
+
+    if (error)
         throw error;
-    }
+
 
     if (!oldVariants?.length)
         return;
@@ -1317,16 +1462,17 @@ async function deactivateOldVariants(
         } = await sb
             .from("variant_sizes")
             .update({
-                active: false
+                active:
+                    false
             })
             .eq(
                 "variant_id",
                 variant.id
             );
 
-        if (sizeError) {
+
+        if (sizeError)
             throw sizeError;
-        }
     }
 
 
@@ -1335,16 +1481,17 @@ async function deactivateOldVariants(
     } = await sb
         .from("product_variants")
         .update({
-            active: false
+            active:
+                false
         })
         .eq(
             "product_id",
             productId
         );
 
-    if (variantError) {
+
+    if (variantError)
         throw variantError;
-    }
 }
 
 
@@ -1382,7 +1529,8 @@ async function saveVariants(
                 productId,
 
             name:
-                variant.name || null,
+                variant.name ||
+                null,
 
             image_url:
                 imageUrl,
@@ -1404,9 +1552,8 @@ async function saveVariants(
             .single();
 
 
-        if (variantError) {
+        if (variantError)
             throw variantError;
-        }
 
 
         if (!variant.sizes?.length)
@@ -1425,7 +1572,8 @@ async function saveVariants(
 
                     stock:
                         Number(
-                            size.stock || 0
+                            size.stock ||
+                            0
                         ),
 
                     price:
@@ -1451,9 +1599,8 @@ async function saveVariants(
             );
 
 
-        if (sizeError) {
+        if (sizeError)
             throw sizeError;
-        }
     }
 }
 
@@ -1523,7 +1670,8 @@ async function editProduct(
             .single();
 
 
-        if (error) throw error;
+        if (error)
+            throw error;
 
 
         editingProductId =
@@ -1632,6 +1780,7 @@ async function editProduct(
             error
         );
 
+
         showProductAlert(
             error.message ||
             "Product load করতে সমস্যা হয়েছে।",
@@ -1691,12 +1840,14 @@ async function loadProducts() {
             .order(
                 "created_at",
                 {
-                    ascending: false
+                    ascending:
+                        false
                 }
             );
 
 
-        if (error) throw error;
+        if (error)
+            throw error;
 
 
         if (!data?.length) {
@@ -1744,7 +1895,8 @@ async function loadProducts() {
 
                                     stock +=
                                         Number(
-                                            size.stock || 0
+                                            size.stock ||
+                                            0
                                         );
 
                                 }
@@ -1795,7 +1947,6 @@ async function loadProducts() {
 
                             ${image}
 
-
                             <div class="admin-product-info">
 
                                 <h3>
@@ -1803,7 +1954,6 @@ async function loadProducts() {
                                         product.name
                                     )}
                                 </h3>
-
 
                                 <div class="admin-product-price">
 
@@ -1827,14 +1977,12 @@ async function loadProducts() {
 
                                 </div>
 
-
                                 <div class="admin-product-meta">
                                     Stock:
                                     <strong>
                                         ${stock}
                                     </strong>
                                 </div>
-
 
                                 <span
                                     class="admin-product-status ${
@@ -1847,7 +1995,6 @@ async function loadProducts() {
                                 </span>
 
                             </div>
-
 
                             <div class="admin-product-actions">
 
@@ -1900,16 +2047,12 @@ function normalizeOrderStatus(
 
     const value =
         String(
-            status || "pending"
+            status ||
+            "pending"
         )
         .trim()
         .toLowerCase();
 
-
-    /*
-       আগের database-এর pending order
-       এখন New হিসেবে দেখানো হবে।
-    */
 
     if (
         value === "pending" ||
@@ -1957,7 +2100,8 @@ function normalizeOrderStatus(
     }
 
 
-    return value || "new";
+    return value ||
+        "new";
 }
 
 
@@ -2001,12 +2145,6 @@ function getOrderStatusLabel(
    ========================================================= */
 
 async function loadStats() {
-
-    /*
-       আগে loading state দেওয়া হচ্ছে।
-       এতে পুরোনো 00/0 অবস্থায় আটকে থাকার
-       সমস্যা কমবে।
-    */
 
     if (statProducts)
         statProducts.textContent =
@@ -2054,40 +2192,31 @@ async function loadStats() {
         ]);
 
 
-        if (
-            productsResult.error
-        ) {
-
+        if (productsResult.error)
             throw productsResult.error;
-        }
 
 
-        if (
-            sizesResult.error
-        ) {
-
+        if (sizesResult.error)
             throw sizesResult.error;
-        }
 
 
-        if (
-            ordersResult.error
-        ) {
-
+        if (ordersResult.error)
             throw ordersResult.error;
-        }
 
 
         const products =
-            productsResult.data || [];
+            productsResult.data ||
+            [];
 
 
         const sizes =
-            sizesResult.data || [];
+            sizesResult.data ||
+            [];
 
 
         const orders =
-            ordersResult.data || [];
+            ordersResult.data ||
+            [];
 
 
         const totalProducts =
@@ -2110,15 +2239,12 @@ async function loadStats() {
                     ) =>
                         sum +
                         Number(
-                            s.stock || 0
+                            s.stock ||
+                            0
                         ),
                     0
                 );
 
-
-        /*
-           New = pending/new
-        */
 
         const newOrders =
             orders.filter(
@@ -2137,10 +2263,6 @@ async function loadStats() {
                     ) === "completed"
             ).length;
 
-
-        /*
-           DOM-এ সরাসরি number বসানো।
-        */
 
         if (statProducts) {
 
@@ -2175,9 +2297,8 @@ async function loadStats() {
                 String(
                     completedOrders
                 );
-
-
         }
+
 
     } catch (error) {
 
@@ -2186,11 +2307,6 @@ async function loadStats() {
             error
         );
 
-
-        /*
-           Error হলে 00 না দেখিয়ে
-           আসল error indication থাকবে।
-        */
 
         if (statProducts)
             statProducts.textContent =
@@ -2238,21 +2354,19 @@ async function loadOrders() {
             .order(
                 "created_at",
                 {
-                    ascending: false
+                    ascending:
+                        false
                 }
             );
 
 
-        if (error) throw error;
+        if (error)
+            throw error;
 
 
         allOrders =
             data || [];
 
-
-        /*
-           Current filter ধরে আবার render।
-        */
 
         filterOrders(
             currentOrderFilter,
@@ -2280,6 +2394,322 @@ async function loadOrders() {
 
 
 /* =========================================================
+   REALTIME ORDER LISTENER
+   ========================================================= */
+
+function startOrderRealtime() {
+
+    if (!adminIsLoggedIn)
+        return;
+
+
+    /*
+       আগে পুরোনো channel থাকলে remove করা।
+    */
+
+    stopOrderRealtime();
+
+
+    console.log(
+        "Starting Supabase order realtime..."
+    );
+
+
+    ordersRealtimeChannel =
+        sb
+            .channel(
+                "admin-orders-realtime"
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event:
+                        "INSERT",
+
+                    schema:
+                        "public",
+
+                    table:
+                        "orders"
+                },
+                async payload => {
+
+                    console.log(
+                        "NEW ORDER RECEIVED:",
+                        payload
+                    );
+
+
+                    /*
+                       নতুন order database-এ আসার
+                       সাথে সাথে সম্পূর্ণ order list
+                       আবার load হবে।
+                    */
+
+                    await loadOrders();
+
+                    await loadStats();
+
+
+                    /*
+                       Browser notification permission থাকলে
+                       notification দেখানোর চেষ্টা।
+                    */
+
+                    showNewOrderNotification(
+                        payload?.new
+                    );
+
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event:
+                        "UPDATE",
+
+                    schema:
+                        "public",
+
+                    table:
+                        "orders"
+                },
+                async payload => {
+
+                    console.log(
+                        "ORDER UPDATED:",
+                        payload
+                    );
+
+
+                    await loadOrders();
+
+                    await loadStats();
+
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event:
+                        "DELETE",
+
+                    schema:
+                        "public",
+
+                    table:
+                        "orders"
+                },
+                async payload => {
+
+                    console.log(
+                        "ORDER DELETED:",
+                        payload
+                    );
+
+
+                    await loadOrders();
+
+                    await loadStats();
+
+                }
+            )
+            .subscribe(
+                status => {
+
+                    console.log(
+                        "Order realtime status:",
+                        status
+                    );
+
+                }
+            );
+}
+
+
+function stopOrderRealtime() {
+
+    if (
+        ordersRealtimeChannel
+    ) {
+
+        try {
+
+            sb.removeChannel(
+                ordersRealtimeChannel
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Remove realtime channel error:",
+                error
+            );
+        }
+
+        ordersRealtimeChannel =
+            null;
+    }
+}
+
+
+/* =========================================================
+   FALLBACK ORDER POLLING
+   ========================================================= */
+
+function startOrderPolling() {
+
+    stopOrderPolling();
+
+
+    /*
+       প্রতি 10 সেকেন্ডে database থেকে
+       latest orders check করবে।
+
+       Realtime কাজ করলেও এটা fallback হিসেবে থাকবে।
+    */
+
+    ordersRefreshTimer =
+        setInterval(
+            async () => {
+
+                if (
+                    !adminIsLoggedIn
+                ) {
+                    return;
+                }
+
+
+                try {
+
+                    await loadOrders();
+
+                    await loadStats();
+
+                } catch (error) {
+
+                    console.error(
+                        "Automatic order refresh error:",
+                        error
+                    );
+                }
+
+            },
+            10000
+        );
+}
+
+
+function stopOrderPolling() {
+
+    if (
+        ordersRefreshTimer
+    ) {
+
+        clearInterval(
+            ordersRefreshTimer
+        );
+
+        ordersRefreshTimer =
+            null;
+    }
+}
+
+
+/* =========================================================
+   NEW ORDER NOTIFICATION
+   ========================================================= */
+
+function showNewOrderNotification(
+    order
+) {
+
+    console.log(
+        "New order notification:",
+        order
+    );
+
+
+    /*
+       Browser notification permission থাকলে
+       notification দেখাবে।
+    */
+
+    if (
+        "Notification" in window &&
+        Notification.permission ===
+            "granted"
+    ) {
+
+        const customer =
+            order?.customer_name ||
+            order?.name ||
+            "New customer";
+
+
+        const product =
+            order?.product_name ||
+            order?.product ||
+            "New product";
+
+
+        try {
+
+            new Notification(
+                "🛍️ New Order!",
+                {
+                    body:
+                        `${customer} ordered ${product}`,
+                    tag:
+                        "my-shop-new-order"
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Notification error:",
+                error
+            );
+        }
+    }
+}
+
+
+/* =========================================================
+   REQUEST NOTIFICATION PERMISSION
+   ========================================================= */
+
+async function requestNotificationPermission() {
+
+    if (
+        !("Notification" in window)
+    ) {
+        return;
+    }
+
+
+    if (
+        Notification.permission ===
+        "default"
+    ) {
+
+        try {
+
+            await Notification.requestPermission();
+
+        } catch (error) {
+
+            console.error(
+                "Notification permission error:",
+                error
+            );
+        }
+    }
+}
+
+
+/* =========================================================
    RENDER ORDERS
    ========================================================= */
 
@@ -2294,14 +2724,19 @@ function renderOrders(
     if (!orders?.length) {
 
         const message =
-            currentOrderFilter === "all"
+            currentOrderFilter ===
+            "all"
+
                 ? "No orders found."
-                : `এই filter-এ কোনো order নেই।`;
+
+                : "এই filter-এ কোনো order নেই।";
 
 
         adminOrdersList.innerHTML =
             `<div class="order-empty">
-                ${escapeHTML(message)}
+                ${escapeHTML(
+                    message
+                )}
             </div>`;
 
 
@@ -2312,7 +2747,6 @@ function renderOrders(
     adminOrdersList.innerHTML =
         orders.map(
             order => {
-
 
                 const status =
                     normalizeOrderStatus(
@@ -2396,7 +2830,6 @@ function renderOrders(
                     <div
                         class="admin-order-card"
                     >
-
 
                         <div class="order-main">
 
@@ -2490,7 +2923,11 @@ function renderOrders(
                             }
 
 
-                            <div style="margin-top:5px;">
+                            <div
+                                style="
+                                    margin-top:5px;
+                                "
+                            >
 
                                 <strong>
                                     Quantity:
@@ -2573,7 +3010,6 @@ function renderOrders(
 
 
                         <div class="order-actions">
-
 
                             <span
                                 class="
@@ -2690,7 +3126,6 @@ function renderOrders(
                                     : ""
                             }
 
-
                         </div>
 
                     </div>
@@ -2767,10 +3202,8 @@ async function updateOrderStatus(
             );
 
 
-        if (error) {
-
+        if (error)
             throw error;
-        }
 
 
         await Promise.allSettled([
@@ -2834,10 +3267,6 @@ async function deleteCompletedOrder(
         );
 
 
-    /*
-       শুধু Completed order delete.
-    */
-
     if (
         status !==
         "completed"
@@ -2874,10 +3303,8 @@ async function deleteCompletedOrder(
             );
 
 
-        if (error) {
-
+        if (error)
             throw error;
-        }
 
 
         await Promise.allSettled([
@@ -2916,7 +3343,8 @@ function filterOrders(
 
     currentOrderFilter =
         String(
-            filter || "all"
+            filter ||
+            "all"
         )
         .trim()
         .toLowerCase();
@@ -2928,23 +3356,25 @@ function filterOrders(
             .querySelectorAll(
                 "[data-order-filter]"
             )
-            .forEach(button => {
+            .forEach(
+                button => {
 
-                const buttonFilter =
-                    String(
-                        button.dataset.orderFilter ||
-                        "all"
-                    )
-                    .toLowerCase();
+                    const buttonFilter =
+                        String(
+                            button.dataset.orderFilter ||
+                            "all"
+                        )
+                        .toLowerCase();
 
 
-                button.classList.toggle(
-                    "active",
-                    buttonFilter ===
-                    currentOrderFilter
-                );
+                    button.classList.toggle(
+                        "active",
+                        buttonFilter ===
+                        currentOrderFilter
+                    );
 
-            });
+                }
+            );
     }
 
 
@@ -3017,37 +3447,44 @@ async function loadStoreSettings() {
 
         if (aboutUsAdmin)
             aboutUsAdmin.value =
-                data.about_us || "";
+                data.about_us ||
+                "";
 
 
         if (contactPhoneAdmin)
             contactPhoneAdmin.value =
-                data.contact_phone || "";
+                data.contact_phone ||
+                "";
 
 
         if (contactWhatsappAdmin)
             contactWhatsappAdmin.value =
-                data.contact_whatsapp || "";
+                data.contact_whatsapp ||
+                "";
 
 
         if (contactEmailAdmin)
             contactEmailAdmin.value =
-                data.contact_email || "";
+                data.contact_email ||
+                "";
 
 
         if (contactAddressAdmin)
             contactAddressAdmin.value =
-                data.contact_address || "";
+                data.contact_address ||
+                "";
 
 
         if (contactFacebookAdmin)
             contactFacebookAdmin.value =
-                data.contact_facebook || "";
+                data.contact_facebook ||
+                "";
 
 
         if (contactInstagramAdmin)
             contactInstagramAdmin.value =
-                data.contact_instagram || "";
+                data.contact_instagram ||
+                "";
 
 
     } catch (error) {
@@ -3088,34 +3525,49 @@ async function saveStoreSettings(
 
         const settings = {
 
-            id: 1,
+            id:
+                1,
 
             about_us:
-                aboutUsAdmin?.value.trim() ||
+                aboutUsAdmin
+                    ?.value
+                    .trim() ||
                 "",
 
             contact_phone:
-                contactPhoneAdmin?.value.trim() ||
+                contactPhoneAdmin
+                    ?.value
+                    .trim() ||
                 "",
 
             contact_whatsapp:
-                contactWhatsappAdmin?.value.trim() ||
+                contactWhatsappAdmin
+                    ?.value
+                    .trim() ||
                 "",
 
             contact_email:
-                contactEmailAdmin?.value.trim() ||
+                contactEmailAdmin
+                    ?.value
+                    .trim() ||
                 "",
 
             contact_address:
-                contactAddressAdmin?.value.trim() ||
+                contactAddressAdmin
+                    ?.value
+                    .trim() ||
                 "",
 
             contact_facebook:
-                contactFacebookAdmin?.value.trim() ||
+                contactFacebookAdmin
+                    ?.value
+                    .trim() ||
                 "",
 
             contact_instagram:
-                contactInstagramAdmin?.value.trim() ||
+                contactInstagramAdmin
+                    ?.value
+                    .trim() ||
                 ""
 
         };
@@ -3179,7 +3631,6 @@ async function saveStoreSettings(
 
 function setupEventListeners() {
 
-
     /* LOGIN */
 
     if (loginForm) {
@@ -3208,27 +3659,29 @@ function setupEventListeners() {
         .querySelectorAll(
             ".admin-nav-btn"
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                async () => {
+                button.addEventListener(
+                    "click",
+                    async () => {
 
-                    const section =
-                        button.dataset.section;
+                        const section =
+                            button.dataset.section;
 
 
-                    if (section) {
+                        if (section) {
 
-                        await openSection(
-                            section
-                        );
+                            await openSection(
+                                section
+                            );
+                        }
+
                     }
+                );
 
-                }
-            );
-
-        });
+            }
+        );
 
 
     /* QUICK ACTIONS */
@@ -3237,27 +3690,29 @@ function setupEventListeners() {
         .querySelectorAll(
             ".quick-action-btn"
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                async () => {
+                button.addEventListener(
+                    "click",
+                    async () => {
 
-                    const section =
-                        button.dataset.openSection;
+                        const section =
+                            button.dataset.openSection;
 
 
-                    if (section) {
+                        if (section) {
 
-                        await openSection(
-                            section
-                        );
+                            await openSection(
+                                section
+                            );
+                        }
+
                     }
+                );
 
-                }
-            );
-
-        });
+            }
+        );
 
 
     /* PRODUCT SAVE */
@@ -3367,7 +3822,6 @@ function setupEventListeners() {
             "click",
             event => {
 
-
                 const removeVariantButton =
                     event.target.closest(
                         ".remove-variant-button"
@@ -3463,11 +3917,6 @@ function setupEventListeners() {
             "click",
             event => {
 
-
-                /*
-                   Status button
-                */
-
                 const statusButton =
                     event.target.closest(
                         ".order-status-button"
@@ -3499,10 +3948,6 @@ function setupEventListeners() {
                     return;
                 }
 
-
-                /*
-                   Delete button
-                */
 
                 const deleteButton =
                     event.target.closest(
@@ -3538,26 +3983,28 @@ function setupEventListeners() {
         .querySelectorAll(
             "[data-order-filter]"
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+                button.addEventListener(
+                    "click",
+                    () => {
 
-                    const filter =
-                        button.dataset.orderFilter ||
-                        "all";
+                        const filter =
+                            button.dataset.orderFilter ||
+                            "all";
 
 
-                    filterOrders(
-                        filter,
-                        true
-                    );
+                        filterOrders(
+                            filter,
+                            true
+                        );
 
-                }
-            );
+                    }
+                );
 
-        });
+            }
+        );
 
 
     /* SETTINGS */
@@ -3588,7 +4035,34 @@ sb.auth.onAuthStateChange(
             "SIGNED_OUT"
         ) {
 
+            adminIsLoggedIn =
+                false;
+
+            stopOrderRealtime();
+
+            stopOrderPolling();
+
             showLoginScreen();
+
+            return;
+        }
+
+
+        if (
+            event ===
+            "SIGNED_IN" &&
+            session?.user
+        ) {
+
+            /*
+               এখানে সরাসরি dashboard চালানো হচ্ছে না,
+               কারণ loginAdmin/checkExistingSession
+               already dashboard চালায়।
+            */
+
+            console.log(
+                "Admin signed in."
+            );
         }
 
     }
@@ -3606,6 +4080,12 @@ document.addEventListener(
         setupEventListeners();
 
         checkPaymentMethodsAdmin();
+
+        /*
+           Browser notification permission চাইবে।
+        */
+
+        await requestNotificationPermission();
 
         await checkExistingSession();
 
