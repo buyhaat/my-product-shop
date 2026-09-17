@@ -1,22 +1,7 @@
 /* =========================================================
    MY SHOP ADMIN PANEL
-   Complete version matched with current admin.html
-
-   Login
-   Dashboard
-   Add Product
-   Edit Product
-   Variants
-   Sizes
-   Image Upload
-   Products
-   Orders
-   Store Settings
-   ========================================================= */
-
-
-/* =========================================================
-   SUPABASE
+   Login + Dashboard + Add Product + Edit Product
+   + Variants + Sizes + Stock + Orders + Settings
    ========================================================= */
 
 const sb = window.supabase.createClient(
@@ -26,10 +11,24 @@ const sb = window.supabase.createClient(
 
 
 /* =========================================================
-   HELPER
+   HELPERS
    ========================================================= */
 
 const $ = (id) => document.getElementById(id);
+
+const money = (value) => {
+    const n = Number(value || 0);
+    return `৳${n.toLocaleString("en-BD")}`;
+};
+
+const escapeHTML = (value) => {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
 
 
 /* =========================================================
@@ -42,18 +41,18 @@ const adminDashboard = $("adminDashboard");
 const loginForm = $("loginForm");
 const loginEmail = $("loginEmail");
 const loginPassword = $("loginPassword");
-const loginMessage = $("loginMessage");
 const loginButton = $("loginButton");
+const loginMessage = $("loginMessage");
 
-const logoutButton = $("logoutButton");
 const adminUserEmail = $("adminUserEmail");
-
-
-/* Product */
+const logoutButton = $("logoutButton");
 
 const productForm = $("productForm");
 const productFormTitle = $("productFormTitle");
 const productFormAlert = $("productFormAlert");
+
+const saveProductButton = $("saveProductButton");
+const resetProductButton = $("resetProductButton");
 
 const productNameAdmin = $("productNameAdmin");
 const regularPriceAdmin = $("regularPriceAdmin");
@@ -71,32 +70,22 @@ const paymentWarningAdmin = $("paymentWarningAdmin");
 const variantsContainer = $("variantsContainer");
 const addVariantButton = $("addVariantButton");
 
-const saveProductButton = $("saveProductButton");
-const resetProductButton = $("resetProductButton");
-
-
-/* Products */
-
-const adminProductsList = $("adminProductsList");
-
-
-/* Orders */
-
-const adminOrdersList = $("adminOrdersList");
-
-
-/* Stats */
+const dashboardSection = $("dashboardSection");
+const addProductSection = $("addProductSection");
+const productsSectionAdmin = $("productsSectionAdmin");
+const ordersSectionAdmin = $("ordersSectionAdmin");
+const settingsSectionAdmin = $("settingsSectionAdmin");
 
 const statProducts = $("statProducts");
 const statStock = $("statStock");
 const statPendingOrders = $("statPendingOrders");
 const statCompletedOrders = $("statCompletedOrders");
 
+const adminProductsList = $("adminProductsList");
+const adminOrdersList = $("adminOrdersList");
 
-/* Settings */
-
-const storeSettingsForm = $("storeSettingsForm");
 const storeSettingsAlert = $("storeSettingsAlert");
+const storeSettingsForm = $("storeSettingsForm");
 
 const aboutUsAdmin = $("aboutUsAdmin");
 const contactPhoneAdmin = $("contactPhoneAdmin");
@@ -106,392 +95,196 @@ const contactAddressAdmin = $("contactAddressAdmin");
 const contactFacebookAdmin = $("contactFacebookAdmin");
 const contactInstagramAdmin = $("contactInstagramAdmin");
 
-const saveStoreSettingsButton =
-    $("saveStoreSettingsButton");
+const saveStoreSettingsButton = $("saveStoreSettingsButton");
 
 
 /* =========================================================
    STATE
    ========================================================= */
 
-let currentUser = null;
 let editingProductId = null;
+let allOrders = [];
 
 
 /* =========================================================
-   ESCAPE HTML
+   ALERTS
    ========================================================= */
 
-function escapeHtml(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-
-/* =========================================================
-   FORMAT NUMBER
-   ========================================================= */
-
-function formatNumber(value) {
-
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) {
-        return "0";
-    }
-
-    return number.toLocaleString(
-        "en-BD",
-        {
-            maximumFractionDigits: 2
-        }
-    );
-}
-
-
-/* =========================================================
-   FORMAT DATE
-   ========================================================= */
-
-function formatDate(value) {
-
-    if (!value) {
-        return "";
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return String(value);
-    }
-
-    return date.toLocaleString(
-        "en-BD",
-        {
-            dateStyle: "medium",
-            timeStyle: "short"
-        }
-    );
-}
-
-
-/* =========================================================
-   PRODUCT ALERT
-   ========================================================= */
-
-function showProductAlert(
-    message,
-    type = "info"
-) {
-
-    if (!productFormAlert) {
-        return;
-    }
-
-    productFormAlert.textContent = message;
-
-    productFormAlert.className =
-        "form-alert " + type;
-
-    productFormAlert.style.display =
-        "block";
-}
-
-
-function hideProductAlert() {
-
-    if (!productFormAlert) {
-        return;
-    }
-
-    productFormAlert.textContent = "";
-
-    productFormAlert.className =
-        "form-alert";
-
-    productFormAlert.style.display =
-        "none";
-}
-
-
-/* =========================================================
-   LOGIN MESSAGE
-   ========================================================= */
-
-function showLoginMessage(
-    message,
-    type = "error"
-) {
-
-    if (!loginMessage) {
-        return;
-    }
+function showLoginMessage(message, type = "error") {
+    if (!loginMessage) return;
 
     loginMessage.textContent = message;
 
-    loginMessage.style.display =
-        "block";
+    loginMessage.className = "login-message";
 
-    loginMessage.style.color =
-        type === "success"
-            ? "#16843a"
-            : "#d00000";
+    if (type === "success") {
+        loginMessage.style.color = "#16a34a";
+    } else {
+        loginMessage.style.color = "#dc2626";
+    }
 }
 
 
-function hideLoginMessage() {
+function showProductAlert(message, type = "info") {
+    if (!productFormAlert) return;
 
-    if (!loginMessage) {
-        return;
-    }
+    productFormAlert.textContent = message;
+    productFormAlert.className = `form-alert ${type}`;
+}
 
-    loginMessage.textContent = "";
 
-    loginMessage.style.display =
-        "none";
+function clearProductAlert() {
+    if (!productFormAlert) return;
+
+    productFormAlert.textContent = "";
+    productFormAlert.className = "form-alert";
+}
+
+
+function showSettingsAlert(message, type = "info") {
+    if (!storeSettingsAlert) return;
+
+    storeSettingsAlert.textContent = message;
+    storeSettingsAlert.className = `form-alert ${type}`;
 }
 
 
 /* =========================================================
-   SETTINGS ALERT
+   AUTH
    ========================================================= */
 
-function showSettingsAlert(
-    message,
-    type = "info"
-) {
+async function isAdmin(user) {
+    if (!user) return false;
 
-    if (!storeSettingsAlert) {
-        return;
+    const { data, error } = await sb
+        .from("admin_users")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (error) {
+        console.error("Admin check error:", error);
+        return false;
     }
 
-    storeSettingsAlert.textContent =
-        message;
-
-    storeSettingsAlert.className =
-        "form-alert " + type;
-
-    storeSettingsAlert.style.display =
-        "block";
+    return !!data;
 }
 
-
-/* =========================================================
-   LOGIN
-   ========================================================= */
 
 async function loginAdmin(event) {
-
     event.preventDefault();
 
-    hideLoginMessage();
-
-    const email =
-        loginEmail?.value.trim();
-
-    const password =
-        loginPassword?.value || "";
-
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
 
     if (!email || !password) {
-
-        showLoginMessage(
-            "Please enter email and password."
-        );
-
+        showLoginMessage("Email এবং password দিন।");
         return;
     }
 
+    loginButton.disabled = true;
+    loginButton.textContent = "Logging in...";
+
+    showLoginMessage("Login হচ্ছে...", "success");
 
     try {
-
-        if (loginButton) {
-            loginButton.disabled = true;
-            loginButton.textContent =
-                "Logging in...";
-        }
-
-
-        const {
-            data,
-            error
-        } = await sb.auth.signInWithPassword({
+        const { data, error } = await sb.auth.signInWithPassword({
             email,
             password
         });
 
-
         if (error) {
             throw error;
         }
 
-
-        currentUser =
-            data?.user || null;
-
-
-        if (!currentUser) {
-
-            throw new Error(
-                "Login succeeded but user information was not found."
-            );
+        if (!data.user) {
+            throw new Error("User পাওয়া যায়নি।");
         }
 
+        const admin = await isAdmin(data.user);
 
-        await verifyAdminUser();
-
-
-    } catch (error) {
-
-        console.error(
-            "Login error:",
-            error
-        );
-
-
-        showLoginMessage(
-            error?.message ||
-            "Login failed."
-        );
-
-
-    } finally {
-
-        if (loginButton) {
-
-            loginButton.disabled = false;
-
-            loginButton.textContent =
-                "Login";
-        }
-    }
-}
-
-
-/* =========================================================
-   VERIFY ADMIN
-   ========================================================= */
-
-async function verifyAdminUser() {
-
-    if (!currentUser) {
-        return false;
-    }
-
-
-    try {
-
-        const {
-            data,
-            error
-        } = await sb
-            .from("admin_users")
-            .select("user_id")
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .maybeSingle();
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        if (!data) {
-
+        if (!admin) {
             await sb.auth.signOut();
-
-            currentUser = null;
-
-            showLoginMessage(
-                "You are not authorized to access the admin panel."
-            );
-
-            return false;
+            throw new Error("এই account-এর Admin access নেই।");
         }
 
+        showLoginMessage("Login successful!", "success");
 
-        showDashboard();
-
-        return true;
-
+        await showDashboard(data.user);
 
     } catch (error) {
-
-        console.error(
-            "Admin verification error:",
-            error
-        );
-
+        console.error(error);
 
         showLoginMessage(
-            "Could not verify admin account: " +
-            (
-                error?.message ||
-                "Unknown error"
-            )
+            error.message || "Login করতে সমস্যা হয়েছে।"
         );
-
-        return false;
+    } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = "Login";
     }
 }
 
 
-/* =========================================================
-   SHOW DASHBOARD
-   ========================================================= */
+async function checkExistingSession() {
+    try {
+        const {
+            data: { session }
+        } = await sb.auth.getSession();
 
-function showDashboard() {
+        if (!session?.user) {
+            showLoginScreen();
+            return;
+        }
 
-    if (adminLogin) {
+        const admin = await isAdmin(session.user);
 
-        adminLogin.style.display =
-            "none";
+        if (!admin) {
+            await sb.auth.signOut();
+            showLoginScreen();
+            return;
+        }
+
+        await showDashboard(session.user);
+
+    } catch (error) {
+        console.error("Session error:", error);
+        showLoginScreen();
     }
+}
 
+
+function showLoginScreen() {
+    if (adminLogin) {
+        adminLogin.style.display = "";
+    }
 
     if (adminDashboard) {
+        adminDashboard.style.display = "none";
+    }
+}
 
-        adminDashboard.style.display =
-            "block";
+
+async function showDashboard(user) {
+    if (adminLogin) {
+        adminLogin.style.display = "none";
     }
 
+    if (adminDashboard) {
+        adminDashboard.style.display = "";
+    }
 
     if (adminUserEmail) {
-
-        adminUserEmail.textContent =
-            currentUser?.email || "";
+        adminUserEmail.textContent = user.email || "";
     }
 
-
-    showSection(
-        "dashboardSection"
-    );
-
-
-    loadDashboardStats();
-
-    loadProducts();
-
-    loadOrders();
-
-    loadStoreSettings();
-
     resetProductForm();
+
+    await Promise.all([
+        loadStats(),
+        loadProducts(),
+        loadOrders(),
+        loadStoreSettings()
+    ]);
 }
 
 
@@ -500,601 +293,288 @@ function showDashboard() {
    ========================================================= */
 
 async function logoutAdmin() {
+    const { error } = await sb.auth.signOut();
 
-    try {
-
-        await sb.auth.signOut();
-
-        currentUser = null;
-        editingProductId = null;
-
-
-        if (adminDashboard) {
-
-            adminDashboard.style.display =
-                "none";
-        }
-
-
-        if (adminLogin) {
-
-            adminLogin.style.display =
-                "flex";
-        }
-
-
-        hideLoginMessage();
-
-
-    } catch (error) {
-
-        console.error(
-            "Logout error:",
-            error
-        );
+    if (error) {
+        console.error(error);
+        alert("Logout করতে সমস্যা হয়েছে।");
+        return;
     }
+
+    showLoginScreen();
+
+    if (loginEmail) loginEmail.value = "";
+    if (loginPassword) loginPassword.value = "";
+
+    showLoginMessage("");
 }
 
 
 /* =========================================================
-   SHOW SECTION
+   NAVIGATION
    ========================================================= */
 
-function showSection(sectionId) {
+function openSection(sectionId) {
+    document.querySelectorAll(".admin-section").forEach(section => {
+        section.classList.remove("active");
+    });
 
-    document
-        .querySelectorAll(".admin-section")
-        .forEach(
-            (section) => {
-
-                section.classList.remove(
-                    "active"
-                );
-
-                section.style.display =
-                    "none";
-            }
-        );
-
-
-    const target =
-        $(sectionId);
-
+    const target = $(sectionId);
 
     if (target) {
-
-        target.classList.add(
-            "active"
-        );
-
-        target.style.display =
-            "block";
+        target.classList.add("active");
     }
 
+    document.querySelectorAll(".admin-nav-btn").forEach(button => {
+        button.classList.remove("active");
 
-    document
-        .querySelectorAll(".admin-nav-btn")
-        .forEach(
-            (button) => {
+        if (button.dataset.section === sectionId) {
+            button.classList.add("active");
+        }
+    });
 
-                button.classList.remove(
-                    "active"
-                );
-
-                if (
-                    button.dataset.section ===
-                    sectionId
-                ) {
-
-                    button.classList.add(
-                        "active"
-                    );
-                }
-            }
-        );
-
-
-    if (
-        sectionId ===
-        "dashboardSection"
-    ) {
-
-        loadDashboardStats();
+    if (sectionId === "dashboardSection") {
+        loadStats();
     }
 
-
-    if (
-        sectionId ===
-        "productsSectionAdmin"
-    ) {
-
+    if (sectionId === "productsSectionAdmin") {
         loadProducts();
     }
 
-
-    if (
-        sectionId ===
-        "ordersSectionAdmin"
-    ) {
-
+    if (sectionId === "ordersSectionAdmin") {
         loadOrders();
     }
 
-
-    if (
-        sectionId ===
-        "settingsSectionAdmin"
-    ) {
-
+    if (sectionId === "settingsSectionAdmin") {
         loadStoreSettings();
     }
 }
 
 
 /* =========================================================
-   RESET PRODUCT FORM
+   PRODUCT FORM RESET
    ========================================================= */
 
 function resetProductForm() {
-
     editingProductId = null;
-
 
     if (productForm) {
         productForm.reset();
     }
 
-
     if (productFormTitle) {
-
-        productFormTitle.textContent =
-            "Add Product";
+        productFormTitle.textContent = "Add Product";
     }
-
 
     if (saveProductButton) {
-
-        saveProductButton.textContent =
-            "💾 Save Product";
-
-        saveProductButton.disabled =
-            false;
+        saveProductButton.textContent = "Save Product";
     }
-
-
-    if (mainImagePreview) {
-
-        mainImagePreview.style.display =
-            "none";
-    }
-
-
-    if (mainImagePreviewImg) {
-
-        mainImagePreviewImg.src =
-            "";
-    }
-
-
-    if (mainImageAdmin) {
-
-        mainImageAdmin.value =
-            "";
-    }
-
 
     if (variantsContainer) {
-
-        variantsContainer.innerHTML =
-            "";
+        variantsContainer.innerHTML = "";
     }
 
+    if (mainImagePreview) {
+        mainImagePreview.style.display = "none";
+    }
+
+    if (mainImagePreviewImg) {
+        mainImagePreviewImg.src = "";
+    }
 
     if (allowCodAdmin) {
-
-        allowCodAdmin.checked =
-            true;
+        allowCodAdmin.checked = true;
     }
-
 
     if (allowAdvanceAdmin) {
-
-        allowAdvanceAdmin.checked =
-            false;
+        allowAdvanceAdmin.checked = false;
     }
 
+    clearProductAlert();
 
-    hideProductAlert();
+    checkPaymentMethodsAdmin();
+}
 
-    checkPaymentMethods();
+
+function checkPaymentMethodsAdmin() {
+    if (!allowCodAdmin || !allowAdvanceAdmin) return;
+
+    const cod = allowCodAdmin.checked;
+    const advance = allowAdvanceAdmin.checked;
+
+    if (paymentWarningAdmin) {
+        paymentWarningAdmin.style.display =
+            (!cod && !advance) ? "block" : "none";
+
+        if (!cod && !advance) {
+            paymentWarningAdmin.textContent =
+                "কমপক্ষে একটি payment method নির্বাচন করুন।";
+        }
+    }
 }
 
 
 /* =========================================================
-   IMAGE PREVIEW
+   MAIN IMAGE PREVIEW
    ========================================================= */
 
 function previewMainImage() {
+    const file = mainImageAdmin?.files?.[0];
 
-    if (
-        !mainImageAdmin ||
-        !mainImagePreview ||
-        !mainImagePreviewImg
-    ) {
-        return;
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+
+    if (mainImagePreviewImg) {
+        mainImagePreviewImg.src = url;
     }
 
-
-    const file =
-        mainImageAdmin.files?.[0];
-
-
-    if (!file) {
-
-        mainImagePreview.style.display =
-            "none";
-
-        mainImagePreviewImg.src =
-            "";
-
-        return;
+    if (mainImagePreview) {
+        mainImagePreview.style.display = "block";
     }
-
-
-    if (
-        !file.type.startsWith(
-            "image/"
-        )
-    ) {
-
-        showProductAlert(
-            "Please select an image file.",
-            "error"
-        );
-
-        mainImageAdmin.value =
-            "";
-
-        return;
-    }
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload =
-        function (event) {
-
-            mainImagePreviewImg.src =
-                event.target.result;
-
-            mainImagePreview.style.display =
-                "block";
-        };
-
-
-    reader.readAsDataURL(file);
 }
 
 
 /* =========================================================
-   PAYMENT METHODS
+   IMAGE UPLOAD
    ========================================================= */
 
-function checkPaymentMethods() {
+async function uploadImage(file, folder = "products") {
+    if (!file) return null;
 
-    if (
-        !allowCodAdmin ||
-        !allowAdvanceAdmin
-    ) {
-        return;
+    const extension =
+        file.name.split(".").pop().toLowerCase() || "jpg";
+
+    const fileName =
+        `${folder}/${Date.now()}-${Math.random()
+            .toString(36)
+            .substring(2, 10)}.${extension}`;
+
+    const { error } = await sb.storage
+        .from("product-images")
+        .upload(fileName, file, {
+            cacheControl: "3600",
+            upsert: false
+        });
+
+    if (error) {
+        throw error;
     }
 
+    const {
+        data: publicData
+    } = sb.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
 
-    const noneSelected =
-        !allowCodAdmin.checked &&
-        !allowAdvanceAdmin.checked;
+    return publicData.publicUrl;
+}
 
 
-    if (noneSelected) {
+/* =========================================================
+   VARIANTS
+   ========================================================= */
 
-        if (paymentWarningAdmin) {
+function addVariant(variantData = null) {
+    if (!variantsContainer) return;
 
-            paymentWarningAdmin.style.display =
-                "block";
+    const variant = document.createElement("div");
+
+    variant.className = "admin-variant";
+
+    variant.innerHTML = `
+        <div class="variant-header">
+            <strong>Variant</strong>
+            <button type="button"
+                    class="remove-variant-button">
+                Remove
+            </button>
+        </div>
+
+        <div class="form-group">
+            <label>Variant Name</label>
+            <input
+                type="text"
+                class="variant-name"
+                placeholder="যেমন: Black"
+                value="${escapeHTML(variantData?.name || "")}"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Variant Image</label>
+            <input
+                type="file"
+                class="variant-image"
+                accept="image/*"
+            >
+        </div>
+
+        ${
+            variantData?.image_url
+                ? `
+                <div class="variant-existing-image">
+                    <img
+                        src="${escapeHTML(variantData.image_url)}"
+                        alt="Variant"
+                        style="max-width:100px;border-radius:8px;"
+                    >
+                </div>
+                `
+                : ""
         }
 
-        return;
-    }
-
-
-    if (paymentWarningAdmin) {
-
-        paymentWarningAdmin.style.display =
-            "none";
-    }
-}
-
-
-/* =========================================================
-   ADD VARIANT
-   ========================================================= */
-
-function addVariant() {
-
-    if (!variantsContainer) {
-        return;
-    }
-
-
-    const variant =
-        createVariantElement();
-
-
-    variantsContainer.appendChild(
-        variant
-    );
-}
-
-
-/* =========================================================
-   CREATE VARIANT
-   ========================================================= */
-
-function createVariantElement(
-    variant = {}
-) {
-
-    const wrapper =
-        document.createElement("div");
-
-
-    wrapper.className =
-        "admin-variant";
-
-
-    const name =
-        variant.name ||
-        variant.variant_name ||
-        "";
-
-
-    const price =
-        variant.price ??
-        "";
-
-
-    const stock =
-        variant.stock ??
-        0;
-
-
-    wrapper.innerHTML = `
-
-        <div class="variant-header">
-
-            <div style="flex:1;">
-
-                <label>
-                    Variant Name
-                </label>
-
-                <input
-                    type="text"
-                    class="variant-name admin-field-input"
-                    placeholder="যেমন: Black / Red / XL"
-                    value="${escapeHtml(name)}"
-                    style="
-                        width:100%;
-                        padding:10px;
-                        border:1px solid #ddd;
-                        border-radius:7px;
-                    "
-                >
-
+        <div class="variant-sizes">
+            <div class="sizes-title">
+                <strong>Sizes / Stock</strong>
             </div>
-
-
-            <button
-                type="button"
-                class="remove-variant-button"
-            >
-                Remove Variant
-            </button>
-
         </div>
 
-
-        <div
-            style="
-                display:grid;
-                grid-template-columns:1fr 1fr;
-                gap:10px;
-            "
-        >
-
-            <div>
-
-                <label>
-                    Variant Price
-                </label>
-
-                <input
-                    type="number"
-                    class="variant-price"
-                    min="0"
-                    step="0.01"
-                    placeholder="Price"
-                    value="${escapeHtml(price)}"
-                    style="
-                        width:100%;
-                        padding:10px;
-                        border:1px solid #ddd;
-                        border-radius:7px;
-                    "
-                >
-
-            </div>
-
-
-            <div>
-
-                <label>
-                    Variant Stock
-                </label>
-
-                <input
-                    type="number"
-                    class="variant-stock"
-                    min="0"
-                    step="1"
-                    placeholder="Stock"
-                    value="${escapeHtml(stock)}"
-                    style="
-                        width:100%;
-                        padding:10px;
-                        border:1px solid #ddd;
-                        border-radius:7px;
-                    "
-                >
-
-            </div>
-
-        </div>
-
-
-        <div class="sizes-title">
-            Sizes
-        </div>
-
-
-        <div class="variant-sizes"></div>
-
-
-        <button
-            type="button"
-            class="add-size-button"
-        >
+        <button type="button"
+                class="add-size-button">
             + Add Size
         </button>
-
     `;
 
-
-    const removeButton =
-        wrapper.querySelector(
-            ".remove-variant-button"
-        );
-
-
-    removeButton?.addEventListener(
-        "click",
-        () => {
-
-            wrapper.remove();
-        }
-    );
-
+    variantsContainer.appendChild(variant);
 
     const sizesContainer =
-        wrapper.querySelector(
-            ".variant-sizes"
-        );
+        variant.querySelector(".variant-sizes");
 
-
-    const addSizeButton =
-        wrapper.querySelector(
-            ".add-size-button"
-        );
-
-
-    addSizeButton?.addEventListener(
-        "click",
-        () => {
-
-            createSizeElement(
-                sizesContainer
-            );
-        }
-    );
-
-
-    const existingSizes =
-        Array.isArray(
-            variant.variant_sizes
-        )
-            ? variant.variant_sizes
-            : [];
-
-
-    existingSizes
-        .filter(
-            (size) =>
-                size.active !== false
-        )
-        .forEach(
-            (size) => {
-
-                createSizeElement(
-                    sizesContainer,
-                    size
-                );
-            }
-        );
-
-
-    return wrapper;
+    if (variantData?.variant_sizes?.length) {
+        variantData.variant_sizes
+            .filter(size => size.active !== false)
+            .forEach(size => {
+                addSizeRow(sizesContainer, size);
+            });
+    } else {
+        addSizeRow(sizesContainer);
+    }
 }
 
 
-/* =========================================================
-   CREATE SIZE
-   ========================================================= */
+function addSizeRow(container, sizeData = null) {
+    if (!container) return;
 
-function createSizeElement(
-    container,
-    size = {}
-) {
+    const row = document.createElement("div");
 
-    if (!container) {
-        return;
-    }
+    row.className = "admin-size-row";
 
-
-    const wrapper =
-        document.createElement("div");
-
-
-    wrapper.className =
-        "admin-size-row";
-
-
-    const sizeName =
-        size.size ||
-        size.name ||
-        "";
-
-
-    const sizePrice =
-        size.price ??
-        "";
-
-
-    const sizeStock =
-        size.stock ??
-        0;
-
-
-    wrapper.innerHTML = `
-
+    row.innerHTML = `
         <input
             type="text"
             class="size-name"
             placeholder="Size"
-            value="${escapeHtml(sizeName)}"
+            value="${escapeHTML(sizeData?.size_name || "")}"
         >
 
+        <input
+            type="number"
+            class="size-stock"
+            placeholder="Stock"
+            min="0"
+            value="${sizeData?.stock ?? 0}"
+        >
 
         <input
             type="number"
@@ -1102,52 +582,16 @@ function createSizeElement(
             placeholder="Price"
             min="0"
             step="0.01"
-            value="${escapeHtml(sizePrice)}"
+            value="${sizeData?.price ?? ""}"
         >
 
-
-        <input
-            type="number"
-            class="size-stock"
-            placeholder="Stock"
-            min="0"
-            step="1"
-            value="${escapeHtml(sizeStock)}"
-        >
-
-
-        <button
-            type="button"
-            class="remove-size-button"
-            title="Remove size"
-        >
+        <button type="button"
+                class="remove-size-button">
             ×
         </button>
-
     `;
 
-
-    const removeButton =
-        wrapper.querySelector(
-            ".remove-size-button"
-        );
-
-
-    removeButton?.addEventListener(
-        "click",
-        () => {
-
-            wrapper.remove();
-        }
-    );
-
-
-    container.appendChild(
-        wrapper
-    );
-
-
-    return wrapper;
+    container.appendChild(row);
 }
 
 
@@ -1156,553 +600,77 @@ function createSizeElement(
    ========================================================= */
 
 function collectVariants() {
+    if (!variantsContainer) return [];
+
+    const variantElements =
+        variantsContainer.querySelectorAll(".admin-variant");
 
     const variants = [];
 
+    variantElements.forEach(variantElement => {
 
-    if (!variantsContainer) {
-        return variants;
-    }
+        const name =
+            variantElement
+                .querySelector(".variant-name")
+                ?.value
+                .trim() || "";
 
+        const imageFile =
+            variantElement
+                .querySelector(".variant-image")
+                ?.files?.[0] || null;
 
-    variantsContainer
-        .querySelectorAll(
-            ".admin-variant"
-        )
-        .forEach(
-            (variantElement) => {
+        const existingImage =
+            variantElement
+                .querySelector(".variant-existing-image img")
+                ?.getAttribute("src") || null;
 
-                const name =
-                    variantElement
-                        .querySelector(
-                            ".variant-name"
-                        )
+        const sizes = [];
+
+        variantElement
+            .querySelectorAll(".admin-size-row")
+            .forEach(row => {
+
+                const sizeName =
+                    row.querySelector(".size-name")
                         ?.value
                         .trim() || "";
 
-
-                const price =
-                    Number(
-                        variantElement
-                            .querySelector(
-                                ".variant-price"
-                            )
-                            ?.value || 0
-                    );
-
-
                 const stock =
                     Number(
-                        variantElement
-                            .querySelector(
-                                ".variant-stock"
-                            )
+                        row.querySelector(".size-stock")
                             ?.value || 0
                     );
 
+                const priceValue =
+                    row.querySelector(".size-price")
+                        ?.value;
 
-                if (!name) {
-                    return;
+                const price =
+                    priceValue === "" || priceValue == null
+                        ? null
+                        : Number(priceValue);
+
+                if (sizeName) {
+                    sizes.push({
+                        size_name: sizeName,
+                        stock,
+                        price
+                    });
                 }
+            });
 
-
-                const sizes = [];
-
-
-                variantElement
-                    .querySelectorAll(
-                        ".admin-size-row"
-                    )
-                    .forEach(
-                        (sizeElement) => {
-
-                            const size =
-                                sizeElement
-                                    .querySelector(
-                                        ".size-name"
-                                    )
-                                    ?.value
-                                    .trim() || "";
-
-
-                            const sizePrice =
-                                Number(
-                                    sizeElement
-                                        .querySelector(
-                                            ".size-price"
-                                        )
-                                        ?.value || 0
-                                );
-
-
-                            const sizeStock =
-                                Number(
-                                    sizeElement
-                                        .querySelector(
-                                            ".size-stock"
-                                        )
-                                        ?.value || 0
-                                );
-
-
-                            if (size) {
-
-                                sizes.push({
-
-                                    size,
-
-                                    price:
-                                        Number.isFinite(
-                                            sizePrice
-                                        )
-                                            ? Math.max(
-                                                0,
-                                                sizePrice
-                                            )
-                                            : 0,
-
-                                    stock:
-                                        Number.isFinite(
-                                            sizeStock
-                                        )
-                                            ? Math.max(
-                                                0,
-                                                sizeStock
-                                            )
-                                            : 0
-                                });
-                            }
-                        }
-                    );
-
-
-                variants.push({
-
-                    name,
-
-                    price:
-                        Number.isFinite(
-                            price
-                        )
-                            ? Math.max(
-                                0,
-                                price
-                            )
-                            : 0,
-
-                    stock:
-                        Number.isFinite(
-                            stock
-                        )
-                            ? Math.max(
-                                0,
-                                stock
-                            )
-                            : 0,
-
-                    sizes
-                });
-            }
-        );
-
+        if (name || imageFile || existingImage || sizes.length) {
+            variants.push({
+                name,
+                imageFile,
+                image_url: existingImage,
+                sizes
+            });
+        }
+    });
 
     return variants;
-}
-
-
-/* =========================================================
-   COLLECT PRODUCT FORM
-   ========================================================= */
-
-function collectProductForm() {
-
-    const name =
-        productNameAdmin?.value
-            .trim() || "";
-
-
-    const regularPrice =
-        Number(
-            regularPriceAdmin?.value || 0
-        );
-
-
-    const salePrice =
-        Number(
-            basePriceAdmin?.value || 0
-        );
-
-
-    const description =
-        descriptionAdmin?.value
-            .trim() || "";
-
-
-    if (!name) {
-
-        throw new Error(
-            "Please enter product name."
-        );
-    }
-
-
-    if (
-        !Number.isFinite(
-            regularPrice
-        ) ||
-        regularPrice < 0
-    ) {
-
-        throw new Error(
-            "Please enter a valid regular price."
-        );
-    }
-
-
-    if (
-        !Number.isFinite(
-            salePrice
-        ) ||
-        salePrice < 0
-    ) {
-
-        throw new Error(
-            "Please enter a valid sale price."
-        );
-    }
-
-
-    if (
-        regularPrice > 0 &&
-        salePrice > regularPrice
-    ) {
-
-        throw new Error(
-            "Sale price cannot be higher than regular price."
-        );
-    }
-
-
-    checkPaymentMethods();
-
-
-    if (
-        !allowCodAdmin?.checked &&
-        !allowAdvanceAdmin?.checked
-    ) {
-
-        throw new Error(
-            "Please select at least one payment method."
-        );
-    }
-
-
-    return {
-
-        name,
-
-        regularPrice,
-
-        salePrice,
-
-        description,
-
-        mainImageFile:
-            mainImageAdmin
-                ?.files?.[0] || null,
-
-        allowCod:
-            allowCodAdmin
-                ?.checked ?? true,
-
-        allowAdvance:
-            allowAdvanceAdmin
-                ?.checked ?? false,
-
-        variants:
-            collectVariants()
-    };
-}
-
-
-/* =========================================================
-   UPLOAD IMAGE
-   ========================================================= */
-
-async function uploadImage(
-    file,
-    folder = "products"
-) {
-
-    if (!file) {
-
-        throw new Error(
-            "Image file is required."
-        );
-    }
-
-
-    const extension =
-        (
-            file.name
-                .split(".")
-                .pop() || "jpg"
-        )
-        .toLowerCase()
-        .replace(
-            /[^a-z0-9]/g,
-            ""
-        );
-
-
-    const fileName =
-        crypto.randomUUID() +
-        "." +
-        (
-            extension ||
-            "jpg"
-        );
-
-
-    const filePath =
-        folder +
-        "/" +
-        fileName;
-
-
-    const {
-        error
-    } = await sb.storage
-        .from("product-images")
-        .upload(
-            filePath,
-            file,
-            {
-                cacheControl: "3600",
-                upsert: false,
-                contentType:
-                    file.type
-            }
-        );
-
-
-    if (error) {
-
-        console.error(
-            "Storage upload error:",
-            error
-        );
-
-        throw new Error(
-            "Image upload failed: " +
-            error.message
-        );
-    }
-
-
-    const {
-        data
-    } = sb.storage
-        .from("product-images")
-        .getPublicUrl(
-            filePath
-        );
-
-
-    if (
-        !data ||
-        !data.publicUrl
-    ) {
-
-        throw new Error(
-            "Could not create public image URL."
-        );
-    }
-
-
-    return data.publicUrl;
-}
-
-
-/* =========================================================
-   SAVE VARIANTS
-   ========================================================= */
-
-async function saveVariants(
-    productId,
-    variants
-) {
-
-    if (
-        !productId ||
-        !Array.isArray(variants)
-    ) {
-        return;
-    }
-
-
-    for (
-        const variant
-        of variants
-    ) {
-
-        const {
-            data: insertedVariant,
-            error
-        } = await sb
-            .from(
-                "product_variants"
-            )
-            .insert({
-
-                product_id:
-                    productId,
-
-                name:
-                    variant.name,
-
-                price:
-                    variant.price,
-
-                stock:
-                    variant.stock,
-
-                active:
-                    true
-            })
-            .select()
-            .single();
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        if (
-            insertedVariant &&
-            variant.sizes?.length
-        ) {
-
-            const rows =
-                variant.sizes.map(
-                    (size) => ({
-
-                        variant_id:
-                            insertedVariant.id,
-
-                        size:
-                            size.size,
-
-                        price:
-                            size.price,
-
-                        stock:
-                            size.stock,
-
-                        active:
-                            true
-                    })
-                );
-
-
-            const {
-                error: sizeError
-            } = await sb
-                .from(
-                    "variant_sizes"
-                )
-                .insert(rows);
-
-
-            if (sizeError) {
-                throw sizeError;
-            }
-        }
-    }
-}
-
-
-/* =========================================================
-   DEACTIVATE OLD VARIANTS
-   ========================================================= */
-
-async function deactivateOldVariants(
-    productId
-) {
-
-    const {
-        data: variants,
-        error
-    } = await sb
-        .from(
-            "product_variants"
-        )
-        .select("id")
-        .eq(
-            "product_id",
-            productId
-        );
-
-
-    if (error) {
-        throw error;
-    }
-
-
-    if (
-        !variants ||
-        !variants.length
-    ) {
-        return;
-    }
-
-
-    const ids =
-        variants.map(
-            (variant) =>
-                variant.id
-        );
-
-
-    const {
-        error: sizeError
-    } = await sb
-        .from(
-            "variant_sizes"
-        )
-        .update({
-            active: false
-        })
-        .in(
-            "variant_id",
-            ids
-        );
-
-
-    if (sizeError) {
-        throw sizeError;
-    }
-
-
-    const {
-        error: variantError
-    } = await sb
-        .from(
-            "product_variants"
-        )
-        .update({
-            active: false
-        })
-        .eq(
-            "product_id",
-            productId
-        );
-
-
-    if (variantError) {
-        throw variantError;
-    }
 }
 
 
@@ -1711,252 +679,297 @@ async function deactivateOldVariants(
    ========================================================= */
 
 async function saveProduct(event) {
-
     event.preventDefault();
 
-    hideProductAlert();
+    clearProductAlert();
 
+    const name =
+        productNameAdmin?.value.trim() || "";
+
+    const regularPrice =
+        Number(regularPriceAdmin?.value || 0);
+
+    const salePrice =
+        Number(basePriceAdmin?.value || 0);
+
+    const description =
+        descriptionAdmin?.value.trim() || "";
+
+    const allowCod =
+        !!allowCodAdmin?.checked;
+
+    const allowAdvance =
+        !!allowAdvanceAdmin?.checked;
+
+    if (!name) {
+        showProductAlert(
+            "Product name দিন।",
+            "error"
+        );
+        return;
+    }
+
+    if (salePrice <= 0) {
+        showProductAlert(
+            "Sale price সঠিকভাবে দিন।",
+            "error"
+        );
+        return;
+    }
+
+    if (
+        regularPrice > 0 &&
+        salePrice > regularPrice
+    ) {
+        showProductAlert(
+            "Sale price regular price-এর চেয়ে বেশি হতে পারবে না।",
+            "error"
+        );
+        return;
+    }
+
+    if (!allowCod && !allowAdvance) {
+        showProductAlert(
+            "কমপক্ষে একটি payment method নির্বাচন করুন।",
+            "error"
+        );
+        return;
+    }
+
+    saveProductButton.disabled = true;
+    saveProductButton.textContent = "Saving...";
 
     try {
 
-        const product =
-            collectProductForm();
+        let mainImageUrl = null;
 
+        const mainImageFile =
+            mainImageAdmin?.files?.[0] || null;
 
-        if (
-            !editingProductId &&
-            !product.mainImageFile
-        ) {
-
-            throw new Error(
-                "Please select a main product image."
+        if (mainImageFile) {
+            showProductAlert(
+                "Main image upload হচ্ছে...",
+                "info"
             );
-        }
-
-
-        if (saveProductButton) {
-
-            saveProductButton.disabled =
-                true;
-
-            saveProductButton.textContent =
-                "Saving...";
-        }
-
-
-        let mainImageUrl =
-            null;
-
-
-        /* =================================================
-           EDIT
-           ================================================= */
-
-        if (editingProductId) {
-
-            const {
-                data: existingProduct,
-                error
-            } = await sb
-                .from("products")
-                .select(
-                    "main_image_url"
-                )
-                .eq(
-                    "id",
-                    editingProductId
-                )
-                .single();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            mainImageUrl =
-                existingProduct
-                    ?.main_image_url ||
-                null;
-
-
-            if (
-                product.mainImageFile
-            ) {
-
-                mainImageUrl =
-                    await uploadImage(
-                        product.mainImageFile
-                    );
-            }
-        }
-
-
-        /* =================================================
-           NEW PRODUCT
-           ================================================= */
-
-        else {
 
             mainImageUrl =
                 await uploadImage(
-                    product.mainImageFile
+                    mainImageFile,
+                    "products"
                 );
-        }
+        } else if (editingProductId) {
 
+            const { data, error } =
+                await sb
+                    .from("products")
+                    .select("main_image_url")
+                    .eq("id", editingProductId)
+                    .single();
+
+            if (error) throw error;
+
+            mainImageUrl =
+                data?.main_image_url || null;
+        }
 
         const productData = {
-
-            name:
-                product.name,
-
+            name,
             regular_price:
-                product.regularPrice,
-
-            base_price:
-                product.salePrice,
-
-            description:
-                product.description,
-
-            main_image_url:
-                mainImageUrl,
-
-            allow_cod:
-                product.allowCod,
-
-            allow_advance:
-                product.allowAdvance,
-
-            active:
-                true
+                regularPrice > 0
+                    ? regularPrice
+                    : null,
+            base_price: salePrice,
+            description,
+            main_image_url: mainImageUrl,
+            allow_cod: allowCod,
+            allow_advance: allowAdvance,
+            active: true
         };
 
+        let productId;
 
-        /* =================================================
-           INSERT
-           ================================================= */
+        if (editingProductId) {
 
-        if (!editingProductId) {
+            const { error } =
+                await sb
+                    .from("products")
+                    .update(productData)
+                    .eq("id", editingProductId);
 
-            const {
-                data:
-                    insertedProduct,
-                error
-            } = await sb
-                .from("products")
-                .insert(
-                    productData
-                )
-                .select()
-                .single();
+            if (error) throw error;
 
+            productId = editingProductId;
 
-            if (error) {
-                throw error;
-            }
+            await deactivateOldVariants(productId);
 
+        } else {
 
-            await saveVariants(
-                insertedProduct.id,
-                product.variants
-            );
+            const { data, error } =
+                await sb
+                    .from("products")
+                    .insert(productData)
+                    .select("id")
+                    .single();
 
+            if (error) throw error;
 
-            showProductAlert(
-                "Product added successfully.",
-                "success"
-            );
+            productId = data.id;
         }
 
+        const variants = collectVariants();
 
-        /* =================================================
-           UPDATE
-           ================================================= */
-
-        else {
-
-            const {
-                error
-            } = await sb
-                .from("products")
-                .update(
-                    productData
-                )
-                .eq(
-                    "id",
-                    editingProductId
-                );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            await deactivateOldVariants(
-                editingProductId
-            );
-
-
-            await saveVariants(
-                editingProductId,
-                product.variants
-            );
-
-
-            showProductAlert(
-                "Product updated successfully.",
-                "success"
-            );
-        }
-
-
-        await loadProducts();
-
-        await loadDashboardStats();
-
-
-        setTimeout(
-            () => {
-
-                resetProductForm();
-
-                showSection(
-                    "productsSectionAdmin"
-                );
-
-            },
-            700
+        await saveVariants(
+            productId,
+            variants
         );
 
+        showProductAlert(
+            editingProductId
+                ? "Product successfully updated!"
+                : "Product successfully added!",
+            "success"
+        );
+
+        resetProductForm();
+
+        await Promise.all([
+            loadProducts(),
+            loadStats()
+        ]);
+
+        openSection("productsSectionAdmin");
 
     } catch (error) {
 
-        console.error(
-            "Save product error:",
-            error
-        );
-
+        console.error("Save product error:", error);
 
         showProductAlert(
-            error?.message ||
-            "Could not save product.",
+            error.message ||
+            "Product save করতে সমস্যা হয়েছে।",
             "error"
         );
 
-
     } finally {
 
-        if (saveProductButton) {
+        saveProductButton.disabled = false;
+        saveProductButton.textContent =
+            editingProductId
+                ? "Update Product"
+                : "Save Product";
+    }
+}
 
-            saveProductButton.disabled =
-                false;
 
-            saveProductButton.textContent =
-                editingProductId
-                    ? "Update Product"
-                    : "💾 Save Product";
+/* =========================================================
+   DEACTIVATE OLD VARIANTS
+   ========================================================= */
+
+async function deactivateOldVariants(productId) {
+
+    const { data: oldVariants, error } =
+        await sb
+            .from("product_variants")
+            .select("id")
+            .eq("product_id", productId);
+
+    if (error) {
+        throw error;
+    }
+
+    if (!oldVariants?.length) return;
+
+    for (const variant of oldVariants) {
+
+        const { error: sizeError } =
+            await sb
+                .from("variant_sizes")
+                .update({
+                    active: false
+                })
+                .eq("variant_id", variant.id);
+
+        if (sizeError) {
+            throw sizeError;
+        }
+    }
+
+    const { error: variantError } =
+        await sb
+            .from("product_variants")
+            .update({
+                active: false
+            })
+            .eq("product_id", productId);
+
+    if (variantError) {
+        throw variantError;
+    }
+}
+
+
+/* =========================================================
+   SAVE VARIANTS
+   ========================================================= */
+
+async function saveVariants(productId, variants) {
+
+    for (const variant of variants) {
+
+        let imageUrl =
+            variant.image_url || null;
+
+        if (variant.imageFile) {
+
+            imageUrl =
+                await uploadImage(
+                    variant.imageFile,
+                    "variants"
+                );
+        }
+
+        const variantData = {
+            product_id: productId,
+            name: variant.name || null,
+            image_url: imageUrl,
+            active: true
+        };
+
+        const {
+            data: savedVariant,
+            error: variantError
+        } = await sb
+            .from("product_variants")
+            .insert(variantData)
+            .select("id")
+            .single();
+
+        if (variantError) {
+            throw variantError;
+        }
+
+        if (!variant.sizes?.length) {
+            continue;
+        }
+
+        const sizeRows =
+            variant.sizes.map(size => ({
+                variant_id: savedVariant.id,
+                size_name: size.size_name,
+                stock: Number(size.stock || 0),
+                price:
+                    size.price == null
+                        ? null
+                        : Number(size.price),
+                active: true
+            }));
+
+        const { error: sizeError } =
+            await sb
+                .from("variant_sizes")
+                .insert(sizeRows);
+
+        if (sizeError) {
+            throw sizeError;
         }
     }
 }
@@ -1966,358 +979,124 @@ async function saveProduct(event) {
    EDIT PRODUCT
    ========================================================= */
 
-async function editProduct(
-    productId
-) {
+async function editProduct(productId) {
 
     try {
 
-        showSection(
-            "addProductSection"
-        );
-
+        openSection("addProductSection");
 
         showProductAlert(
-            "Loading product...",
+            "Product information loading...",
             "info"
         );
 
+        const { data, error } =
+            await sb
+                .from("products")
+                .select(`
+                    id,
+                    name,
+                    regular_price,
+                    base_price,
+                    description,
+                    main_image_url,
+                    allow_cod,
+                    allow_advance,
+                    active,
+                    product_variants (
+                        id,
+                        name,
+                        image_url,
+                        active,
+                        variant_sizes (
+                            id,
+                            size_name,
+                            stock,
+                            price,
+                            active
+                        )
+                    )
+                `)
+                .eq("id", productId)
+                .single();
 
-        const {
-            data: product,
-            error
-        } = await sb
-            .from("products")
-            .select(`
-                *,
-                product_variants (
-                    *,
-                    variant_sizes (*)
-                )
-            `)
-            .eq(
-                "id",
-                productId
-            )
-            .single();
+        if (error) throw error;
 
-
-        if (error) {
-            throw error;
-        }
-
-
-        if (!product) {
-
-            throw new Error(
-                "Product not found."
-            );
-        }
-
-
-        editingProductId =
-            product.id;
-
+        editingProductId = data.id;
 
         if (productFormTitle) {
-
             productFormTitle.textContent =
                 "Edit Product";
         }
 
-
-        if (productNameAdmin) {
-
-            productNameAdmin.value =
-                product.name || "";
+        if (saveProductButton) {
+            saveProductButton.textContent =
+                "Update Product";
         }
 
+        productNameAdmin.value =
+            data.name || "";
 
-        if (regularPriceAdmin) {
+        regularPriceAdmin.value =
+            data.regular_price ?? "";
 
-            regularPriceAdmin.value =
-                product.regular_price ??
-                product.base_price ??
-                "";
-        }
+        basePriceAdmin.value =
+            data.base_price ?? "";
 
+        descriptionAdmin.value =
+            data.description || "";
 
-        if (basePriceAdmin) {
+        allowCodAdmin.checked =
+            data.allow_cod !== false;
 
-            basePriceAdmin.value =
-                product.base_price ??
-                "";
-        }
+        allowAdvanceAdmin.checked =
+            data.allow_advance === true;
 
-
-        if (descriptionAdmin) {
-
-            descriptionAdmin.value =
-                product.description ||
-                "";
-        }
-
-
-        if (allowCodAdmin) {
-
-            allowCodAdmin.checked =
-                product.allow_cod !== false;
-        }
-
-
-        if (allowAdvanceAdmin) {
-
-            allowAdvanceAdmin.checked =
-                product.allow_advance === true;
-        }
-
-
-        if (mainImagePreviewImg) {
+        if (data.main_image_url) {
 
             mainImagePreviewImg.src =
-                product.main_image_url ||
-                "";
-        }
-
-
-        if (
-            mainImagePreview &&
-            product.main_image_url
-        ) {
+                data.main_image_url;
 
             mainImagePreview.style.display =
                 "block";
         }
 
+        variantsContainer.innerHTML = "";
 
-        if (mainImageAdmin) {
+        const activeVariants =
+            (data.product_variants || [])
+                .filter(v => v.active !== false);
 
-            mainImageAdmin.value =
-                "";
-        }
+        activeVariants.forEach(variant => {
 
-
-        if (variantsContainer) {
-
-            variantsContainer.innerHTML =
-                "";
-
-
-            const variants =
-                Array.isArray(
-                    product.product_variants
-                )
-                    ? product.product_variants
-                        .filter(
-                            (variant) =>
-                                variant.active !== false
+            addVariant({
+                ...variant,
+                variant_sizes:
+                    (variant.variant_sizes || [])
+                        .filter(size =>
+                            size.active !== false
                         )
-                    : [];
+            });
 
-
-            variants.forEach(
-                (variant) => {
-
-                    variantsContainer
-                        .appendChild(
-                            createVariantElement(
-                                variant
-                            )
-                        );
-                }
-            );
-        }
-
-
-        if (saveProductButton) {
-
-            saveProductButton.textContent =
-                "Update Product";
-        }
-
-
-        checkPaymentMethods();
-
-        hideProductAlert();
-
-
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
         });
 
+        checkPaymentMethodsAdmin();
+
+        showProductAlert(
+            "Product edit করার জন্য প্রস্তুত।",
+            "info"
+        );
 
     } catch (error) {
 
-        console.error(
-            "Edit product error:",
-            error
-        );
-
+        console.error("Edit product error:", error);
 
         showProductAlert(
-            error?.message ||
-            "Could not load product.",
+            error.message ||
+            "Product load করতে সমস্যা হয়েছে।",
             "error"
         );
     }
-}
-
-
-/* =========================================================
-   ACTIVATE / DEACTIVATE
-   ========================================================= */
-
-async function setProductActive(
-    productId,
-    active
-) {
-
-    try {
-
-        const {
-            error
-        } = await sb
-            .from("products")
-            .update({
-                active
-            })
-            .eq(
-                "id",
-                productId
-            );
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        await loadProducts();
-
-        await loadDashboardStats();
-
-
-    } catch (error) {
-
-        console.error(
-            "Product status error:",
-            error
-        );
-
-
-        alert(
-            error?.message ||
-            "Could not update product status."
-        );
-    }
-}
-
-
-async function deactivateProduct(
-    productId
-) {
-
-    const confirmed =
-        confirm(
-            "Are you sure you want to disable this product?"
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    await setProductActive(
-        productId,
-        false
-    );
-}
-
-
-async function activateProduct(
-    productId
-) {
-
-    await setProductActive(
-        productId,
-        true
-    );
-}
-
-
-/* =========================================================
-   CALCULATE STOCK
-   ========================================================= */
-
-function calculateProductStock(
-    product
-) {
-
-    const variants =
-        Array.isArray(
-            product.product_variants
-        )
-            ? product.product_variants
-                .filter(
-                    (variant) =>
-                        variant.active !== false
-                )
-            : [];
-
-
-    if (!variants.length) {
-
-        return Number(
-            product.stock || 0
-        );
-    }
-
-
-    return variants.reduce(
-        (
-            total,
-            variant
-        ) => {
-
-            const sizes =
-                Array.isArray(
-                    variant.variant_sizes
-                )
-                    ? variant.variant_sizes
-                        .filter(
-                            (size) =>
-                                size.active !== false
-                        )
-                    : [];
-
-
-            if (sizes.length) {
-
-                return total +
-                    sizes.reduce(
-                        (
-                            sizeTotal,
-                            size
-                        ) =>
-                            sizeTotal +
-                            Number(
-                                size.stock || 0
-                            ),
-                        0
-                    );
-            }
-
-
-            return total +
-                Number(
-                    variant.stock || 0
-                );
-
-        },
-        0
-    );
 }
 
 
@@ -2327,291 +1106,287 @@ function calculateProductStock(
 
 async function loadProducts() {
 
-    if (!adminProductsList) {
-        return;
-    }
-
+    if (!adminProductsList) return;
 
     adminProductsList.innerHTML =
-        `
-            <div class="admin-loading">
-                Loading products...
-            </div>
-        `;
-
+        `<p>Products loading...</p>`;
 
     try {
 
-        const {
-            data,
-            error
-        } = await sb
-            .from("products")
-            .select(`
-                *,
-                product_variants (
-                    *,
-                    variant_sizes (*)
-                )
-            `)
-            .order(
-                "created_at",
-                {
+        const { data, error } =
+            await sb
+                .from("products")
+                .select(`
+                    id,
+                    name,
+                    regular_price,
+                    base_price,
+                    description,
+                    main_image_url,
+                    active,
+                    product_variants (
+                        id,
+                        name,
+                        active,
+                        variant_sizes (
+                            stock,
+                            active
+                        )
+                    )
+                `)
+                .order("created_at", {
                     ascending: false
-                }
-            );
+                });
 
+        if (error) throw error;
 
-        if (error) {
-            throw error;
+        if (!data?.length) {
+
+            adminProductsList.innerHTML =
+                `<p>No products found.</p>`;
+
+            return;
         }
 
+        adminProductsList.innerHTML =
+            data.map(product => {
 
-        renderProducts(
-            data || []
-        );
+                const variants =
+                    (product.product_variants || [])
+                        .filter(v =>
+                            v.active !== false
+                        );
 
+                let stock = 0;
+
+                variants.forEach(variant => {
+
+                    (variant.variant_sizes || [])
+                        .filter(size =>
+                            size.active !== false
+                        )
+                        .forEach(size => {
+                            stock += Number(
+                                size.stock || 0
+                            );
+                        });
+                });
+
+                const image =
+                    product.main_image_url
+                        ? `
+                            <img
+                                src="${escapeHTML(product.main_image_url)}"
+                                alt="${escapeHTML(product.name)}"
+                                style="
+                                    width:70px;
+                                    height:70px;
+                                    object-fit:cover;
+                                    border-radius:8px;
+                                "
+                            >
+                        `
+                        : `
+                            <div
+                                style="
+                                    width:70px;
+                                    height:70px;
+                                    border-radius:8px;
+                                    background:#eee;
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;
+                                "
+                            >
+                                No Image
+                            </div>
+                        `;
+
+                const status =
+                    product.active !== false
+                        ? "Active"
+                        : "Inactive";
+
+                return `
+                    <div
+                        class="admin-product-card"
+                        style="
+                            display:flex;
+                            gap:15px;
+                            align-items:center;
+                            padding:15px;
+                            border-bottom:1px solid #ddd;
+                        "
+                    >
+
+                        ${image}
+
+                        <div style="flex:1;">
+
+                            <h3 style="margin:0 0 5px;">
+                                ${escapeHTML(product.name)}
+                            </h3>
+
+                            <div>
+                                Sale:
+                                <strong>
+                                    ${money(product.base_price)}
+                                </strong>
+                            </div>
+
+                            ${
+                                product.regular_price
+                                    ? `
+                                        <div>
+                                            Regular:
+                                            <s>
+                                                ${money(product.regular_price)}
+                                            </s>
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+                            <div>
+                                Stock:
+                                <strong>${stock}</strong>
+                            </div>
+
+                            <small>
+                                ${status}
+                            </small>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="edit-product-button"
+                            data-edit-id="${product.id}"
+                        >
+                            Edit
+                        </button>
+
+                    </div>
+                `;
+
+            }).join("");
 
     } catch (error) {
 
-        console.error(
-            "Load products error:",
-            error
-        );
-
+        console.error("Load products error:", error);
 
         adminProductsList.innerHTML =
-            `
-                <div class="admin-error">
-                    ${escapeHtml(
-                        error?.message ||
-                        "Could not load products."
-                    )}
-                </div>
-            `;
+            `<p style="color:red;">
+                ${escapeHTML(
+                    error.message ||
+                    "Products load করতে সমস্যা হয়েছে।"
+                )}
+            </p>`;
     }
 }
 
 
 /* =========================================================
-   RENDER PRODUCTS
+   LOAD STATS
    ========================================================= */
 
-function renderProducts(
-    products
-) {
+async function loadStats() {
 
-    if (!adminProductsList) {
-        return;
+    try {
+
+        const [
+            productsResult,
+            variantsResult,
+            sizesResult,
+            ordersResult
+        ] = await Promise.all([
+
+            sb
+                .from("products")
+                .select("id, active"),
+
+            sb
+                .from("product_variants")
+                .select("id, active"),
+
+            sb
+                .from("variant_sizes")
+                .select("stock, active"),
+
+            sb
+                .from("orders")
+                .select("id, status")
+        ]);
+
+        if (productsResult.error)
+            throw productsResult.error;
+
+        if (variantsResult.error)
+            throw variantsResult.error;
+
+        if (sizesResult.error)
+            throw sizesResult.error;
+
+        if (ordersResult.error)
+            throw ordersResult.error;
+
+        const products =
+            productsResult.data || [];
+
+        const sizes =
+            sizesResult.data || [];
+
+        const orders =
+            ordersResult.data || [];
+
+        const totalProducts =
+            products.filter(
+                p => p.active !== false
+            ).length;
+
+        const totalStock =
+            sizes
+                .filter(s => s.active !== false)
+                .reduce(
+                    (sum, s) =>
+                        sum + Number(s.stock || 0),
+                    0
+                );
+
+        const pending =
+            orders.filter(
+                o =>
+                    String(o.status || "")
+                        .toLowerCase() === "pending"
+            ).length;
+
+        const completed =
+            orders.filter(
+                o =>
+                    String(o.status || "")
+                        .toLowerCase() === "completed"
+            ).length;
+
+        if (statProducts)
+            statProducts.textContent =
+                totalProducts;
+
+        if (statStock)
+            statStock.textContent =
+                totalStock;
+
+        if (statPendingOrders)
+            statPendingOrders.textContent =
+                pending;
+
+        if (statCompletedOrders)
+            statCompletedOrders.textContent =
+                completed;
+
+    } catch (error) {
+
+        console.error("Stats error:", error);
     }
-
-
-    if (!products.length) {
-
-        adminProductsList.innerHTML =
-            `
-                <div class="empty-admin">
-                    No products found.
-                </div>
-            `;
-
-        return;
-    }
-
-
-    adminProductsList.innerHTML =
-        products
-            .map(
-                (product) => {
-
-                    const id =
-                        JSON.stringify(
-                            product.id
-                        );
-
-
-                    const image =
-                        product.main_image_url ||
-                        "";
-
-
-                    const regular =
-                        Number(
-                            product.regular_price ??
-                            product.base_price ??
-                            0
-                        );
-
-
-                    const sale =
-                        Number(
-                            product.base_price ??
-                            0
-                        );
-
-
-                    const stock =
-                        calculateProductStock(
-                            product
-                        );
-
-
-                    const active =
-                        product.active !== false;
-
-
-                    let priceHTML;
-
-
-                    if (
-                        regular > 0 &&
-                        sale > 0 &&
-                        sale < regular
-                    ) {
-
-                        priceHTML =
-                            `
-                                <span class="admin-regular-price">
-                                    ৳${formatNumber(
-                                        regular
-                                    )}
-                                </span>
-
-                                <span class="admin-sale-price">
-                                    ৳${formatNumber(
-                                        sale
-                                    )}
-                                </span>
-                            `;
-
-                    } else {
-
-                        priceHTML =
-                            `
-                                <span class="admin-sale-price">
-                                    ৳${formatNumber(
-                                        sale || regular
-                                    )}
-                                </span>
-                            `;
-                    }
-
-
-                    return `
-
-                        <div class="admin-product-card">
-
-                            <div class="admin-product-image">
-
-                                ${
-                                    image
-                                        ? `
-                                            <img
-                                                src="${escapeHtml(image)}"
-                                                alt="${escapeHtml(product.name)}"
-                                            >
-                                        `
-                                        : `
-                                            <div class="no-image">
-                                                No Image
-                                            </div>
-                                        `
-                                }
-
-                            </div>
-
-
-                            <div class="admin-product-info">
-
-                                <h3>
-                                    ${escapeHtml(
-                                        product.name
-                                    )}
-                                </h3>
-
-
-                                <div class="admin-product-price">
-                                    ${priceHTML}
-                                </div>
-
-
-                                <div class="admin-product-meta">
-
-                                    Stock:
-                                    <strong>
-                                        ${formatNumber(stock)}
-                                    </strong>
-
-                                </div>
-
-
-                                <span
-                                    class="
-                                        admin-product-status
-                                        ${
-                                            active
-                                                ? "active"
-                                                : "inactive"
-                                        }
-                                    "
-                                >
-                                    ${
-                                        active
-                                            ? "Active"
-                                            : "Inactive"
-                                    }
-                                </span>
-
-                            </div>
-
-
-                            <div
-                                style="
-                                    display:flex;
-                                    flex-direction:column;
-                                    gap:7px;
-                                "
-                            >
-
-                                <button
-                                    type="button"
-                                    class="admin-edit-button"
-                                    onclick='editProduct(${id})'
-                                >
-                                    Edit
-                                </button>
-
-
-                                ${
-                                    active
-                                        ? `
-                                            <button
-                                                type="button"
-                                                class="admin-edit-button"
-                                                onclick='deactivateProduct(${id})'
-                                            >
-                                                Disable
-                                            </button>
-                                        `
-                                        : `
-                                            <button
-                                                type="button"
-                                                class="admin-edit-button"
-                                                onclick='activateProduct(${id})'
-                                            >
-                                                Activate
-                                            </button>
-                                        `
-                                }
-
-                            </div>
-
-                        </div>
-
-                    `;
-                }
-            )
-            .join("");
 }
 
 
@@ -2619,83 +1394,40 @@ function renderProducts(
    LOAD ORDERS
    ========================================================= */
 
-async function loadOrders(
-    statusFilter = "all"
-) {
+async function loadOrders() {
 
-    if (!adminOrdersList) {
-        return;
-    }
-
+    if (!adminOrdersList) return;
 
     adminOrdersList.innerHTML =
-        `
-            <div class="admin-loading">
-                Loading orders...
-            </div>
-        `;
-
+        `<p>Orders loading...</p>`;
 
     try {
 
-        let query =
-            sb
+        const { data, error } =
+            await sb
                 .from("orders")
                 .select("*")
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                );
+                .order("created_at", {
+                    ascending: false
+                });
 
+        if (error) throw error;
 
-        if (
-            statusFilter &&
-            statusFilter !== "all"
-        ) {
+        allOrders = data || [];
 
-            query =
-                query.eq(
-                    "status",
-                    statusFilter
-                );
-        }
-
-
-        const {
-            data,
-            error
-        } = await query;
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        renderOrders(
-            data || []
-        );
-
+        renderOrders(allOrders);
 
     } catch (error) {
 
-        console.error(
-            "Load orders error:",
-            error
-        );
-
+        console.error("Load orders error:", error);
 
         adminOrdersList.innerHTML =
-            `
-                <div class="admin-error">
-                    ${escapeHtml(
-                        error?.message ||
-                        "Could not load orders."
-                    )}
-                </div>
-            `;
+            `<p style="color:red;">
+                ${escapeHTML(
+                    error.message ||
+                    "Orders load করতে সমস্যা হয়েছে।"
+                )}
+            </p>`;
     }
 }
 
@@ -2704,339 +1436,251 @@ async function loadOrders(
    RENDER ORDERS
    ========================================================= */
 
-function renderOrders(
-    orders
-) {
+function renderOrders(orders) {
 
-    if (!adminOrdersList) {
+    if (!adminOrdersList) return;
+
+    if (!orders?.length) {
+
+        adminOrdersList.innerHTML =
+            `<p>No orders found.</p>`;
+
         return;
     }
 
+    adminOrdersList.innerHTML =
+        orders.map(order => {
 
-    if (!orders.length) {
+            const status =
+                String(order.status || "pending")
+                    .toLowerCase();
 
-        adminOrdersList.innerHTML =
-            `
-                <div class="empty-admin">
-                    No orders found.
+            const date =
+                order.created_at
+                    ? new Date(
+                        order.created_at
+                    ).toLocaleString("en-BD")
+                    : "";
+
+            const customerName =
+                order.customer_name ||
+                order.name ||
+                "Unknown";
+
+            const phone =
+                order.phone ||
+                order.customer_phone ||
+                "";
+
+            const address =
+                order.address ||
+                "";
+
+            const productName =
+                order.product_name ||
+                order.product ||
+                "";
+
+            const variantName =
+                order.variant_name ||
+                "";
+
+            const sizeName =
+                order.size_name ||
+                "";
+
+            const quantity =
+                order.quantity || 1;
+
+            const amount =
+                order.total_amount ??
+                order.total ??
+                order.amount ??
+                0;
+
+            const paymentMethod =
+                order.payment_method ||
+                "";
+
+            const transactionId =
+                order.transaction_id ||
+                "";
+
+            return `
+                <div
+                    class="admin-order-card"
+                    style="
+                        padding:15px;
+                        border-bottom:1px solid #ddd;
+                        margin-bottom:10px;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            gap:10px;
+                        "
+                    >
+
+                        <strong>
+                            Order #${escapeHTML(order.id)}
+                        </strong>
+
+                        <strong>
+                            ${escapeHTML(status)}
+                        </strong>
+
+                    </div>
+
+                    <hr>
+
+                    <div>
+                        <strong>Customer:</strong>
+                        ${escapeHTML(customerName)}
+                    </div>
+
+                    <div>
+                        <strong>Phone:</strong>
+                        ${escapeHTML(phone)}
+                    </div>
+
+                    <div>
+                        <strong>Address:</strong>
+                        ${escapeHTML(address)}
+                    </div>
+
+                    <div>
+                        <strong>Product:</strong>
+                        ${escapeHTML(productName)}
+                    </div>
+
+                    ${
+                        variantName
+                            ? `
+                                <div>
+                                    <strong>Variant:</strong>
+                                    ${escapeHTML(variantName)}
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        sizeName
+                            ? `
+                                <div>
+                                    <strong>Size:</strong>
+                                    ${escapeHTML(sizeName)}
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    <div>
+                        <strong>Quantity:</strong>
+                        ${escapeHTML(quantity)}
+                    </div>
+
+                    <div>
+                        <strong>Total:</strong>
+                        ${money(amount)}
+                    </div>
+
+                    ${
+                        paymentMethod
+                            ? `
+                                <div>
+                                    <strong>Payment:</strong>
+                                    ${escapeHTML(paymentMethod)}
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        transactionId
+                            ? `
+                                <div>
+                                    <strong>Transaction ID:</strong>
+                                    ${escapeHTML(transactionId)}
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        date
+                            ? `
+                                <div>
+                                    <small>${escapeHTML(date)}</small>
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        status !== "completed"
+                            ? `
+                                <button
+                                    type="button"
+                                    class="complete-order-button"
+                                    data-order-id="${escapeHTML(order.id)}"
+                                >
+                                    Mark Completed
+                                </button>
+                            `
+                            : ""
+                    }
+
                 </div>
             `;
 
-        return;
-    }
-
-
-    adminOrdersList.innerHTML =
-        orders
-            .map(
-                (order) => {
-
-                    const id =
-                        JSON.stringify(
-                            order.id
-                        );
-
-
-                    const status =
-                        order.status ||
-                        "pending";
-
-
-                    const orderNumber =
-                        order.order_number ||
-                        order.id;
-
-
-                    const customerName =
-                        order.customer_name ||
-                        order.name ||
-                        "Unknown";
-
-
-                    const phone =
-                        order.customer_phone ||
-                        order.phone ||
-                        "";
-
-
-                    const address =
-                        order.customer_address ||
-                        order.address ||
-                        "";
-
-
-                    const productName =
-                        order.product_name ||
-                        order.product ||
-                        "";
-
-
-                    const variant =
-                        order.variant_name ||
-                        order.variant ||
-                        "";
-
-
-                    const quantity =
-                        Number(
-                            order.quantity ||
-                            1
-                        );
-
-
-                    const payment =
-                        order.payment_method ||
-                        "";
-
-
-                    const trxId =
-                        order.transaction_id ||
-                        order.trx_id ||
-                        "";
-
-
-                    const total =
-                        Number(
-                            order.total_amount ??
-                            order.total ??
-                            0
-                        );
-
-
-                    return `
-
-                        <div class="admin-order-card">
-
-                            <div class="order-main">
-
-                                <div class="order-title">
-                                    Order #${escapeHtml(
-                                        orderNumber
-                                    )}
-                                </div>
-
-
-                                <div class="order-customer">
-                                    ${escapeHtml(
-                                        customerName
-                                    )}
-                                </div>
-
-
-                                <div class="order-phone">
-                                    📞 ${escapeHtml(
-                                        phone
-                                    )}
-                                </div>
-
-
-                                ${
-                                    productName
-                                        ? `
-                                            <div class="order-product">
-                                                📦 ${escapeHtml(
-                                                    productName
-                                                )}
-                                            </div>
-                                        `
-                                        : ""
-                                }
-
-
-                                ${
-                                    variant
-                                        ? `
-                                            <div class="order-variant">
-                                                Variant:
-                                                ${escapeHtml(
-                                                    variant
-                                                )}
-                                            </div>
-                                        `
-                                        : ""
-                                }
-
-
-                                <div class="order-variant">
-                                    Quantity:
-                                    ${quantity}
-                                </div>
-
-
-                                <div class="order-address">
-                                    📍 ${escapeHtml(
-                                        address
-                                    )}
-                                </div>
-
-
-                                <div class="order-payment">
-
-                                    <strong>
-                                        Payment:
-                                    </strong>
-
-                                    ${escapeHtml(
-                                        payment ||
-                                        "Not specified"
-                                    )}
-
-                                    ${
-                                        trxId
-                                            ? `
-                                                <br>
-                                                <strong>
-                                                    TrxID:
-                                                </strong>
-                                                ${escapeHtml(
-                                                    trxId
-                                                )}
-                                            `
-                                            : ""
-                                    }
-
-                                </div>
-
-
-                                <div class="order-total">
-                                    ৳${formatNumber(
-                                        total
-                                    )}
-                                </div>
-
-
-                                <div class="order-date">
-                                    ${escapeHtml(
-                                        formatDate(
-                                            order.created_at
-                                        )
-                                    )}
-                                </div>
-
-                            </div>
-
-
-                            <div class="order-actions">
-
-                                <span
-                                    class="
-                                        order-status
-                                        ${escapeHtml(status)}
-                                    "
-                                >
-                                    ${escapeHtml(
-                                        status
-                                    )}
-                                </span>
-
-
-                                ${
-                                    status !== "completed"
-                                        ? `
-                                            <button
-                                                type="button"
-                                                class="complete-order-button"
-                                                onclick='updateOrderStatus(${id}, "completed")'
-                                            >
-                                                ✓ Complete
-                                            </button>
-                                        `
-                                        : ""
-                                }
-
-
-                                ${
-                                    status !== "pending"
-                                        ? `
-                                            <button
-                                                type="button"
-                                                class="admin-btn admin-btn-secondary"
-                                                onclick='updateOrderStatus(${id}, "pending")'
-                                            >
-                                                Pending
-                                            </button>
-                                        `
-                                        : ""
-                                }
-
-
-                                ${
-                                    status !== "cancelled"
-                                        ? `
-                                            <button
-                                                type="button"
-                                                class="admin-btn"
-                                                style="
-                                                    background:#ffe5e5;
-                                                    color:#c00000;
-                                                "
-                                                onclick='updateOrderStatus(${id}, "cancelled")'
-                                            >
-                                                Cancel
-                                            </button>
-                                        `
-                                        : ""
-                                }
-
-                            </div>
-
-                        </div>
-
-                    `;
-                }
-            )
-            .join("");
+        }).join("");
 }
 
 
 /* =========================================================
-   UPDATE ORDER STATUS
+   COMPLETE ORDER
    ========================================================= */
 
-async function updateOrderStatus(
-    orderId,
-    status
-) {
+async function completeOrder(orderId) {
+
+    if (!orderId) return;
+
+    const confirmed =
+        confirm(
+            "এই order-টি completed হিসেবে mark করবেন?"
+        );
+
+    if (!confirmed) return;
 
     try {
 
-        const {
-            error
-        } = await sb
-            .from("orders")
-            .update({
-                status
-            })
-            .eq(
-                "id",
-                orderId
-            );
+        const { error } =
+            await sb
+                .from("orders")
+                .update({
+                    status: "completed"
+                })
+                .eq("id", orderId);
 
+        if (error) throw error;
 
-        if (error) {
-            throw error;
-        }
-
-
-        await loadOrders(
-            getCurrentOrderFilter()
-        );
-
-
-        await loadDashboardStats();
-
+        await loadOrders();
+        await loadStats();
 
     } catch (error) {
 
         console.error(
-            "Update order status error:",
+            "Complete order error:",
             error
         );
 
-
         alert(
-            error?.message ||
-            "Could not update order status."
+            error.message ||
+            "Order update করতে সমস্যা হয়েছে।"
         );
     }
 }
@@ -3046,193 +1690,20 @@ async function updateOrderStatus(
    ORDER FILTER
    ========================================================= */
 
-let currentOrderFilter =
-    "all";
+function filterOrders(filter) {
 
-
-function getCurrentOrderFilter() {
-
-    return currentOrderFilter;
-}
-
-
-function setupOrderFilters() {
-
-    document
-        .querySelectorAll(
-            "[data-order-filter]"
-        )
-        .forEach(
-            (button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        document
-                            .querySelectorAll(
-                                "[data-order-filter]"
-                            )
-                            .forEach(
-                                (btn) => {
-
-                                    btn.classList.remove(
-                                        "active"
-                                    );
-                                }
-                            );
-
-
-                        button.classList.add(
-                            "active"
-                        );
-
-
-                        currentOrderFilter =
-                            button.dataset.orderFilter ||
-                            "all";
-
-
-                        loadOrders(
-                            currentOrderFilter
-                        );
-                    }
-                );
-            }
-        );
-}
-
-
-/* =========================================================
-   DASHBOARD STATS
-   ========================================================= */
-
-async function loadDashboardStats() {
-
-    try {
-
-        /* PRODUCTS */
-
-        const {
-            data: products,
-            error: productError
-        } = await sb
-            .from("products")
-            .select(`
-                id,
-                active,
-                stock,
-                product_variants (
-                    stock,
-                    active,
-                    variant_sizes (
-                        stock,
-                        active
-                    )
-                )
-            `);
-
-
-        if (productError) {
-            throw productError;
-        }
-
-
-        const activeProducts =
-            (products || [])
-                .filter(
-                    (product) =>
-                        product.active !== false
-                );
-
-
-        let totalStock = 0;
-
-
-        activeProducts.forEach(
-            (product) => {
-
-                totalStock +=
-                    calculateProductStock(
-                        product
-                    );
-            }
-        );
-
-
-        if (statProducts) {
-
-            statProducts.textContent =
-                activeProducts.length;
-        }
-
-
-        if (statStock) {
-
-            statStock.textContent =
-                totalStock;
-        }
-
-
-        /* ORDERS */
-
-        const {
-            data: orders,
-            error: orderError
-        } = await sb
-            .from("orders")
-            .select(
-                "id, status"
-            );
-
-
-        if (orderError) {
-            throw orderError;
-        }
-
-
-        const allOrders =
-            orders || [];
-
-
-        const pending =
-            allOrders.filter(
-                (order) =>
-                    !order.status ||
-                    order.status ===
-                        "pending"
-            ).length;
-
-
-        const completed =
-            allOrders.filter(
-                (order) =>
-                    order.status ===
-                    "completed"
-            ).length;
-
-
-        if (statPendingOrders) {
-
-            statPendingOrders.textContent =
-                pending;
-        }
-
-
-        if (statCompletedOrders) {
-
-            statCompletedOrders.textContent =
-                completed;
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "Dashboard stats error:",
-            error
-        );
+    if (filter === "all") {
+        renderOrders(allOrders);
+        return;
     }
+
+    const filtered =
+        allOrders.filter(order =>
+            String(order.status || "pending")
+                .toLowerCase() === filter
+        );
+
+    renderOrders(filtered);
 }
 
 
@@ -3242,579 +1713,444 @@ async function loadDashboardStats() {
 
 async function loadStoreSettings() {
 
-    /*
-     * This expects a table named:
-     *
-     * store_settings
-     *
-     * with one row for the shop.
-     *
-     * If the table doesn't exist yet, the rest of
-     * the Admin Panel will still work.
-     */
-
-
     try {
 
-        const {
-            data,
-            error
-        } = await sb
-            .from(
-                "store_settings"
-            )
-            .select("*")
-            .limit(1)
-            .maybeSingle();
+        const { data, error } =
+            await sb
+                .from("store_settings")
+                .select("*")
+                .eq("id", 1)
+                .maybeSingle();
 
+        if (error) throw error;
 
-        if (error) {
+        if (!data) return;
 
-            console.warn(
-                "Store settings table:",
-                error.message
-            );
-
-            return;
-        }
-
-
-        if (!data) {
-            return;
-        }
-
-
-        if (aboutUsAdmin) {
-
+        if (aboutUsAdmin)
             aboutUsAdmin.value =
                 data.about_us || "";
-        }
 
-
-        if (contactPhoneAdmin) {
-
+        if (contactPhoneAdmin)
             contactPhoneAdmin.value =
-                data.phone || "";
-        }
+                data.contact_phone || "";
 
-
-        if (contactWhatsappAdmin) {
-
+        if (contactWhatsappAdmin)
             contactWhatsappAdmin.value =
-                data.whatsapp || "";
-        }
+                data.contact_whatsapp || "";
 
-
-        if (contactEmailAdmin) {
-
+        if (contactEmailAdmin)
             contactEmailAdmin.value =
-                data.email || "";
-        }
+                data.contact_email || "";
 
-
-        if (contactAddressAdmin) {
-
+        if (contactAddressAdmin)
             contactAddressAdmin.value =
-                data.address || "";
-        }
+                data.contact_address || "";
 
-
-        if (contactFacebookAdmin) {
-
+        if (contactFacebookAdmin)
             contactFacebookAdmin.value =
-                data.facebook || "";
-        }
+                data.contact_facebook || "";
 
-
-        if (contactInstagramAdmin) {
-
+        if (contactInstagramAdmin)
             contactInstagramAdmin.value =
-                data.instagram || "";
-        }
-
+                data.contact_instagram || "";
 
     } catch (error) {
 
-        console.warn(
-            "Load settings error:",
+        console.error(
+            "Settings load error:",
             error
+        );
+
+        showSettingsAlert(
+            error.message ||
+            "Settings load করতে সমস্যা হয়েছে।",
+            "error"
         );
     }
 }
 
 
-/* =========================================================
-   SAVE STORE SETTINGS
-   ========================================================= */
-
-async function saveStoreSettings(
-    event
-) {
+async function saveStoreSettings(event) {
 
     event.preventDefault();
 
-
     if (saveStoreSettingsButton) {
-
-        saveStoreSettingsButton.disabled =
-            true;
-
+        saveStoreSettingsButton.disabled = true;
         saveStoreSettingsButton.textContent =
             "Saving...";
     }
 
-
     try {
 
         const settings = {
-
+            id: 1,
             about_us:
-                aboutUsAdmin?.value
-                    .trim() || "",
+                aboutUsAdmin?.value.trim() || "",
 
-            phone:
-                contactPhoneAdmin?.value
-                    .trim() || "",
+            contact_phone:
+                contactPhoneAdmin?.value.trim() || "",
 
-            whatsapp:
-                contactWhatsappAdmin?.value
-                    .trim() || "",
+            contact_whatsapp:
+                contactWhatsappAdmin?.value.trim() || "",
 
-            email:
-                contactEmailAdmin?.value
-                    .trim() || "",
+            contact_email:
+                contactEmailAdmin?.value.trim() || "",
 
-            address:
-                contactAddressAdmin?.value
-                    .trim() || "",
+            contact_address:
+                contactAddressAdmin?.value.trim() || "",
 
-            facebook:
-                contactFacebookAdmin?.value
-                    .trim() || "",
+            contact_facebook:
+                contactFacebookAdmin?.value.trim() || "",
 
-            instagram:
-                contactInstagramAdmin?.value
-                    .trim() || ""
+            contact_instagram:
+                contactInstagramAdmin?.value.trim() || ""
         };
 
+        const { error } =
+            await sb
+                .from("store_settings")
+                .upsert(settings, {
+                    onConflict: "id"
+                });
 
-        /*
-         * Check whether a settings row exists.
-         */
-
-        const {
-            data: existing,
-            error: findError
-        } = await sb
-            .from(
-                "store_settings"
-            )
-            .select("id")
-            .limit(1)
-            .maybeSingle();
-
-
-        if (findError) {
-            throw findError;
-        }
-
-
-        if (existing?.id) {
-
-            const {
-                error
-            } = await sb
-                .from(
-                    "store_settings"
-                )
-                .update(settings)
-                .eq(
-                    "id",
-                    existing.id
-                );
-
-
-            if (error) {
-                throw error;
-            }
-
-        } else {
-
-            const {
-                error
-            } = await sb
-                .from(
-                    "store_settings"
-                )
-                .insert(settings);
-
-
-            if (error) {
-                throw error;
-            }
-        }
-
+        if (error) throw error;
 
         showSettingsAlert(
-            "Store settings saved successfully.",
+            "Settings successfully saved!",
             "success"
         );
-
 
     } catch (error) {
 
         console.error(
-            "Save settings error:",
+            "Settings save error:",
             error
         );
 
-
         showSettingsAlert(
-            error?.message ||
-            "Could not save store settings.",
+            error.message ||
+            "Settings save করতে সমস্যা হয়েছে।",
             "error"
         );
-
 
     } finally {
 
         if (saveStoreSettingsButton) {
-
-            saveStoreSettingsButton.disabled =
-                false;
-
+            saveStoreSettingsButton.disabled = false;
             saveStoreSettingsButton.textContent =
-                "💾 Save Store Settings";
+                "Save Settings";
         }
     }
 }
 
 
 /* =========================================================
-   NAVIGATION
+   EVENT LISTENERS
    ========================================================= */
 
-function setupNavigation() {
+function setupEventListeners() {
 
-    document
-        .querySelectorAll(
-            ".admin-nav-btn"
-        )
-        .forEach(
-            (button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const section =
-                            button.dataset.section;
-
-
-                        if (section) {
-
-                            showSection(
-                                section
-                            );
-                        }
-                    }
-                );
-            }
+    /* Login */
+    if (loginForm) {
+        loginForm.addEventListener(
+            "submit",
+            loginAdmin
         );
+    }
 
 
-    document
-        .querySelectorAll(
-            "[data-open-section]"
-        )
-        .forEach(
-            (button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const section =
-                            button.dataset.openSection;
-
-
-                        if (section) {
-
-                            showSection(
-                                section
-                            );
-                        }
-                    }
-                );
-            }
+    /* Logout */
+    if (logoutButton) {
+        logoutButton.addEventListener(
+            "click",
+            logoutAdmin
         );
-}
+    }
 
 
-/* =========================================================
-   INITIALIZE
-   ========================================================= */
+    /* Navigation */
+    document
+        .querySelectorAll(".admin-nav-btn")
+        .forEach(button => {
 
-async function initializeAdmin() {
-
-    try {
-
-        /* LOGIN */
-
-        if (loginForm) {
-
-            loginForm.addEventListener(
-                "submit",
-                loginAdmin
-            );
-        }
-
-
-        /* LOGOUT */
-
-        if (logoutButton) {
-
-            logoutButton.addEventListener(
+            button.addEventListener(
                 "click",
-                logoutAdmin
-            );
-        }
+                () => {
 
+                    const section =
+                        button.dataset.section;
 
-        /* NAVIGATION */
-
-        setupNavigation();
-
-
-        /* ORDERS */
-
-        setupOrderFilters();
-
-
-        /* PRODUCT FORM */
-
-        if (productForm) {
-
-            productForm.addEventListener(
-                "submit",
-                saveProduct
-            );
-        }
-
-
-        /* RESET */
-
-        if (resetProductButton) {
-
-            resetProductButton.addEventListener(
-                "click",
-                resetProductForm
-            );
-        }
-
-
-        /* IMAGE */
-
-        if (mainImageAdmin) {
-
-            mainImageAdmin.addEventListener(
-                "change",
-                previewMainImage
-            );
-        }
-
-
-        /* VARIANT */
-
-        if (addVariantButton) {
-
-            addVariantButton.addEventListener(
-                "click",
-                addVariant
-            );
-        }
-
-
-        /* PAYMENT */
-
-        if (allowCodAdmin) {
-
-            allowCodAdmin.addEventListener(
-                "change",
-                checkPaymentMethods
-            );
-        }
-
-
-        if (allowAdvanceAdmin) {
-
-            allowAdvanceAdmin.addEventListener(
-                "change",
-                checkPaymentMethods
-            );
-        }
-
-
-        /* SETTINGS */
-
-        if (storeSettingsForm) {
-
-            storeSettingsForm.addEventListener(
-                "submit",
-                saveStoreSettings
-            );
-        }
-
-
-        /* =================================================
-           CHECK SESSION
-           ================================================= */
-
-        const {
-            data,
-            error
-        } = await sb.auth.getSession();
-
-
-        if (error) {
-
-            console.error(
-                "Session error:",
-                error
-            );
-
-            return;
-        }
-
-
-        const session =
-            data?.session;
-
-
-        if (session?.user) {
-
-            currentUser =
-                session.user;
-
-
-            await verifyAdminUser();
-
-        } else {
-
-            if (adminLogin) {
-
-                adminLogin.style.display =
-                    "flex";
-            }
-
-
-            if (adminDashboard) {
-
-                adminDashboard.style.display =
-                    "none";
-            }
-        }
-
-
-        /* =================================================
-           AUTH STATE
-           ================================================= */
-
-        sb.auth.onAuthStateChange(
-            (
-                event,
-                session
-            ) => {
-
-                console.log(
-                    "Auth event:",
-                    event
-                );
-
-
-                if (
-                    event ===
-                    "SIGNED_OUT"
-                ) {
-
-                    currentUser =
-                        null;
-
-
-                    if (adminDashboard) {
-
-                        adminDashboard.style.display =
-                            "none";
+                    if (section) {
+                        openSection(section);
                     }
+                }
+            );
+
+        });
 
 
-                    if (adminLogin) {
+    /* Quick actions */
+    document
+        .querySelectorAll(".quick-action-btn")
+        .forEach(button => {
 
-                        adminLogin.style.display =
-                            "flex";
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const section =
+                        button.dataset.openSection;
+
+                    if (section) {
+                        openSection(section);
                     }
+                }
+            );
+
+        });
+
+
+    /* Product save */
+    if (productForm) {
+        productForm.addEventListener(
+            "submit",
+            saveProduct
+        );
+    }
+
+
+    /* Product reset */
+    if (resetProductButton) {
+        resetProductButton.addEventListener(
+            "click",
+            resetProductForm
+        );
+    }
+
+
+    /* Add variant */
+    if (addVariantButton) {
+        addVariantButton.addEventListener(
+            "click",
+            () => addVariant()
+        );
+    }
+
+
+    /* Main image */
+    if (mainImageAdmin) {
+        mainImageAdmin.addEventListener(
+            "change",
+            previewMainImage
+        );
+    }
+
+
+    /* Payment */
+    if (allowCodAdmin) {
+        allowCodAdmin.addEventListener(
+            "change",
+            checkPaymentMethodsAdmin
+        );
+    }
+
+    if (allowAdvanceAdmin) {
+        allowAdvanceAdmin.addEventListener(
+            "change",
+            checkPaymentMethodsAdmin
+        );
+    }
+
+
+    /* Product list */
+    if (adminProductsList) {
+
+        adminProductsList.addEventListener(
+            "click",
+            event => {
+
+                const button =
+                    event.target.closest(
+                        ".edit-product-button"
+                    );
+
+                if (!button) return;
+
+                const productId =
+                    button.dataset.editId;
+
+                if (productId) {
+                    editProduct(productId);
                 }
             }
         );
+    }
 
 
-    } catch (error) {
+    /* Variant / Size buttons */
+    if (variantsContainer) {
 
-        console.error(
-            "Admin initialization error:",
-            error
+        variantsContainer.addEventListener(
+            "click",
+            event => {
+
+                const removeVariantButton =
+                    event.target.closest(
+                        ".remove-variant-button"
+                    );
+
+                if (removeVariantButton) {
+
+                    const variant =
+                        removeVariantButton.closest(
+                            ".admin-variant"
+                        );
+
+                    if (variant) {
+                        variant.remove();
+                    }
+
+                    return;
+                }
+
+
+                const addSizeButton =
+                    event.target.closest(
+                        ".add-size-button"
+                    );
+
+                if (addSizeButton) {
+
+                    const variant =
+                        addSizeButton.closest(
+                            ".admin-variant"
+                        );
+
+                    const sizesContainer =
+                        variant?.querySelector(
+                            ".variant-sizes"
+                        );
+
+                    if (sizesContainer) {
+                        addSizeRow(
+                            sizesContainer
+                        );
+                    }
+
+                    return;
+                }
+
+
+                const removeSizeButton =
+                    event.target.closest(
+                        ".remove-size-button"
+                    );
+
+                if (removeSizeButton) {
+
+                    const row =
+                        removeSizeButton.closest(
+                            ".admin-size-row"
+                        );
+
+                    if (row) {
+                        row.remove();
+                    }
+                }
+
+            }
         );
     }
+
+
+    /* Orders */
+    if (adminOrdersList) {
+
+        adminOrdersList.addEventListener(
+            "click",
+            event => {
+
+                const button =
+                    event.target.closest(
+                        ".complete-order-button"
+                    );
+
+                if (!button) return;
+
+                const orderId =
+                    button.dataset.orderId;
+
+                if (orderId) {
+                    completeOrder(orderId);
+                }
+            }
+        );
+    }
+
+
+    /* Order filter */
+    document
+        .querySelectorAll(
+            "[data-order-filter]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const filter =
+                        button.dataset.orderFilter;
+
+                    filterOrders(
+                        filter || "all"
+                    );
+                }
+            );
+
+        });
+
+
+    /* Settings */
+    if (storeSettingsForm) {
+
+        storeSettingsForm.addEventListener(
+            "submit",
+            saveStoreSettings
+        );
+    }
+
 }
 
 
 /* =========================================================
-   GLOBAL FUNCTIONS
+   AUTH STATE
    ========================================================= */
 
-window.loginAdmin =
-    loginAdmin;
+sb.auth.onAuthStateChange(
+    async (event, session) => {
 
-window.logoutAdmin =
-    logoutAdmin;
+        if (event === "SIGNED_OUT") {
+            showLoginScreen();
+        }
 
-window.showSection =
-    showSection;
-
-window.addVariant =
-    addVariant;
-
-window.editProduct =
-    editProduct;
-
-window.activateProduct =
-    activateProduct;
-
-window.deactivateProduct =
-    deactivateProduct;
-
-window.updateOrderStatus =
-    updateOrderStatus;
-
-window.resetProductForm =
-    resetProductForm;
+    }
+);
 
 
 /* =========================================================
-   START
+   INIT
    ========================================================= */
 
-if (
-    document.readyState ===
-    "loading"
-) {
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeAdmin
-    );
+        setupEventListeners();
 
-} else {
+        checkPaymentMethodsAdmin();
 
-    initializeAdmin();
-}
+        await checkExistingSession();
+
+    }
+);
