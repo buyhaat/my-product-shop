@@ -16,10 +16,15 @@ const sb = window.supabase.createClient(
 
 
 /* =========================================================
-   DOM
+   DOM HELPER
    ========================================================= */
 
 const $ = (id) => document.getElementById(id);
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
 
 const adminLogin = $("adminLogin");
 const adminDashboard = $("adminDashboard");
@@ -69,59 +74,31 @@ let currentUser = null;
 
 
 /* =========================================================
-   PAYMENT SETTINGS
-   ========================================================= */
-
-function checkPaymentMethodsAdmin() {
-
-    if (!allowCodAdmin || !allowAdvanceAdmin) {
-        return;
-    }
-
-    if (!allowCodAdmin.checked && !allowAdvanceAdmin.checked) {
-        allowCodAdmin.checked = true;
-    }
-}
-
-
-/* =========================================================
-   ALERT
+   ALERTS
    ========================================================= */
 
 function showAlert(message, type = "info") {
 
-    if (!productFormAlert) {
-        return;
-    }
+    if (!productFormAlert) return;
 
     productFormAlert.textContent = message;
-
     productFormAlert.className = "form-alert " + type;
-
     productFormAlert.style.display = "block";
 }
 
 
 function hideAlert() {
 
-    if (!productFormAlert) {
-        return;
-    }
+    if (!productFormAlert) return;
 
     productFormAlert.textContent = "";
     productFormAlert.style.display = "none";
 }
 
 
-/* =========================================================
-   LOGIN ALERT
-   ========================================================= */
-
 function showLoginAlert(message, type = "error") {
 
-    if (!loginAlert) {
-        return;
-    }
+    if (!loginAlert) return;
 
     loginAlert.textContent = message;
     loginAlert.className = "form-alert " + type;
@@ -131,12 +108,49 @@ function showLoginAlert(message, type = "error") {
 
 function hideLoginAlert() {
 
-    if (!loginAlert) {
-        return;
-    }
+    if (!loginAlert) return;
 
     loginAlert.textContent = "";
     loginAlert.style.display = "none";
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+   ========================================================= */
+
+function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function escapeHtmlAttribute(value) {
+
+    return escapeHtml(value);
+}
+
+
+/* =========================================================
+   PAYMENT METHODS
+   ========================================================= */
+
+function checkPaymentMethodsAdmin() {
+
+    if (!allowCodAdmin || !allowAdvanceAdmin) return;
+
+    if (!allowCodAdmin.checked && !allowAdvanceAdmin.checked) {
+        allowCodAdmin.checked = true;
+    }
 }
 
 
@@ -150,8 +164,8 @@ async function loginAdmin(event) {
 
     hideLoginAlert();
 
-    const email = loginEmail.value.trim();
-    const password = loginPassword.value;
+    const email = loginEmail?.value.trim();
+    const password = loginPassword?.value;
 
     if (!email || !password) {
 
@@ -165,10 +179,15 @@ async function loginAdmin(event) {
 
     try {
 
-        const { data, error } = await sb.auth.signInWithPassword({
-            email,
-            password
-        });
+        if (!window.supabase) {
+            throw new Error("Supabase library is not loaded.");
+        }
+
+        const { data, error } =
+            await sb.auth.signInWithPassword({
+                email,
+                password
+            });
 
         if (error) {
             throw error;
@@ -183,7 +202,7 @@ async function loginAdmin(event) {
         console.error("Login error:", error);
 
         showLoginAlert(
-            error.message || "Login failed.",
+            error?.message || "Login failed.",
             "error"
         );
     }
@@ -196,9 +215,7 @@ async function loginAdmin(event) {
 
 async function verifyAdminUser() {
 
-    if (!currentUser) {
-        return;
-    }
+    if (!currentUser) return false;
 
     try {
 
@@ -216,24 +233,34 @@ async function verifyAdminUser() {
 
             await sb.auth.signOut();
 
+            currentUser = null;
+
             showLoginAlert(
                 "You are not authorized to access the admin panel.",
                 "error"
             );
 
-            return;
+            return false;
         }
 
         showDashboard();
 
+        return true;
+
     } catch (error) {
 
-        console.error("Admin verification error:", error);
+        console.error(
+            "Admin verification error:",
+            error
+        );
 
         showLoginAlert(
-            "Could not verify admin account.",
+            "Could not verify admin account: " +
+            (error?.message || "Unknown error"),
             "error"
         );
+
+        return false;
     }
 }
 
@@ -271,6 +298,7 @@ async function logoutAdmin() {
         await sb.auth.signOut();
 
         currentUser = null;
+        editingProductId = null;
 
         if (adminDashboard) {
             adminDashboard.style.display = "none";
@@ -280,6 +308,8 @@ async function logoutAdmin() {
             adminLogin.style.display = "block";
         }
 
+        hideLoginAlert();
+
     } catch (error) {
 
         console.error("Logout error:", error);
@@ -288,7 +318,7 @@ async function logoutAdmin() {
 
 
 /* =========================================================
-   NAVIGATION
+   ADMIN SECTIONS
    ========================================================= */
 
 function showAdminSection(section) {
@@ -296,6 +326,7 @@ function showAdminSection(section) {
     document
         .querySelectorAll(".admin-section")
         .forEach((element) => {
+
             element.style.display = "none";
         });
 
@@ -320,55 +351,78 @@ function showAdminSection(section) {
 
 
 /* =========================================================
-   MAIN IMAGE PREVIEW
+   IMAGE PREVIEW
    ========================================================= */
 
 function previewMainImage() {
 
-    if (!mainImageAdmin || !mainImagePreview) {
-        return;
-    }
+    if (!mainImageAdmin || !mainImagePreview) return;
 
-    const file = mainImageAdmin.files[0];
+    const file = mainImageAdmin.files?.[0];
 
     if (!file) {
 
-        mainImagePreview.src = "";
-        mainImagePreview.style.display = "none";
+        mainImagePreview.innerHTML = "";
+        return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+
+        mainImagePreview.innerHTML =
+            "<p>Please select an image file.</p>";
 
         return;
     }
 
-    const url = URL.createObjectURL(file);
+    const reader = new FileReader();
 
-    mainImagePreview.src = url;
-    mainImagePreview.style.display = "block";
+    reader.onload = function (event) {
+
+        mainImagePreview.innerHTML = `
+            <img
+                src="${event.target.result}"
+                alt="Preview"
+                style="
+                    max-width:180px;
+                    max-height:180px;
+                    object-fit:cover;
+                    border-radius:10px;
+                "
+            >
+        `;
+    };
+
+    reader.readAsDataURL(file);
 }
 
 
 /* =========================================================
-   CREATE VARIANT
+   VARIANT ELEMENT
    ========================================================= */
 
 function createVariantElement(variant = {}) {
-
-    if (!variantsContainer) {
-        return;
-    }
 
     const wrapper = document.createElement("div");
 
     wrapper.className = "variant-item";
 
+    const variantName =
+        variant.name ||
+        variant.variant_name ||
+        "";
+
+    const variantPrice =
+        variant.price ??
+        variant.sale_price ??
+        "";
+
+    const variantStock =
+        variant.stock ??
+        0;
+
     wrapper.innerHTML = `
         <div class="variant-header">
-
-            <input
-                type="text"
-                class="variant-name"
-                placeholder="Variant name"
-                value="${escapeHtmlAttribute(variant.name || "")}"
-            >
+            <strong>Variant</strong>
 
             <button
                 type="button"
@@ -376,136 +430,113 @@ function createVariantElement(variant = {}) {
             >
                 Remove
             </button>
-
         </div>
 
-        <div class="variant-image-box">
+        <div class="variant-fields">
 
             <input
-                type="file"
-                class="variant-image"
-                accept="image/*"
+                type="text"
+                class="variant-name"
+                placeholder="Variant name"
+                value="${escapeHtmlAttribute(variantName)}"
             >
 
-            ${
-                variant.image_url
-                    ? `
-                        <img
-                            class="variant-image-preview"
-                            src="${escapeHtmlAttribute(variant.image_url)}"
-                            style="display:block;"
-                        >
-                    `
-                    : `
-                        <img
-                            class="variant-image-preview"
-                            style="display:none;"
-                        >
-                    `
-            }
+            <input
+                type="number"
+                class="variant-price"
+                placeholder="Price"
+                min="0"
+                step="0.01"
+                value="${escapeHtmlAttribute(variantPrice)}"
+            >
+
+            <input
+                type="number"
+                class="variant-stock"
+                placeholder="Stock"
+                min="0"
+                step="1"
+                value="${escapeHtmlAttribute(variantStock)}"
+            >
 
         </div>
 
-        <div class="variant-sizes">
+        <div class="variant-sizes"></div>
 
-            <div class="sizes-list"></div>
-
-            <button
-                type="button"
-                class="add-size-btn"
-            >
-                + Add Size
-            </button>
-
-        </div>
+        <button
+            type="button"
+            class="add-size-btn"
+        >
+            + Add Size
+        </button>
     `;
-
-    variantsContainer.appendChild(wrapper);
 
     const removeBtn =
         wrapper.querySelector(".remove-variant-btn");
 
-    removeBtn.addEventListener("click", () => {
+    removeBtn?.addEventListener("click", () => {
         wrapper.remove();
     });
 
-    const imageInput =
-        wrapper.querySelector(".variant-image");
 
-    const imagePreview =
-        wrapper.querySelector(".variant-image-preview");
-
-    imageInput.addEventListener("change", () => {
-
-        const file = imageInput.files[0];
-
-        if (!file) {
-            imagePreview.style.display = "none";
-            return;
-        }
-
-        imagePreview.src = URL.createObjectURL(file);
-        imagePreview.style.display = "block";
-    });
-
-    const addSizeButton =
+    const addSizeBtn =
         wrapper.querySelector(".add-size-btn");
 
-    addSizeButton.addEventListener("click", () => {
+    const sizesContainer =
+        wrapper.querySelector(".variant-sizes");
+
+
+    addSizeBtn?.addEventListener("click", () => {
+
         createSizeElement(
-            wrapper.querySelector(".sizes-list")
+            sizesContainer
         );
     });
 
-    if (variant.sizes && Array.isArray(variant.sizes)) {
 
-        variant.sizes.forEach((size) => {
+    if (Array.isArray(variant.variant_sizes)) {
+
+        variant.variant_sizes.forEach((size) => {
 
             createSizeElement(
-                wrapper.querySelector(".sizes-list"),
+                sizesContainer,
                 size
             );
-
         });
-
-    } else {
-
-        createSizeElement(
-            wrapper.querySelector(".sizes-list")
-        );
     }
+
+
+    return wrapper;
 }
 
 
 /* =========================================================
-   CREATE SIZE
+   SIZE ELEMENT
    ========================================================= */
 
 function createSizeElement(container, size = {}) {
 
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
     const wrapper = document.createElement("div");
 
     wrapper.className = "size-item";
+
+    const sizeName =
+        size.size ||
+        size.name ||
+        "";
+
+    const sizeStock =
+        size.stock ??
+        0;
 
     wrapper.innerHTML = `
         <input
             type="text"
             class="size-name"
             placeholder="Size"
-            value="${escapeHtmlAttribute(size.size || "")}"
-        >
-
-        <input
-            type="number"
-            class="size-price"
-            placeholder="Price"
-            min="0"
-            step="0.01"
-            value="${size.price ?? ""}"
+            value="${escapeHtmlAttribute(sizeName)}"
         >
 
         <input
@@ -514,7 +545,7 @@ function createSizeElement(container, size = {}) {
             placeholder="Stock"
             min="0"
             step="1"
-            value="${size.stock ?? 0}"
+            value="${escapeHtmlAttribute(sizeStock)}"
         >
 
         <button
@@ -525,28 +556,16 @@ function createSizeElement(container, size = {}) {
         </button>
     `;
 
+    const removeBtn =
+        wrapper.querySelector(".remove-size-btn");
+
+    removeBtn?.addEventListener("click", () => {
+        wrapper.remove();
+    });
+
     container.appendChild(wrapper);
 
-    wrapper
-        .querySelector(".remove-size-btn")
-        .addEventListener("click", () => {
-            wrapper.remove();
-        });
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function escapeHtmlAttribute(value) {
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+    return wrapper;
 }
 
 
@@ -557,31 +576,63 @@ function escapeHtmlAttribute(value) {
 async function uploadImage(file, folder = "products") {
 
     if (!file) {
-        return null;
+        throw new Error("Image file is required.");
     }
 
     const extension =
-        file.name.split(".").pop().toLowerCase();
+        file.name.split(".").pop()?.toLowerCase() || "jpg";
+
+    const safeExtension =
+        extension.replace(/[^a-z0-9]/g, "") || "jpg";
 
     const fileName =
-        `${folder}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+        `${crypto.randomUUID()}.${safeExtension}`;
 
-    const { error } = await sb
-        .storage
-        .from("product-images")
-        .upload(fileName, file, {
-            cacheControl: "3600",
-            upsert: false
-        });
+    const filePath =
+        `${folder}/${fileName}`;
 
-    if (error) {
-        throw error;
+
+    const { error: uploadError } =
+        await sb.storage
+            .from("product-images")
+            .upload(
+                filePath,
+                file,
+                {
+                    cacheControl: "3600",
+                    upsert: false,
+                    contentType: file.type
+                }
+            );
+
+
+    if (uploadError) {
+
+        console.error(
+            "Image upload error:",
+            uploadError
+        );
+
+        throw new Error(
+            "Image upload failed: " +
+            uploadError.message
+        );
     }
 
-    const { data } = sb
-        .storage
-        .from("product-images")
-        .getPublicUrl(fileName);
+
+    const { data } =
+        sb.storage
+            .from("product-images")
+            .getPublicUrl(filePath);
+
+
+    if (!data?.publicUrl) {
+
+        throw new Error(
+            "Could not create image URL."
+        );
+    }
+
 
     return data.publicUrl;
 }
@@ -594,153 +645,290 @@ async function uploadImage(file, folder = "products") {
 function collectProductForm() {
 
     const name =
-        productNameAdmin.value.trim();
-
-    const regularPriceValue =
-        regularPriceAdmin
-            ? regularPriceAdmin.value.trim()
-            : "";
-
-    const salePriceValue =
-        basePriceAdmin.value.trim();
-
-    const description =
-        descriptionAdmin.value.trim();
+        productNameAdmin?.value.trim() || "";
 
     const regularPrice =
-        regularPriceValue === ""
-            ? null
-            : Number(regularPriceValue);
+        Number(regularPriceAdmin?.value || 0);
 
     const salePrice =
-        Number(salePriceValue);
+        Number(basePriceAdmin?.value || 0);
+
+    const description =
+        descriptionAdmin?.value.trim() || "";
+
 
     if (!name) {
-        throw new Error("Product name is required.");
+        throw new Error("Please enter product name.");
     }
 
+
     if (
-        regularPrice !== null &&
-        (
-            Number.isNaN(regularPrice) ||
-            regularPrice < 0
-        )
+        !Number.isFinite(regularPrice) ||
+        regularPrice < 0
     ) {
-        throw new Error("Please enter a valid regular price.");
+        throw new Error(
+            "Please enter a valid regular price."
+        );
     }
 
+
     if (
-        Number.isNaN(salePrice) ||
+        !Number.isFinite(salePrice) ||
         salePrice < 0
     ) {
-        throw new Error("Please enter a valid sale price.");
+        throw new Error(
+            "Please enter a valid sale price."
+        );
     }
 
-    if (
-        regularPrice !== null &&
-        regularPrice > 0 &&
-        salePrice > regularPrice
-    ) {
+
+    if (salePrice > regularPrice && regularPrice > 0) {
+
         throw new Error(
             "Sale price cannot be higher than regular price."
         );
     }
 
+
+    checkPaymentMethodsAdmin();
+
+
     const variants = [];
 
-    document
-        .querySelectorAll(".variant-item")
-        .forEach((variantElement) => {
 
-            const variantName =
+    if (variantsContainer) {
+
+        variantsContainer
+            .querySelectorAll(".variant-item")
+            .forEach((variantElement) => {
+
+                const variantName =
+                    variantElement
+                        .querySelector(".variant-name")
+                        ?.value.trim() || "";
+
+
+                const variantPrice =
+                    Number(
+                        variantElement
+                            .querySelector(".variant-price")
+                            ?.value || 0
+                    );
+
+
+                const variantStock =
+                    Number(
+                        variantElement
+                            .querySelector(".variant-stock")
+                            ?.value || 0
+                    );
+
+
+                const sizes = [];
+
+
                 variantElement
-                    .querySelector(".variant-name")
-                    .value
-                    .trim();
+                    .querySelectorAll(".size-item")
+                    .forEach((sizeElement) => {
 
-            const variantImage =
-                variantElement
-                    .querySelector(".variant-image")
-                    .files[0] || null;
+                        const sizeName =
+                            sizeElement
+                                .querySelector(".size-name")
+                                ?.value.trim() || "";
 
-            const existingImage =
-                variantElement
-                    .querySelector(".variant-image-preview")
-                    ?.getAttribute("src") || null;
 
-            const sizes = [];
+                        const sizeStock =
+                            Number(
+                                sizeElement
+                                    .querySelector(".size-stock")
+                                    ?.value || 0
+                            );
 
-            variantElement
-                .querySelectorAll(".size-item")
-                .forEach((sizeElement) => {
 
-                    const sizeName =
-                        sizeElement
-                            .querySelector(".size-name")
-                            .value
-                            .trim();
+                        if (sizeName) {
 
-                    const priceValue =
-                        sizeElement
-                            .querySelector(".size-price")
-                            .value
-                            .trim();
-
-                    const stockValue =
-                        sizeElement
-                            .querySelector(".size-stock")
-                            .value
-                            .trim();
-
-                    if (!sizeName) {
-                        return;
-                    }
-
-                    const price =
-                        priceValue === ""
-                            ? salePrice
-                            : Number(priceValue);
-
-                    const stock =
-                        stockValue === ""
-                            ? 0
-                            : Number(stockValue);
-
-                    sizes.push({
-                        size: sizeName,
-                        price,
-                        stock
+                            sizes.push({
+                                size: sizeName,
+                                stock:
+                                    Number.isFinite(sizeStock)
+                                        ? Math.max(0, sizeStock)
+                                        : 0
+                            });
+                        }
                     });
-                });
 
-            if (variantName) {
 
-                variants.push({
-                    name: variantName,
-                    imageFile: variantImage,
-                    image_url: existingImage,
-                    sizes
-                });
-            }
-        });
+                if (variantName) {
+
+                    variants.push({
+                        name: variantName,
+                        price:
+                            Number.isFinite(variantPrice)
+                                ? Math.max(0, variantPrice)
+                                : 0,
+                        stock:
+                            Number.isFinite(variantStock)
+                                ? Math.max(0, variantStock)
+                                : 0,
+                        sizes
+                    });
+                }
+            });
+    }
+
 
     return {
+
         name,
+
         regularPrice,
+
         salePrice,
+
         description,
+
         mainImageFile:
-            mainImageAdmin.files[0] || null,
-        variants,
+            mainImageAdmin?.files?.[0] || null,
+
         allowCod:
-            allowCodAdmin
-                ? allowCodAdmin.checked
-                : true,
+            allowCodAdmin?.checked ?? true,
+
         allowAdvance:
-            allowAdvanceAdmin
-                ? allowAdvanceAdmin.checked
-                : false
+            allowAdvanceAdmin?.checked ?? false,
+
+        variants
     };
+}
+
+
+/* =========================================================
+   SAVE VARIANTS
+   ========================================================= */
+
+async function saveVariants(productId, variants) {
+
+    if (!productId) return;
+
+    if (!Array.isArray(variants)) return;
+
+
+    for (const variant of variants) {
+
+        const { data: insertedVariant, error } =
+            await sb
+                .from("product_variants")
+                .insert({
+                    product_id: productId,
+                    name: variant.name,
+                    price: variant.price,
+                    stock: variant.stock,
+                    active: true
+                })
+                .select()
+                .single();
+
+
+        if (error) {
+
+            console.error(
+                "Variant insert error:",
+                error
+            );
+
+            throw error;
+        }
+
+
+        if (
+            insertedVariant &&
+            Array.isArray(variant.sizes) &&
+            variant.sizes.length
+        ) {
+
+            const sizeRows =
+                variant.sizes.map((size) => ({
+                    variant_id: insertedVariant.id,
+                    size: size.size,
+                    stock: size.stock,
+                    active: true
+                }));
+
+
+            const { error: sizeError } =
+                await sb
+                    .from("variant_sizes")
+                    .insert(sizeRows);
+
+
+            if (sizeError) {
+
+                console.error(
+                    "Size insert error:",
+                    sizeError
+                );
+
+                throw sizeError;
+            }
+        }
+    }
+}
+
+
+/* =========================================================
+   DEACTIVATE OLD VARIANTS
+   ========================================================= */
+
+async function deactivateOldVariants(productId) {
+
+    if (!productId) return;
+
+    const { data: oldVariants, error } =
+        await sb
+            .from("product_variants")
+            .select("id")
+            .eq("product_id", productId);
+
+
+    if (error) {
+        throw error;
+    }
+
+
+    if (!oldVariants || !oldVariants.length) {
+        return;
+    }
+
+
+    const variantIds =
+        oldVariants.map((variant) => variant.id);
+
+
+    const { error: sizeError } =
+        await sb
+            .from("variant_sizes")
+            .update({
+                active: false
+            })
+            .in("variant_id", variantIds);
+
+
+    if (sizeError) {
+        throw sizeError;
+    }
+
+
+    const { error: variantError } =
+        await sb
+            .from("product_variants")
+            .update({
+                active: false
+            })
+            .eq("product_id", productId);
+
+
+    if (variantError) {
+        throw variantError;
+    }
 }
 
 
@@ -754,45 +942,58 @@ async function saveProduct(event) {
 
     hideAlert();
 
+
     try {
 
         const product =
             collectProductForm();
 
+
         if (
             !editingProductId &&
             !product.mainImageFile
         ) {
+
             throw new Error(
                 "Please select a main product image."
             );
         }
 
-        saveProductBtn.disabled = true;
-        saveProductBtn.textContent = "Saving...";
+
+        if (saveProductBtn) {
+
+            saveProductBtn.disabled = true;
+            saveProductBtn.textContent = "Saving...";
+        }
+
 
         let mainImageUrl = null;
 
-        /*
-         * EDIT PRODUCT
-         * Keep old image if no new image selected.
-         */
+
+        /* =================================================
+           EDIT EXISTING PRODUCT
+           ================================================= */
 
         if (editingProductId) {
 
-            const { data: existingProduct, error } =
-                await sb
-                    .from("products")
-                    .select("main_image_url")
-                    .eq("id", editingProductId)
-                    .single();
+            const {
+                data: existingProduct,
+                error
+            } = await sb
+                .from("products")
+                .select("main_image_url")
+                .eq("id", editingProductId)
+                .single();
+
 
             if (error) {
                 throw error;
             }
 
+
             mainImageUrl =
-                existingProduct.main_image_url;
+                existingProduct?.main_image_url || null;
+
 
             if (product.mainImageFile) {
 
@@ -802,8 +1003,14 @@ async function saveProduct(event) {
                         "products"
                     );
             }
+        }
 
-        } else {
+
+        /* =================================================
+           ADD NEW PRODUCT
+           ================================================= */
+
+        else {
 
             mainImageUrl =
                 await uploadImage(
@@ -812,10 +1019,6 @@ async function saveProduct(event) {
                 );
         }
 
-
-        /* =====================================================
-           PRODUCT DATA
-           ===================================================== */
 
         const productData = {
 
@@ -843,9 +1046,9 @@ async function saveProduct(event) {
         };
 
 
-        /* =====================================================
-           ADD PRODUCT
-           ===================================================== */
+        /* =================================================
+           INSERT
+           ================================================= */
 
         if (!editingProductId) {
 
@@ -858,31 +1061,1573 @@ async function saveProduct(event) {
                 .select()
                 .single();
 
+
             if (error) {
                 throw error;
             }
 
+
             const productId =
                 insertedProduct.id;
+
 
             await saveVariants(
                 productId,
                 product.variants
             );
 
+
             showAlert(
                 "Product added successfully.",
                 "success"
             );
-
         }
 
-        /* =====================================================
-           EDIT PRODUCT
-           ===================================================== */
+
+        /* =================================================
+           UPDATE
+           ================================================= */
 
         else {
 
             const {
                 error
-  
+            } = await sb
+                .from("products")
+                .update(productData)
+                .eq("id", editingProductId);
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            /*
+             * Old variants are deactivated first.
+             * New variants are then inserted.
+             */
+
+            await deactivateOldVariants(
+                editingProductId
+            );
+
+
+            await saveVariants(
+                editingProductId,
+                product.variants
+            );
+
+
+            showAlert(
+                "Product updated successfully.",
+                "success"
+            );
+        }
+
+
+        await loadProducts();
+        await loadStats();
+
+
+        setTimeout(() => {
+
+            resetProductForm();
+
+        }, 700);
+
+
+    } catch (error) {
+
+        console.error(
+            "Save product error:",
+            error
+        );
+
+
+        showAlert(
+            error?.message ||
+            "Could not save product.",
+            "error"
+        );
+
+
+    } finally {
+
+        if (saveProductBtn) {
+
+            saveProductBtn.disabled = false;
+
+            saveProductBtn.textContent =
+                editingProductId
+                    ? "Update Product"
+                    : "Save Product";
+        }
+    }
+}
+
+
+/* =========================================================
+   EDIT PRODUCT
+   ========================================================= */
+
+async function editProduct(productId) {
+
+    try {
+
+        hideAlert();
+
+
+        const {
+            data: product,
+            error
+        } = await sb
+            .from("products")
+            .select(`
+                *,
+                product_variants (
+                    *,
+                    variant_sizes (*)
+                )
+            `)
+            .eq("id", productId)
+            .single();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        if (!product) {
+            throw new Error("Product not found.");
+        }
+
+
+        editingProductId =
+            product.id;
+
+
+        if (productFormTitle) {
+
+            productFormTitle.textContent =
+                "Edit Product";
+        }
+
+
+        if (productNameAdmin) {
+
+            productNameAdmin.value =
+                product.name || "";
+        }
+
+
+        if (regularPriceAdmin) {
+
+            regularPriceAdmin.value =
+                product.regular_price ??
+                product.base_price ??
+                "";
+        }
+
+
+        if (basePriceAdmin) {
+
+            basePriceAdmin.value =
+                product.base_price ??
+                "";
+        }
+
+
+        if (descriptionAdmin) {
+
+            descriptionAdmin.value =
+                product.description ||
+                "";
+        }
+
+
+        if (allowCodAdmin) {
+
+            allowCodAdmin.checked =
+                product.allow_cod !== false;
+        }
+
+
+        if (allowAdvanceAdmin) {
+
+            allowAdvanceAdmin.checked =
+                product.allow_advance === true;
+        }
+
+
+        if (mainImagePreview) {
+
+            mainImagePreview.innerHTML =
+                product.main_image_url
+                    ? `
+                        <img
+                            src="${escapeHtmlAttribute(
+                                product.main_image_url
+                            )}"
+                            alt="Current product image"
+                            style="
+                                max-width:180px;
+                                max-height:180px;
+                                object-fit:cover;
+                                border-radius:10px;
+                            "
+                        >
+                    `
+                    : "";
+        }
+
+
+        if (mainImageAdmin) {
+
+            mainImageAdmin.value = "";
+        }
+
+
+        if (variantsContainer) {
+
+            variantsContainer.innerHTML = "";
+
+
+            const variants =
+                Array.isArray(product.product_variants)
+                    ? product.product_variants.filter(
+                        (variant) =>
+                            variant.active !== false
+                    )
+                    : [];
+
+
+            variants.forEach((variant) => {
+
+                const element =
+                    createVariantElement(variant);
+
+                variantsContainer.appendChild(
+                    element
+                );
+            });
+        }
+
+
+        if (saveProductBtn) {
+
+            saveProductBtn.textContent =
+                "Update Product";
+        }
+
+
+        showAdminSection(
+            "productFormSection"
+        );
+
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "Edit product error:",
+            error
+        );
+
+
+        showAlert(
+            error?.message ||
+            "Could not load product.",
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   DELETE / DISABLE PRODUCT
+   ========================================================= */
+
+async function deactivateProduct(productId) {
+
+    if (!productId) return;
+
+
+    const confirmed =
+        window.confirm(
+            "Are you sure you want to deactivate this product?"
+        );
+
+
+    if (!confirmed) return;
+
+
+    try {
+
+        const { error } =
+            await sb
+                .from("products")
+                .update({
+                    active: false
+                })
+                .eq("id", productId);
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        await loadProducts();
+        await loadStats();
+
+
+    } catch (error) {
+
+        console.error(
+            "Deactivate product error:",
+            error
+        );
+
+
+        alert(
+            error?.message ||
+            "Could not deactivate product."
+        );
+    }
+}
+
+
+/* =========================================================
+   ACTIVATE PRODUCT
+   ========================================================= */
+
+async function activateProduct(productId) {
+
+    if (!productId) return;
+
+
+    try {
+
+        const { error } =
+            await sb
+                .from("products")
+                .update({
+                    active: true
+                })
+                .eq("id", productId);
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        await loadProducts();
+        await loadStats();
+
+
+    } catch (error) {
+
+        console.error(
+            "Activate product error:",
+            error
+        );
+
+
+        alert(
+            error?.message ||
+            "Could not activate product."
+        );
+    }
+}
+
+
+/* =========================================================
+   LOAD PRODUCTS
+   ========================================================= */
+
+async function loadProducts() {
+
+    if (!productsList) return;
+
+
+    productsList.innerHTML =
+        "<p>Loading products...</p>";
+
+
+    try {
+
+        const {
+            data,
+            error
+        } = await sb
+            .from("products")
+            .select(`
+                *,
+                product_variants (
+                    *,
+                    variant_sizes (*)
+                )
+            `)
+            .order("created_at", {
+                ascending: false
+            });
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        renderProducts(
+            data || []
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Load products error:",
+            error
+        );
+
+
+        productsList.innerHTML = `
+            <div class="form-alert error">
+                ${escapeHtml(
+                    error?.message ||
+                    "Could not load products."
+                )}
+            </div>
+        `;
+    }
+}
+
+
+/* =========================================================
+   RENDER PRODUCTS
+   ========================================================= */
+
+function renderProducts(products) {
+
+    if (!productsList) return;
+
+
+    if (!products.length) {
+
+        productsList.innerHTML =
+            "<p>No products found.</p>";
+
+        return;
+    }
+
+
+    productsList.innerHTML =
+        products.map((product) => {
+
+            const id =
+                JSON.stringify(product.id);
+
+
+            const name =
+                escapeHtml(product.name);
+
+
+            const image =
+                escapeHtmlAttribute(
+                    product.main_image_url || ""
+                );
+
+
+            const regular =
+                Number(
+                    product.regular_price ??
+                    product.base_price ??
+                    0
+                );
+
+
+            const sale =
+                Number(
+                    product.base_price ??
+                    0
+                );
+
+
+            const stock =
+                calculateProductStock(
+                    product
+                );
+
+
+            const active =
+                product.active !== false;
+
+
+            let priceHTML = "";
+
+
+            if (
+                regular > 0 &&
+                sale > 0 &&
+                sale < regular
+            ) {
+
+                priceHTML = `
+                    <div>
+                        <del>
+                            ৳${formatNumber(regular)}
+                        </del>
+
+                        <strong>
+                            ৳${formatNumber(sale)}
+                        </strong>
+                    </div>
+                `;
+
+            } else {
+
+                priceHTML = `
+                    <strong>
+                        ৳${formatNumber(
+                            sale || regular
+                        )}
+                    </strong>
+                `;
+            }
+
+
+            return `
+                <div class="admin-product-card">
+
+                    <div class="admin-product-image">
+
+                        ${
+                            image
+                                ? `
+                                    <img
+                                        src="${image}"
+                                        alt="${name}"
+                                    >
+                                `
+                                : `
+                                    <div>
+                                        No Image
+                                    </div>
+                                `
+                        }
+
+                    </div>
+
+
+                    <div class="admin-product-info">
+
+                        <h3>
+                            ${name}
+                        </h3>
+
+                        <div class="admin-product-price">
+                            ${priceHTML}
+                        </div>
+
+                        <p>
+                            Stock:
+                            <strong>
+                                ${stock}
+                            </strong>
+                        </p>
+
+                        <p>
+                            Status:
+                            <strong>
+                                ${
+                                    active
+                                        ? "Active"
+                                        : "Inactive"
+                                }
+                            </strong>
+                        </p>
+
+
+                        <div class="admin-product-actions">
+
+                            <button
+                                type="button"
+                                onclick='editProduct(${id})'
+                            >
+                                Edit
+                            </button>
+
+                            ${
+                                active
+                                    ? `
+                                        <button
+                                            type="button"
+                                            onclick='deactivateProduct(${id})'
+                                        >
+                                            Disable
+                                        </button>
+                                    `
+                                    : `
+                                        <button
+                                            type="button"
+                                            onclick='activateProduct(${id})'
+                                        >
+                                            Activate
+                                        </button>
+                                    `
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   CALCULATE PRODUCT STOCK
+   ========================================================= */
+
+function calculateProductStock(product) {
+
+    const variants =
+        Array.isArray(product.product_variants)
+            ? product.product_variants.filter(
+                (variant) =>
+                    variant.active !== false
+            )
+            : [];
+
+
+    if (!variants.length) {
+
+        if (
+            product.stock !== null &&
+            product.stock !== undefined
+        ) {
+            return Number(product.stock) || 0;
+        }
+
+        return 0;
+    }
+
+
+    return variants.reduce(
+        (total, variant) => {
+
+            const sizes =
+                Array.isArray(
+                    variant.variant_sizes
+                )
+                    ? variant.variant_sizes.filter(
+                        (size) =>
+                            size.active !== false
+                    )
+                    : [];
+
+
+            if (sizes.length) {
+
+                return total +
+                    sizes.reduce(
+                        (
+                            sizeTotal,
+                            size
+                        ) =>
+                            sizeTotal +
+                            (Number(size.stock) || 0),
+                        0
+                    );
+            }
+
+
+            return total +
+                (Number(variant.stock) || 0);
+
+        },
+        0
+    );
+}
+
+
+/* =========================================================
+   FORMAT NUMBER
+   ========================================================= */
+
+function formatNumber(value) {
+
+    const number =
+        Number(value);
+
+    if (!Number.isFinite(number)) {
+        return "0";
+    }
+
+
+    return number.toLocaleString(
+        "en-BD",
+        {
+            maximumFractionDigits: 2
+        }
+    );
+}
+
+
+/* =========================================================
+   LOAD ORDERS
+   ========================================================= */
+
+async function loadOrders() {
+
+    if (!ordersList) return;
+
+
+    ordersList.innerHTML =
+        "<p>Loading orders...</p>";
+
+
+    try {
+
+        let query =
+            sb
+                .from("orders")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
+
+
+        const status =
+            orderStatusFilter?.value;
+
+
+        if (
+            status &&
+            status !== "all"
+        ) {
+
+            query =
+                query.eq(
+                    "status",
+                    status
+                );
+        }
+
+
+        const {
+            data,
+            error
+        } = await query;
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        renderOrders(
+            data || []
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Load orders error:",
+            error
+        );
+
+
+        ordersList.innerHTML = `
+            <div class="form-alert error">
+                ${escapeHtml(
+                    error?.message ||
+                    "Could not load orders."
+                )}
+            </div>
+        `;
+    }
+}
+
+
+/* =========================================================
+   RENDER ORDERS
+   ========================================================= */
+
+function renderOrders(orders) {
+
+    if (!ordersList) return;
+
+
+    if (!orders.length) {
+
+        ordersList.innerHTML =
+            "<p>No orders found.</p>";
+
+        return;
+    }
+
+
+    ordersList.innerHTML =
+        orders.map((order) => {
+
+            const id =
+                JSON.stringify(order.id);
+
+
+            const orderNumber =
+                order.order_number ||
+                order.id;
+
+
+            const status =
+                order.status ||
+                "pending";
+
+
+            const total =
+                Number(
+                    order.total_amount ??
+                    order.total ??
+                    0
+                );
+
+
+            const customerName =
+                order.customer_name ||
+                order.name ||
+                "";
+
+
+            const phone =
+                order.customer_phone ||
+                order.phone ||
+                "";
+
+
+            const address =
+                order.customer_address ||
+                order.address ||
+                "";
+
+
+            const paymentMethod =
+                order.payment_method ||
+                "";
+
+
+            const createdAt =
+                formatDate(
+                    order.created_at
+                );
+
+
+            return `
+                <div class="admin-order-card">
+
+                    <div class="order-header">
+
+                        <strong>
+                            Order #${escapeHtml(
+                                orderNumber
+                            )}
+                        </strong>
+
+                        <span>
+                            ${escapeHtml(
+                                status
+                            )}
+                        </span>
+
+                    </div>
+
+
+                    <div class="order-body">
+
+                        <p>
+                            <strong>
+                                Customer:
+                            </strong>
+                            ${escapeHtml(
+                                customerName
+                            )}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Phone:
+                            </strong>
+                            ${escapeHtml(
+                                phone
+                            )}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Address:
+                            </strong>
+                            ${escapeHtml(
+                                address
+                            )}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Payment:
+                            </strong>
+                            ${escapeHtml(
+                                paymentMethod
+                            )}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Total:
+                            </strong>
+                            ৳${formatNumber(
+                                total
+                            )}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Date:
+                            </strong>
+                            ${escapeHtml(
+                                createdAt
+                            )}
+                        </p>
+
+
+                        <div class="order-actions">
+
+                            ${
+                                status !== "completed"
+                                    ? `
+                                        <button
+                                            type="button"
+                                            onclick='updateOrderStatus(${id}, "completed")'
+                                        >
+                                            Complete
+                                        </button>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                status !== "cancelled"
+                                    ? `
+                                        <button
+                                            type="button"
+                                            onclick='updateOrderStatus(${id}, "cancelled")'
+                                        >
+                                            Cancel
+                                        </button>
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                status !== "pending"
+                                    ? `
+                                        <button
+                                            type="button"
+                                            onclick='updateOrderStatus(${id}, "pending")'
+                                        >
+                                            Pending
+                                        </button>
+                                    `
+                                    : ""
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   UPDATE ORDER STATUS
+   ========================================================= */
+
+async function updateOrderStatus(
+    orderId,
+    newStatus
+) {
+
+    if (!orderId) return;
+
+
+    try {
+
+        const { error } =
+            await sb
+                .from("orders")
+                .update({
+                    status: newStatus
+                })
+                .eq("id", orderId);
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        await loadOrders();
+        await loadStats();
+
+
+    } catch (error) {
+
+        console.error(
+            "Update order status error:",
+            error
+        );
+
+
+        alert(
+            error?.message ||
+            "Could not update order status."
+        );
+    }
+}
+
+
+/* =========================================================
+   LOAD STATS
+   ========================================================= */
+
+async function loadStats() {
+
+    try {
+
+        /* PRODUCTS */
+
+        const {
+            data: products,
+            error: productsError
+        } = await sb
+            .from("products")
+            .select(
+                "id, active"
+            );
+
+
+        if (productsError) {
+            throw productsError;
+        }
+
+
+        const activeProducts =
+            (products || []).filter(
+                (product) =>
+                    product.active !== false
+            ).length;
+
+
+        if (totalProductsAdmin) {
+
+            totalProductsAdmin.textContent =
+                activeProducts;
+        }
+
+
+        /* ORDERS */
+
+        const {
+            data: orders,
+            error: ordersError
+        } = await sb
+            .from("orders")
+            .select(
+                "id, status, total_amount, total"
+            );
+
+
+        if (ordersError) {
+            throw ordersError;
+        }
+
+
+        const allOrders =
+            orders || [];
+
+
+        if (totalOrdersAdmin) {
+
+            totalOrdersAdmin.textContent =
+                allOrders.length;
+        }
+
+
+        const pendingOrders =
+            allOrders.filter(
+                (order) =>
+                    !order.status ||
+                    order.status === "pending"
+            ).length;
+
+
+        if (pendingOrdersAdmin) {
+
+            pendingOrdersAdmin.textContent =
+                pendingOrders;
+        }
+
+
+        const totalSales =
+            allOrders
+                .filter(
+                    (order) =>
+                        order.status === "completed"
+                )
+                .reduce(
+                    (
+                        total,
+                        order
+                    ) => {
+
+                        const amount =
+                            Number(
+                                order.total_amount ??
+                                order.total ??
+                                0
+                            );
+
+                        return total +
+                            (
+                                Number.isFinite(amount)
+                                    ? amount
+                                    : 0
+                            );
+                    },
+                    0
+                );
+
+
+        if (totalSalesAdmin) {
+
+            totalSalesAdmin.textContent =
+                "৳" +
+                formatNumber(
+                    totalSales
+                );
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Load stats error:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   FORMAT DATE
+   ========================================================= */
+
+function formatDate(value) {
+
+    if (!value) {
+        return "";
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
+
+
+    return date.toLocaleString(
+        "en-BD",
+        {
+            dateStyle: "medium",
+            timeStyle: "short"
+        }
+    );
+}
+
+
+/* =========================================================
+   RESET PRODUCT FORM
+   ========================================================= */
+
+function resetProductForm() {
+
+    editingProductId = null;
+
+
+    if (productForm) {
+
+        productForm.reset();
+    }
+
+
+    if (productFormTitle) {
+
+        productFormTitle.textContent =
+            "Add Product";
+    }
+
+
+    if (saveProductBtn) {
+
+        saveProductBtn.textContent =
+            "Save Product";
+
+        saveProductBtn.disabled = false;
+    }
+
+
+    if (mainImagePreview) {
+
+        mainImagePreview.innerHTML = "";
+    }
+
+
+    if (variantsContainer) {
+
+        variantsContainer.innerHTML = "";
+    }
+
+
+    if (allowCodAdmin) {
+
+        allowCodAdmin.checked = true;
+    }
+
+
+    if (allowAdvanceAdmin) {
+
+        allowAdvanceAdmin.checked = false;
+    }
+
+
+    hideAlert();
+}
+
+
+/* =========================================================
+   ADD VARIANT
+   ========================================================= */
+
+function addVariant() {
+
+    if (!variantsContainer) return;
+
+
+    const variant =
+        createVariantElement();
+
+
+    variantsContainer.appendChild(
+        variant
+    );
+}
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+async function initializeAdmin() {
+
+    try {
+
+        if (!window.supabase) {
+
+            console.error(
+                "Supabase library not found."
+            );
+
+            return;
+        }
+
+
+        /* LOGIN FORM */
+
+        if (loginForm) {
+
+            loginForm.addEventListener(
+                "submit",
+                loginAdmin
+            );
+        }
+
+
+        /* LOGOUT */
+
+        if (logoutBtn) {
+
+            logoutBtn.addEventListener(
+                "click",
+                logoutAdmin
+            );
+        }
+
+
+        /* PRODUCT FORM */
+
+        if (productForm) {
+
+            productForm.addEventListener(
+                "submit",
+                saveProduct
+            );
+        }
+
+
+        /* IMAGE PREVIEW */
+
+        if (mainImageAdmin) {
+
+            mainImageAdmin.addEventListener(
+                "change",
+                previewMainImage
+            );
+        }
+
+
+        /* ADD VARIANT */
+
+        if (addVariantBtn) {
+
+            addVariantBtn.addEventListener(
+                "click",
+                addVariant
+            );
+        }
+
+
+        /* PAYMENT */
+
+        if (allowCodAdmin) {
+
+            allowCodAdmin.addEventListener(
+                "change",
+                checkPaymentMethodsAdmin
+            );
+        }
+
+
+        if (allowAdvanceAdmin) {
+
+            allowAdvanceAdmin.addEventListener(
+                "change",
+                checkPaymentMethodsAdmin
+            );
+        }
+
+
+        /* ORDER FILTER */
+
+        if (orderStatusFilter) {
+
+            orderStatusFilter.addEventListener(
+                "change",
+                loadOrders
+            );
+        }
+
+
+        /* =================================================
+           CHECK EXISTING SESSION
+           ================================================= */
+
+        const {
+            data: sessionData,
+            error: sessionError
+        } = await sb.auth.getSession();
+
+
+        if (sessionError) {
+
+            console.error(
+                "Session error:",
+                sessionError
+            );
+
+            return;
+        }
+
+
+        const session =
+            sessionData?.session;
+
+
+        if (session?.user) {
+
+            currentUser =
+                session.user;
+
+            await verifyAdminUser();
+
+        } else {
+
+            if (adminDashboard) {
+
+                adminDashboard.style.display =
+                    "none";
+            }
+
+            if (adminLogin) {
+
+                adminLogin.style.display =
+                    "block";
+            }
+        }
+
+
+        /* =================================================
+           AUTH STATE LISTENER
+           ================================================= */
+
+        sb.auth.onAuthStateChange(
+            async (
+                event,
+                session
+            ) => {
+
+                console.log(
+                    "Auth event:",
+                    event
+                );
+
+
+                if (
+                    session?.user &&
+                    (
+                        event === "SIGNED_IN" ||
+                        event === "INITIAL_SESSION"
+                    )
+                ) {
+
+                    currentUser =
+                        session.user;
+
+                }
+
+
+                if (
+                    event === "SIGNED_OUT"
+                ) {
+
+                    currentUser = null;
+
+                    if (adminDashboard) {
+
+                        adminDashboard.style.display =
+                            "none";
+                    }
+
+                    if (adminLogin) {
+
+                        adminLogin.style.display =
+                            "block";
+                    }
+                }
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Admin initialization error:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   GLOBAL FUNCTIONS
+   ========================================================= */
+
+window.loginAdmin =
+    loginAdmin;
+
+window.logoutAdmin =
+    logoutAdmin;
+
+window.showAdminSection =
+    showAdminSection;
+
+window.previewMainImage =
+    previewMainImage;
+
+window.createVariantElement =
+    createVariantElement;
+
+window.createSizeElement =
+    createSizeElement;
+
+window.saveProduct =
+    saveProduct;
+
+window.editProduct =
+    editProduct;
+
+window.deactivateProduct =
+    deactivateProduct;
+
+window.activateProduct =
+    activateProduct;
+
+window.updateOrderStatus =
+    updateOrderStatus;
+
+window.resetProductForm =
+    resetProductForm;
+
+window.addVariant =
+    addVariant;
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+if (
+    document.readyState === "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeAdmin
+    );
+
+} else {
+
+    initializeAdmin();
+}
