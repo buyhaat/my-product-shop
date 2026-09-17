@@ -1,666 +1,1387 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>My Shop</title>
-    <meta name="description" content="My Shop - অনলাইনে পছন্দের পণ্য কিনুন">
+  <title>My Shop</title>
+  <meta name="description" content="My Shop - সহজে পছন্দের পণ্য অর্ডার করুন">
 
-    <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Hind Siliguri", sans-serif;
+      background: #f6f7f9;
+      color: #202124;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* =========================
+       TOP BAR
+    ========================== */
+
+    .top-bar {
+      background: #111827;
+      color: #fff;
+      text-align: center;
+      padding: 7px 15px;
+      font-size: 13px;
+    }
+
+    /* =========================
+       HEADER
+    ========================== */
+
+    .main-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .header-inner {
+      max-width: 1250px;
+      margin: auto;
+      min-height: 70px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .logo {
+      flex-shrink: 0;
+      text-decoration: none;
+      color: #f4511e;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .search-area {
+      flex: 1;
+      max-width: 650px;
+      margin: auto;
+      display: flex;
+      height: 44px;
+    }
+
+    .search-area input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #d8dce2;
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+      outline: none;
+      padding: 0 15px;
+      font-size: 15px;
+      background: #fafafa;
+    }
+
+    .search-area input:focus {
+      border-color: #f4511e;
+      background: #fff;
+    }
+
+    .search-btn {
+      width: 52px;
+      border: none;
+      border-radius: 0 8px 8px 0;
+      background: #f4511e;
+      color: #fff;
+      font-size: 19px;
+    }
+
+    .header-action {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-home-btn {
+      border: 1px solid #e0e3e8;
+      background: #fff;
+      color: #333;
+      padding: 8px 13px;
+      border-radius: 7px;
+      font-size: 14px;
+    }
+
+    .header-home-btn:hover {
+      border-color: #f4511e;
+      color: #f4511e;
+    }
+
+    /* =========================
+       CATEGORY STRIP
+    ========================== */
+
+    .category-strip {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .category-inner {
+      max-width: 1250px;
+      margin: auto;
+      padding: 9px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .category-inner::-webkit-scrollbar {
+      display: none;
+    }
+
+    .category-btn {
+      white-space: nowrap;
+      border: 1px solid #e1e4e8;
+      background: #fff;
+      padding: 6px 15px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #444;
+    }
+
+    .category-btn.active,
+    .category-btn:hover {
+      background: #fff2ed;
+      color: #f4511e;
+      border-color: #f4511e;
+    }
+
+    /* =========================
+       HERO
+    ========================== */
+
+    .hero {
+      max-width: 1250px;
+      margin: 18px auto 0;
+      padding: 0 18px;
+    }
+
+    .hero-box {
+      min-height: 230px;
+      border-radius: 14px;
+      overflow: hidden;
+      background:
+        linear-gradient(115deg, #fff3ec 0%, #fff8f5 50%, #ffe7dc 100%);
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .hero-content {
+      padding: 35px 42px;
+      max-width: 650px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-small {
+      color: #f4511e;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+
+    .hero-title {
+      font-size: clamp(28px, 4vw, 43px);
+      line-height: 1.2;
+      font-weight: 700;
+      color: #202124;
+      margin-bottom: 10px;
+    }
+
+    .hero-text {
+      color: #666;
+      font-size: 15px;
+      margin-bottom: 18px;
+    }
+
+    .shop-now-btn {
+      border: none;
+      background: #f4511e;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 7px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .shop-now-btn:hover {
+      background: #df4315;
+    }
+
+    .hero-decoration {
+      position: absolute;
+      right: 7%;
+      bottom: -40px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(244, 81, 30, 0.08);
+    }
+
+    .hero-decoration::after {
+      content: "";
+      position: absolute;
+      width: 135px;
+      height: 135px;
+      right: 35px;
+      top: 35px;
+      border-radius: 50%;
+      background: rgba(244, 81, 30, 0.09);
+    }
+
+    /* =========================
+       HERO CATEGORY LIST
+    ========================== */
+
+    .hero-categories {
+      display: none;
+    }
+
+    .hero-category-list {
+      display: none;
+    }
+
+    /* =========================
+       PRODUCTS SECTION
+    ========================== */
+
+    .products-section {
+      max-width: 1250px;
+      margin: 25px auto 50px;
+      padding: 0 18px;
+      scroll-margin-top: 130px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #222;
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: #e1e4e8;
+    }
+
+    #searchResultInfo {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 14px;
+    }
+
+    /* =========================
+       PRODUCT GRID
+    ========================== */
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .product-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 9px;
+      overflow: hidden;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 22px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Fixed image area */
+    .product-image-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      background: #f5f5f5;
+    }
+
+    .product-image {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .product-info {
+      padding: 12px;
+    }
+
+    .product-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #252525;
+      line-height: 1.4;
+      min-height: 42px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .product-price {
+      margin-top: 8px;
+      color: #f4511e;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .product-stock {
+      color: #777;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .buy-now-card-btn {
+      width: 100%;
+      margin-top: 10px;
+      border: none;
+      background: #f4511e;
+      color: #fff;
+      padding: 9px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .buy-now-card-btn:hover {
+      background: #df4315;
+    }
+
+    .buy-now-card-btn:disabled {
+      background: #bdbdbd;
+      cursor: not-allowed;
+    }
+
+    /* =========================
+       NO PRODUCTS
+    ========================== */
+
+    .no-products {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      color: #777;
+    }
+
+    .no-products-icon {
+      font-size: 42px;
+      margin-bottom: 8px;
+    }
+
+    /* =========================
+       ORDER MODAL
+    ========================== */
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 550px;
+      background: #fff;
+      border-radius: 13px;
+      overflow: hidden;
+      box-shadow: 0 15px 45px rgba(0, 0, 0, .2);
+    }
+
+    .modal-header {
+      padding: 17px 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .close-modal {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      background: #f2f2f2;
+      font-size: 22px;
+      color: #555;
+    }
+
+    .close-modal:hover {
+      background: #eee;
+    }
+
+    .order-form {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      border: 1px solid #d9dde2;
+      border-radius: 7px;
+      padding: 10px 11px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: #f4511e;
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .product-selection-box {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 13px;
+      margin-bottom: 16px;
+    }
+
+    .selection-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .selection-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .selection-label {
+      color: #777;
+    }
+
+    .selection-value {
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .order-total-box {
+      margin-top: 15px;
+      padding: 13px;
+      border-radius: 8px;
+      background: #fff4ef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .order-total-label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .order-total {
+      color: #f4511e;
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .place-order-btn {
+      width: 100%;
+      border: none;
+      background: #f4511e;
+      color: #fff;
+      padding: 12px;
+      border-radius: 7px;
+      margin-top: 16px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .place-order-btn:hover {
+      background: #df4315;
+    }
+
+    .order-message {
+      display: none;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 7px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    /* =========================
+       VARIANT / SIZE AREA
+    ========================== */
+
+    .variant-area,
+    .size-area {
+      margin-bottom: 14px;
+    }
+
+    .option-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .option-btn {
+      border: 1px solid #d8dce1;
+      background: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .option-btn.active {
+      border-color: #f4511e;
+      background: #fff2ed;
+      color: #f4511e;
+      font-weight: 600;
+    }
+
+    /* =========================
+       QUANTITY
+    ========================== */
+
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      width: fit-content;
+      border: 1px solid #d8dce1;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    .quantity-btn {
+      width: 36px;
+      height: 38px;
+      border: none;
+      background: #f6f6f6;
+      font-size: 18px;
+    }
+
+    .quantity-input {
+      width: 50px;
+      height: 38px;
+      border: none;
+      border-left: 1px solid #ddd;
+      border-right: 1px solid #ddd;
+      text-align: center;
+      outline: none;
+      font-size: 14px;
+    }
+
+    /* =========================
+       CART / OLD COMPATIBILITY
+       Hidden intentionally
+    ========================== */
+
+    #cartSidebar,
+    #cartOverlay,
+    #cartButton,
+    #cartCount,
+    #mobileCartButton,
+    #mobileCartCount,
+    #cartItems,
+    #cartTotal,
+    #checkoutButton {
+      display: none !important;
+    }
+
+    /* =========================
+       FOOTER
+    ========================== */
+
+    .footer {
+      background: #111827;
+      color: #fff;
+      padding: 30px 18px;
+      margin-top: 30px;
+    }
+
+    .footer-inner {
+      max-width: 1250px;
+      margin: auto;
+      text-align: center;
+    }
+
+    .footer-logo {
+      font-size: 23px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .footer-text {
+      color: #b8bec8;
+      font-size: 13px;
+    }
+
+    /* =========================
+       MOBILE BOTTOM NAV
+    ========================== */
+
+    .mobile-bottom-nav {
+      display: none;
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================== */
+
+    @media (max-width: 1100px) {
+      .products-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 800px) {
+      .header-inner {
+        min-height: auto;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .logo {
+        font-size: 24px;
+      }
+
+      .header-action {
+        margin-left: auto;
+      }
+
+      .search-area {
+        order: 3;
+        flex-basis: 100%;
+        max-width: none;
+      }
+
+      .hero-box {
+        min-height: 205px;
+      }
+
+      .hero-content {
+        padding: 28px;
+      }
+
+      .hero-decoration {
+        right: -50px;
+      }
+
+      .products-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding-bottom: 62px;
+      }
+
+      .top-bar {
+        font-size: 12px;
+      }
+
+      .header-inner {
+        padding: 9px 12px;
+      }
+
+      .logo {
+        font-size: 23px;
+      }
+
+      .header-home-btn {
+        display: none;
+      }
+
+      .category-inner {
+        padding: 8px 12px;
+      }
+
+      .hero {
+        margin-top: 12px;
+        padding: 0 12px;
+      }
+
+      .hero-box {
+        min-height: 190px;
+      }
+
+      .hero-content {
+        padding: 24px 22px;
+      }
+
+      .hero-title {
+        font-size: 28px;
+      }
+
+      .hero-text {
+        font-size: 13px;
+        max-width: 270px;
+      }
+
+      .hero-decoration {
+        width: 150px;
+        height: 150px;
+        right: -55px;
+        bottom: -35px;
+      }
+
+      .products-section {
+        margin-top: 20px;
+        padding: 0 12px;
+      }
+
+      .section-title {
+        font-size: 21px;
+      }
+
+      .section-line {
+        display: none;
+      }
+
+      .products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+      }
+
+      .product-info {
+        padding: 9px;
+      }
+
+      .product-name {
+        font-size: 14px;
+        min-height: 39px;
+      }
+
+      .product-price {
+        font-size: 18px;
+      }
+
+      .buy-now-card-btn {
+        margin-top: 8px;
+        padding: 8px;
+        font-size: 13px;
+      }
+
+      .modal {
+        padding: 8px;
+      }
+
+      .modal-content {
+        border-radius: 10px;
+      }
+
+      .order-form {
+        padding: 15px;
+      }
+
+      .mobile-bottom-nav {
+        position: fixed;
+        display: flex;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 58px;
+        background: #fff;
+        border-top: 1px solid #ddd;
+        z-index: 1500;
+      }
+
+      .mobile-nav-btn {
+        flex: 1;
+        border: none;
+        background: #fff;
+        color: #555;
+        font-size: 12px;
+      }
+
+      .mobile-nav-btn span {
+        display: block;
+        font-size: 19px;
+        line-height: 20px;
+      }
+
+      .mobile-nav-btn.active {
+        color: #f4511e;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-    <!-- =========================
-         TOP BAR
-    ========================== -->
-    <div class="top-bar">
-        <div class="container top-bar-inner">
-            <div class="top-left">
-                <span>Welcome to My Shop</span>
-            </div>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    সহজে পছন্দের পণ্য বেছে নিন এবং সরাসরি অর্ডার করুন
+  </div>
 
-            <div class="top-right">
-                <a href="#products">Products</a>
-                <a href="#footer">Help</a>
-            </div>
-        </div>
-    </div>
+  <!-- HEADER -->
+  <header class="main-header">
+    <div class="header-inner">
 
+      <a href="#" class="logo">My Shop</a>
 
-    <!-- =========================
-         MAIN HEADER
-    ========================== -->
-    <header class="main-header">
-        <div class="container header-inner">
-
-            <!-- Logo -->
-            <a href="#" class="logo">
-                <span class="logo-main">MY</span>
-                <span class="logo-shop">SHOP</span>
-            </a>
-
-            <!-- Search -->
-            <div class="search-area">
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="Search products..."
-                    autocomplete="off"
-                >
-
-                <button id="searchButton" type="button">
-                    🔍
-                </button>
-            </div>
-
-            <!-- Cart -->
-            <button class="header-cart-btn" id="cartButton" type="button">
-                🛒
-                <span>Cart</span>
-                <b id="cartCount">0</b>
-            </button>
-
-        </div>
-    </header>
-
-
-    <!-- =========================
-         CATEGORY NAVIGATION
-    ========================== -->
-    <nav class="category-nav">
-        <div class="container">
-
-            <button
-                class="category-menu-button"
-                id="categoryMenuButton"
-                type="button"
-            >
-                ☰
-                <span>Categories</span>
-            </button>
-
-            <div class="category-list" id="categoryList">
-                <button type="button" data-category="all">
-                    All Products
-                </button>
-            </div>
-
-        </div>
-    </nav>
-
-
-    <!-- =========================
-         HERO SECTION
-    ========================== -->
-    <main>
-
-        <section class="hero-section">
-            <div class="container hero-layout">
-
-                <!-- Hero Categories -->
-                <aside class="hero-categories">
-                    <div class="hero-category-title">
-                        Categories
-                    </div>
-
-                    <div id="heroCategoryList" class="hero-category-list">
-                        <button type="button" data-category="all">
-                            All Products
-                        </button>
-                    </div>
-                </aside>
-
-
-                <!-- Hero Banner -->
-                <div class="hero-banner">
-
-                    <div class="hero-content">
-                        <span class="hero-small-title">
-                            Welcome to
-                        </span>
-
-                        <h1>
-                            My Shop
-                        </h1>
-
-                        <p>
-                            আপনার পছন্দের পণ্য এখন এক জায়গায়
-                        </p>
-
-                        <button
-                            id="shopNowButton"
-                            class="hero-shop-button"
-                            type="button"
-                        >
-                            Shop Now
-                        </button>
-                    </div>
-
-                </div>
-
-            </div>
-        </section>
-
-
-        <!-- =========================
-             CATEGORY CARDS
-        ========================== -->
-        <section class="category-section">
-            <div class="container">
-
-                <div class="section-heading">
-                    <div>
-                        <span class="section-kicker">
-                            Explore
-                        </span>
-
-                        <h2>
-                            Shop by Category
-                        </h2>
-                    </div>
-                </div>
-
-                <div
-                    id="categoryCards"
-                    class="category-cards"
-                >
-                    <!-- Categories will be generated by app.js -->
-                </div>
-
-            </div>
-        </section>
-
-
-        <!-- =========================
-             PRODUCTS
-             NO FLASH SALE
-        ========================== -->
-        <section
-            class="products-section"
-            id="productsSection"
+      <div class="search-area">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="পণ্য খুঁজুন..."
+          autocomplete="off"
         >
-            <div class="container">
-
-                <div class="products-header">
-
-                    <div>
-                        <span class="section-kicker">
-                            Discover
-                        </span>
-
-                        <h2>
-                            Just For You
-                        </h2>
-                    </div>
-
-                    <div
-                        id="searchResultInfo"
-                        class="search-result-info"
-                    ></div>
-
-                </div>
-
-
-                <!-- Product Grid -->
-                <div
-                    id="products"
-                    class="product-grid"
-                >
-                    <!-- Products will be loaded by app.js -->
-                </div>
-
-
-                <!-- No Products -->
-                <div
-                    id="noProducts"
-                    class="no-products"
-                    style="display: none;"
-                >
-                    <div class="no-products-icon">
-                        🛍️
-                    </div>
-
-                    <h3>
-                        No products found
-                    </h3>
-
-                    <p>
-                        এই মুহূর্তে কোনো পণ্য পাওয়া যায়নি।
-                    </p>
-                </div>
-
-            </div>
-        </section>
-
-    </main>
-
-
-    <!-- =========================
-         ORDER MODAL
-    ========================== -->
-    <div
-        id="orderModal"
-        class="modal-overlay"
-        style="display: none;"
-    >
-
-        <div class="order-modal">
-
-            <button
-                id="closeModal"
-                class="modal-close"
-                type="button"
-                aria-label="Close"
-            >
-                ×
-            </button>
-
-            <div class="modal-header">
-                <span class="section-kicker">
-                    Order
-                </span>
-
-                <h2>
-                    Place Your Order
-                </h2>
-
-                <p>
-                    আপনার তথ্য দিয়ে অর্ডারটি সম্পন্ন করুন।
-                </p>
-            </div>
-
-
-            <form id="orderForm">
-
-                <!-- Hidden Product Information -->
-                <input
-                    type="hidden"
-                    id="productName"
-                >
-
-                <input
-                    type="hidden"
-                    id="variantName"
-                >
-
-                <input
-                    type="hidden"
-                    id="sizeName"
-                >
-
-                <input
-                    type="hidden"
-                    id="unitPrice"
-                >
-
-                <input
-                    type="hidden"
-                    id="variantSizeId"
-                >
-
-
-                <!-- Customer Name -->
-                <div class="form-group">
-                    <label for="customerName">
-                        আপনার নাম
-                    </label>
-
-                    <input
-                        type="text"
-                        id="customerName"
-                        placeholder="আপনার নাম লিখুন"
-                        required
-                    >
-                </div>
-
-
-                <!-- Phone -->
-                <div class="form-group">
-                    <label for="phone">
-                        মোবাইল নম্বর
-                    </label>
-
-                    <input
-                        type="tel"
-                        id="phone"
-                        placeholder="01XXXXXXXXX"
-                        required
-                    >
-                </div>
-
-
-                <!-- District -->
-                <div class="form-row">
-
-                    <div class="form-group">
-                        <label for="district">
-                            জেলা
-                        </label>
-
-                        <input
-                            type="text"
-                            id="district"
-                            placeholder="জেলার নাম"
-                            required
-                        >
-                    </div>
-
-
-                    <div class="form-group">
-                        <label for="upazila">
-                            উপজেলা
-                        </label>
-
-                        <input
-                            type="text"
-                            id="upazila"
-                            placeholder="উপজেলার নাম"
-                            required
-                        >
-                    </div>
-
-                </div>
-
-
-                <!-- Address -->
-                <div class="form-group">
-                    <label for="address">
-                        বিস্তারিত ঠিকানা
-                    </label>
-
-                    <textarea
-                        id="address"
-                        rows="3"
-                        placeholder="বাড়ি, রাস্তা, গ্রাম ইত্যাদি"
-                        required
-                    ></textarea>
-                </div>
-
-
-                <!-- Quantity -->
-                <div class="form-group">
-                    <label for="quantity">
-                        Quantity
-                    </label>
-
-                    <input
-                        type="number"
-                        id="quantity"
-                        value="1"
-                        min="1"
-                        step="1"
-                        required
-                    >
-                </div>
-
-
-                <!-- Order Summary -->
-                <div class="order-summary">
-
-                    <div class="summary-row">
-                        <span>
-                            Unit Price
-                        </span>
-
-                        <strong>
-                            ৳<span id="displayUnitPrice">
-                                0
-                            </span>
-                        </strong>
-                    </div>
-
-
-                    <div class="summary-row">
-                        <span>
-                            Quantity
-                        </span>
-
-                        <strong id="displayQuantity">
-                            1
-                        </strong>
-                    </div>
-
-
-                    <div class="summary-divider"></div>
-
-
-                    <div class="summary-row total-row">
-                        <span>
-                            Total
-                        </span>
-
-                        <strong>
-                            ৳<span id="orderTotal">
-                                0
-                            </span>
-                        </strong>
-                    </div>
-
-                </div>
-
-
-                <!-- Order Message -->
-                <div
-                    id="orderMessage"
-                    class="order-message"
-                ></div>
-
-
-                <!-- Submit -->
-                <button
-                    type="submit"
-                    class="place-order-button"
-                >
-                    Confirm Order
-                </button>
-
-            </form>
-
-        </div>
+        <button
+          type="button"
+          id="searchButton"
+          class="search-btn"
+          aria-label="Search"
+        >
+          🔍
+        </button>
+      </div>
+
+      <div class="header-action">
+        <button
+          type="button"
+          class="header-home-btn"
+          onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+        >
+          🏠 হোম
+        </button>
+      </div>
 
     </div>
+  </header>
 
+  <!-- CATEGORY STRIP -->
+  <nav class="category-strip">
+    <div class="category-inner">
 
-    <!-- =========================
-         CART SIDEBAR
-    ========================== -->
-    <div
-        id="cartOverlay"
-        class="cart-overlay"
-        style="display: none;"
-    ></div>
+      <button
+        type="button"
+        class="category-btn active"
+        id="categoryMenuButton"
+      >
+        সব পণ্য
+      </button>
 
+      <div id="categoryList"></div>
 
-    <aside
-        id="cartSidebar"
-        class="cart-sidebar"
-    >
+    </div>
+  </nav>
 
-        <div class="cart-sidebar-header">
+  <!-- HERO -->
+  <section class="hero">
 
-            <div>
-                <span class="section-kicker">
-                    Shopping
-                </span>
+    <div class="hero-box">
 
-                <h2>
-                    Your Cart
-                </h2>
-            </div>
+      <div class="hero-content">
 
-            <button
-                id="closeCart"
-                class="cart-close"
-                type="button"
-            >
-                ×
-            </button>
-
+        <div class="hero-small">
+          MY SHOP
         </div>
 
+        <h1 class="hero-title">
+          আপনার পছন্দের পণ্য<br>
+          এক জায়গায়
+        </h1>
 
-        <!-- Cart Items -->
-        <div
-            id="cartItems"
-            class="cart-items"
-        >
-            <!-- Cart items generated by app.js -->
-        </div>
-
-
-        <!-- Cart Footer -->
-        <div class="cart-sidebar-footer">
-
-            <div class="cart-total-row">
-                <span>
-                    Total
-                </span>
-
-                <strong>
-                    ৳<span id="cartTotal">
-                        0
-                    </span>
-                </strong>
-            </div>
-
-            <button
-                id="checkoutButton"
-                class="checkout-button"
-                type="button"
-            >
-                Checkout
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <!-- =========================
-         FOOTER
-    ========================== -->
-    <footer
-        id="footer"
-        class="site-footer"
-    >
-
-        <div class="container footer-grid">
-
-            <div class="footer-column">
-
-                <div class="footer-logo">
-                    MY SHOP
-                </div>
-
-                <p>
-                    সহজ ও সুন্দরভাবে অনলাইনে পণ্য কেনাকাটা করুন।
-                </p>
-
-            </div>
-
-
-            <div class="footer-column">
-
-                <h3>
-                    Quick Links
-                </h3>
-
-                <a href="#">
-                    Home
-                </a>
-
-                <a href="#products">
-                    Products
-                </a>
-
-                <a href="#footer">
-                    Contact
-                </a>
-
-            </div>
-
-
-            <div class="footer-column">
-
-                <h3>
-                    Customer Service
-                </h3>
-
-                <p>
-                    যেকোনো সমস্যায় আমাদের সাথে যোগাযোগ করুন।
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="footer-bottom">
-            <div class="container">
-                © 2026 My Shop. All rights reserved.
-            </div>
-        </div>
-
-    </footer>
-
-
-    <!-- =========================
-         MOBILE BOTTOM NAV
-    ========================== -->
-    <nav class="mobile-bottom-nav">
+        <p class="hero-text">
+          পণ্য দেখুন, পছন্দের অপশন নির্বাচন করুন এবং সরাসরি অর্ডার করুন।
+        </p>
 
         <button
-            id="mobileCategoryButton"
-            type="button"
+          type="button"
+          id="shopNowButton"
+          class="shop-now-btn"
         >
-            <span>☰</span>
-            <small>
-                Categories
-            </small>
+          পণ্য দেখুন
         </button>
 
+      </div>
 
-        <a href="#">
-            <span>⌂</span>
-            <small>
-                Home
-            </small>
-        </a>
+      <div class="hero-decoration"></div>
 
+    </div>
+
+    <!-- Kept for JavaScript compatibility -->
+    <div id="heroCategories" class="hero-categories">
+      <div id="heroCategoryList" class="hero-category-list"></div>
+    </div>
+
+  </section>
+
+  <!-- PRODUCTS -->
+  <main
+    id="productsSection"
+    class="products-section"
+  >
+
+    <div class="section-header">
+      <h2 class="section-title">
+        সব পণ্য
+      </h2>
+
+      <div class="section-line"></div>
+    </div>
+
+    <div id="searchResultInfo"></div>
+
+    <div
+      id="products"
+      class="products-grid"
+    >
+      <!-- Products will be loaded by app.js -->
+    </div>
+
+    <div
+      id="noProducts"
+      class="no-products"
+    >
+      <div class="no-products-icon">📦</div>
+      <h3>কোনো পণ্য পাওয়া যায়নি</h3>
+      <p>অন্য কোনো পণ্য বা শব্দ দিয়ে আবার চেষ্টা করুন।</p>
+    </div>
+
+  </main>
+
+  <!-- ORDER MODAL -->
+  <div
+    id="orderModal"
+    class="modal"
+    aria-hidden="true"
+  >
+
+    <div class="modal-content">
+
+      <div class="modal-header">
+
+        <h2 class="modal-title">
+          অর্ডার করুন
+        </h2>
 
         <button
-            id="mobileCartButton"
-            type="button"
+          type="button"
+          id="closeModal"
+          class="close-modal"
+          aria-label="Close"
         >
-            <span class="mobile-cart-icon">
-                🛒
-                <b id="mobileCartCount">
-                    0
-                </b>
+          ×
+        </button>
+
+      </div>
+
+      <form
+        id="orderForm"
+        class="order-form"
+      >
+
+        <!-- Selected Product -->
+        <div class="product-selection-box">
+
+          <div class="selection-row">
+            <span class="selection-label">পণ্য</span>
+            <span
+              class="selection-value"
+              id="displayProductName"
+            >
+              -
             </span>
+          </div>
 
-            <small>
-                Cart
-            </small>
+          <div class="selection-row">
+            <span class="selection-label">ভ্যারিয়েন্ট</span>
+            <span
+              class="selection-value"
+              id="displayVariantName"
+            >
+              -
+            </span>
+          </div>
+
+          <div class="selection-row">
+            <span class="selection-label">সাইজ</span>
+            <span
+              class="selection-value"
+              id="displaySizeName"
+            >
+              -
+            </span>
+          </div>
+
+          <div class="selection-row">
+            <span class="selection-label">প্রতি পিস</span>
+            <span
+              class="selection-value"
+              id="displayUnitPrice"
+            >
+              ৳0
+            </span>
+          </div>
+
+        </div>
+
+        <!-- Hidden values used by app.js -->
+        <input
+          type="hidden"
+          id="productName"
+        >
+
+        <input
+          type="hidden"
+          id="variantName"
+        >
+
+        <input
+          type="hidden"
+          id="sizeName"
+        >
+
+        <input
+          type="hidden"
+          id="unitPrice"
+        >
+
+        <input
+          type="hidden"
+          id="variantSizeId"
+        >
+
+        <!-- Variant -->
+        <div
+          id="variantArea"
+          class="variant-area"
+        ></div>
+
+        <!-- Size -->
+        <div
+          id="sizeArea"
+          class="size-area"
+        ></div>
+
+        <!-- Customer Name -->
+        <div class="form-group">
+          <label
+            class="form-label"
+            for="customerName"
+          >
+            আপনার নাম
+          </label>
+
+          <input
+            type="text"
+            id="customerName"
+            class="form-input"
+            placeholder="আপনার নাম লিখুন"
+            required
+          >
+        </div>
+
+        <!-- Phone -->
+        <div class="form-group">
+          <label
+            class="form-label"
+            for="phone"
+          >
+            মোবাইল নম্বর
+          </label>
+
+          <input
+            type="tel"
+            id="phone"
+            class="form-input"
+            placeholder="01XXXXXXXXX"
+            required
+          >
+        </div>
+
+        <!-- District -->
+        <div class="form-group">
+          <label
+            class="form-label"
+            for="district"
+          >
+            জেলা
+          </label>
+
+          <input
+            type="text"
+            id="district"
+            class="form-input"
+            placeholder="আপনার জেলা"
+            required
+          >
+        </div>
+
+        <!-- Upazila -->
+        <div class="form-group">
+          <label
+            class="form-label"
+            for="upazila"
+          >
+            উপজেলা
+          </label>
+
+          <input
+            type="text"
+            id="upazila"
+            class="form-input"
+            placeholder="আপনার উপজেলা"
+            required
+          >
+        </div>
+
+        <!-- Address -->
+        <div class="form-group">
+          <label
+            class="form-label"
+            for="address"
+          >
+            বিস্তারিত ঠিকানা
+          </label>
+
+          <textarea
+            id="address"
+            class="form-textarea"
+            placeholder="বাড়ি/গ্রাম/রোড ইত্যাদি লিখুন"
+            required
+          ></textarea>
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-group">
+
+          <label
+            class="form-label"
+            for="quantity"
+          >
+            পরিমাণ
+          </label>
+
+          <div class="quantity-control">
+
+            <button
+              type="button"
+              id="quantityMinus"
+              class="quantity-btn"
+            >
+              −
+            </button>
+
+            <input
+              type="number"
+              id="quantity"
+              class="quantity-input"
+              value="1"
+              min="1"
+              inputmode="numeric"
+              required
+            >
+
+            <button
+              type="button"
+              id="quantityPlus"
+              class="quantity-btn"
+            >
+              +
+            </button>
+
+          </div>
+
+          <div
+            id="displayQuantity"
+            style="display:none;"
+          >
+            1
+          </div>
+
+        </div>
+
+        <!-- Total -->
+        <div class="order-total-box">
+
+          <span class="order-total-label">
+            মোট মূল্য
+          </span>
+
+          <span
+            id="orderTotal"
+            class="order-total"
+          >
+            ৳0
+          </span>
+
+        </div>
+
+        <!-- Message -->
+        <div
+          id="orderMessage"
+          class="order-message"
+        ></div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          class="place-order-btn"
+        >
+          অর্ডার কনফার্ম করুন
         </button>
 
-    </nav>
+      </form>
 
+    </div>
 
-    <!-- =========================
-         SCRIPTS
-    ========================== -->
+  </div>
 
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Hidden compatibility elements -->
+  <div id="cartSidebar"></div>
+  <div id="cartOverlay"></div>
+  <div id="cartItems"></div>
+  <div id="cartTotal"></div>
+  <button id="checkoutButton" type="button"></button>
 
-    <!-- Supabase Config -->
-    <script src="config.js"></script>
+  <!-- FOOTER -->
+  <footer class="footer">
 
-    <!-- Main App -->
-    <script src="app.js"></script>
+    <div class="footer-inner">
+
+      <div class="footer-logo">
+        My Shop
+      </div>
+
+      <p class="footer-text">
+        সহজে পণ্য দেখুন এবং সরাসরি অর্ডার করুন।
+      </p>
+
+      <p
+        class="footer-text"
+        style="margin-top:8px;"
+      >
+        © 2026 My Shop. All rights reserved.
+      </p>
+
+    </div>
+
+  </footer>
+
+  <!-- MOBILE NAV -->
+  <nav class="mobile-bottom-nav">
+
+    <button
+      type="button"
+      id="mobileCategoryButton"
+      class="mobile-nav-btn active"
+      onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+    >
+      <span>⌂</span>
+      হোম
+    </button>
+
+    <button
+      type="button"
+      class="mobile-nav-btn"
+      onclick="document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})"
+    >
+      <span>▦</span>
+      পণ্য
+    </button>
+
+    <button
+      type="button"
+      id="mobileCartButton"
+      class="mobile-nav-btn"
+      style="display:none !important;"
+    >
+      <span>🛒</span>
+      Cart
+      <small id="mobileCartCount">0</small>
+    </button>
+
+  </nav>
+
+  <!-- SUPABASE + APP -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
 
 </body>
 </html>
