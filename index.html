@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <meta name="color-scheme" content="light">
+
   <title>My Shop</title>
   <meta name="description" content="My Shop - সহজে পছন্দের পণ্য অর্ডার করুন">
 
@@ -20,6 +22,7 @@
 
     html {
       scroll-behavior: smooth;
+      color-scheme: light;
     }
 
     body {
@@ -27,6 +30,7 @@
       background: #f6f7f9;
       color: #202124;
       line-height: 1.5;
+      color-scheme: light;
     }
 
     button,
@@ -101,6 +105,7 @@
       padding: 0 15px;
       font-size: 15px;
       background: #fafafa;
+      color: #222;
     }
 
     .search-area input:focus {
@@ -139,7 +144,7 @@
     }
 
     /* =========================
-       CATEGORY STRIP
+       CATEGORY
     ========================== */
 
     .category-strip {
@@ -179,6 +184,11 @@
       border-color: #f4511e;
     }
 
+    #categoryList {
+      display: flex;
+      gap: 8px;
+    }
+
     /* =========================
        HERO
     ========================== */
@@ -194,7 +204,12 @@
       border-radius: 14px;
       overflow: hidden;
       background:
-        linear-gradient(115deg, #fff3ec 0%, #fff8f5 50%, #ffe7dc 100%);
+        linear-gradient(
+          115deg,
+          #fff3ec 0%,
+          #fff8f5 50%,
+          #ffe7dc 100%
+        );
       display: flex;
       align-items: center;
       position: relative;
@@ -263,20 +278,13 @@
       background: rgba(244, 81, 30, 0.09);
     }
 
-    /* =========================
-       HERO CATEGORY LIST
-    ========================== */
-
-    .hero-categories {
-      display: none;
-    }
-
+    .hero-categories,
     .hero-category-list {
       display: none;
     }
 
     /* =========================
-       PRODUCTS SECTION
+       PRODUCTS
     ========================== */
 
     .products-section {
@@ -312,10 +320,6 @@
       margin-bottom: 14px;
     }
 
-    /* =========================
-       PRODUCT GRID
-    ========================== */
-
     .products-grid {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -335,7 +339,6 @@
       box-shadow: 0 7px 22px rgba(0, 0, 0, 0.08);
     }
 
-    /* Fixed image area */
     .product-image-wrap {
       width: 100%;
       aspect-ratio: 1 / 1;
@@ -401,10 +404,6 @@
       cursor: not-allowed;
     }
 
-    /* =========================
-       NO PRODUCTS
-    ========================== */
-
     .no-products {
       display: none;
       text-align: center;
@@ -420,17 +419,17 @@
       margin-bottom: 8px;
     }
 
-    /* =========================
+    /* =====================================================
        ORDER MODAL
-    ========================== */
+    ====================================================== */
 
     .modal {
       display: none;
       position: fixed;
       inset: 0;
       z-index: 2000;
-      background: rgba(0, 0, 0, 0.55);
-      padding: 15px;
+      background: rgba(0, 0, 0, 0.62);
+      padding: 12px;
       overflow-y: auto;
     }
 
@@ -442,161 +441,203 @@
 
     .modal-content {
       width: 100%;
-      max-width: 550px;
+      max-width: 540px;
+      max-height: calc(100vh - 24px);
       background: #fff;
-      border-radius: 13px;
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 15px 45px rgba(0, 0, 0, .2);
+      box-shadow: 0 20px 55px rgba(0, 0, 0, .25);
+      display: flex;
+      flex-direction: column;
     }
 
+    /* Fixed modal header */
+
     .modal-header {
-      padding: 17px 20px;
-      border-bottom: 1px solid #eee;
+      flex-shrink: 0;
+      padding: 15px 18px;
+      background: #fff;
+      border-bottom: 1px solid #eeeeee;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
     .modal-title {
-      font-size: 21px;
+      font-size: 20px;
       font-weight: 700;
+      color: #222;
+    }
+
+    .modal-subtitle {
+      font-size: 12px;
+      color: #888;
+      margin-top: 1px;
+    }
+
+    .modal-title-wrap {
+      min-width: 0;
     }
 
     .close-modal {
-      width: 34px;
-      height: 34px;
+      width: 35px;
+      height: 35px;
+      flex-shrink: 0;
       border: none;
       border-radius: 50%;
-      background: #f2f2f2;
-      font-size: 22px;
+      background: #f4f4f4;
       color: #555;
+      font-size: 23px;
+      line-height: 1;
     }
 
     .close-modal:hover {
-      background: #eee;
+      background: #eeeeee;
     }
 
+    /* Scrollable form */
+
     .order-form {
-      padding: 20px;
+      padding: 17px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    /* =========================
+       ORDER SUMMARY
+    ========================== */
+
+    .product-selection-box {
+      background: #fff8f5;
+      border: 1px solid #ffe0d3;
+      border-radius: 11px;
+      padding: 13px 14px;
+      margin-bottom: 17px;
+    }
+
+    .summary-heading {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f4511e;
+      margin-bottom: 9px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .selection-row {
+      min-height: 27px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      font-size: 14px;
+      border-bottom: 1px dashed #eadbd4;
+    }
+
+    .selection-row:last-child {
+      border-bottom: none;
+    }
+
+    .selection-label {
+      color: #777;
+      flex-shrink: 0;
+    }
+
+    .selection-value {
+      max-width: 65%;
+      font-weight: 600;
+      color: #222;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    /* =========================
+       FORM SECTION
+    ========================== */
+
+    .form-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #222;
+      margin: 4px 0 12px;
+    }
+
+    .form-section-title::before {
+      content: "";
+      width: 4px;
+      height: 18px;
+      border-radius: 5px;
+      background: #f4511e;
     }
 
     .form-group {
-      margin-bottom: 14px;
+      margin-bottom: 13px;
     }
 
     .form-label {
       display: block;
       margin-bottom: 5px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #333;
+    }
+
+    .required-mark {
+      color: #e53935;
     }
 
     .form-input,
     .form-select,
     .form-textarea {
       width: 100%;
-      border: 1px solid #d9dde2;
-      border-radius: 7px;
+      border: 1px solid #d8dce1;
+      border-radius: 8px;
       padding: 10px 11px;
       font-size: 14px;
       outline: none;
       background: #fff;
+      color: #222;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: #a2a2a2;
     }
 
     .form-input:focus,
     .form-select:focus,
     .form-textarea:focus {
       border-color: #f4511e;
+      box-shadow: 0 0 0 3px rgba(244, 81, 30, .08);
     }
 
     .form-textarea {
-      min-height: 80px;
+      min-height: 75px;
       resize: vertical;
     }
 
-    .product-selection-box {
-      background: #fafafa;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      padding: 13px;
-      margin-bottom: 16px;
-    }
+    /* =========================
+       LOCATION ROW
+    ========================== */
 
-    .selection-row {
-      display: flex;
-      justify-content: space-between;
+    .location-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
-      font-size: 14px;
-      margin-bottom: 5px;
-    }
-
-    .selection-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .selection-label {
-      color: #777;
-    }
-
-    .selection-value {
-      font-weight: 600;
-      text-align: right;
-    }
-
-    .order-total-box {
-      margin-top: 15px;
-      padding: 13px;
-      border-radius: 8px;
-      background: #fff4ef;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .order-total-label {
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .order-total {
-      color: #f4511e;
-      font-size: 21px;
-      font-weight: 700;
-    }
-
-    .place-order-btn {
-      width: 100%;
-      border: none;
-      background: #f4511e;
-      color: #fff;
-      padding: 12px;
-      border-radius: 7px;
-      margin-top: 16px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .place-order-btn:hover {
-      background: #df4315;
-    }
-
-    .order-message {
-      display: none;
-      margin-top: 12px;
-      padding: 10px;
-      border-radius: 7px;
-      font-size: 14px;
-      text-align: center;
     }
 
     /* =========================
-       VARIANT / SIZE AREA
+       VARIANT / SIZE
     ========================== */
 
     .variant-area,
     .size-area {
-      margin-bottom: 14px;
+      margin-bottom: 15px;
     }
 
     .option-list {
@@ -606,11 +647,18 @@
     }
 
     .option-btn {
-      border: 1px solid #d8dce1;
+      border: 1px solid #d5d9de;
       background: #fff;
-      padding: 6px 12px;
-      border-radius: 6px;
+      color: #444;
+      padding: 7px 13px;
+      border-radius: 7px;
       font-size: 13px;
+      transition: .15s ease;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: #f4511e;
+      color: #f4511e;
     }
 
     .option-btn.active {
@@ -618,55 +666,150 @@
       background: #fff2ed;
       color: #f4511e;
       font-weight: 600;
+      box-shadow: 0 0 0 1px #f4511e inset;
+    }
+
+    .option-btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      background: #f6f6f6;
+      text-decoration: line-through;
     }
 
     /* =========================
        QUANTITY
     ========================== */
 
+    .quantity-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .quantity-help {
+      color: #888;
+      font-size: 12px;
+    }
+
     .quantity-control {
       display: flex;
       align-items: center;
-      width: fit-content;
-      border: 1px solid #d8dce1;
-      border-radius: 7px;
+      width: 126px;
+      height: 40px;
+      border: 1px solid #d4d8dd;
+      border-radius: 8px;
       overflow: hidden;
+      background: #fff;
+      flex-shrink: 0;
     }
 
     .quantity-btn {
-      width: 36px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border: none;
-      background: #f6f6f6;
-      font-size: 18px;
+      background: #f7f7f7;
+      color: #333;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .quantity-btn:hover {
+      background: #fff0e9;
+      color: #f4511e;
     }
 
     .quantity-input {
-      width: 50px;
-      height: 38px;
+      flex: 1;
+      width: 46px;
+      height: 40px;
       border: none;
-      border-left: 1px solid #ddd;
-      border-right: 1px solid #ddd;
+      border-left: 1px solid #e1e1e1;
+      border-right: 1px solid #e1e1e1;
       text-align: center;
       outline: none;
-      font-size: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #222;
+      background: #fff;
+      -moz-appearance: textfield;
+    }
+
+    .quantity-input::-webkit-inner-spin-button,
+    .quantity-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
     /* =========================
-       CART / OLD COMPATIBILITY
-       Hidden intentionally
+       TOTAL
     ========================== */
 
-    #cartSidebar,
-    #cartOverlay,
-    #cartButton,
-    #cartCount,
-    #mobileCartButton,
-    #mobileCartCount,
-    #cartItems,
-    #cartTotal,
-    #checkoutButton {
-      display: none !important;
+    .order-total-box {
+      margin-top: 17px;
+      padding: 14px 15px;
+      border-radius: 10px;
+      background: #f8f8f8;
+      border: 1px solid #eeeeee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .order-total-label {
+      color: #555;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .order-total {
+      color: #f4511e;
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    /* =========================
+       MESSAGE
+    ========================== */
+
+    .order-message {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    /* =========================
+       SUBMIT
+    ========================== */
+
+    .place-order-btn {
+      width: 100%;
+      border: none;
+      background: #f4511e;
+      color: #fff;
+      padding: 13px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      transition: background .15s ease, transform .1s ease;
+    }
+
+    .place-order-btn:hover {
+      background: #df4315;
+    }
+
+    .place-order-btn:active {
+      transform: scale(.99);
+    }
+
+    .place-order-btn:disabled {
+      background: #bdbdbd;
+      cursor: not-allowed;
+      transform: none;
     }
 
     /* =========================
@@ -698,11 +841,32 @@
     }
 
     /* =========================
-       MOBILE BOTTOM NAV
+       MOBILE NAV
     ========================== */
 
     .mobile-bottom-nav {
       display: none;
+    }
+
+    /* =====================================================
+       EXTRA: OLD CART / ADD TO CART ELEMENTS ARE HIDDEN
+       ===================================================== */
+
+    #cartSidebar,
+    #cartOverlay,
+    #cartButton,
+    #cartCount,
+    #mobileCartButton,
+    #mobileCartCount,
+    #cartItems,
+    #cartTotal,
+    #checkoutButton,
+    .add-to-cart,
+    .add-cart,
+    .add-to-cart-btn,
+    .add-cart-btn,
+    [data-action="add-to-cart"] {
+      display: none !important;
     }
 
     /* =========================
@@ -754,8 +918,9 @@
     }
 
     @media (max-width: 600px) {
+
       body {
-        padding-bottom: 62px;
+        padding-bottom: 58px;
       }
 
       .top-bar {
@@ -844,16 +1009,89 @@
         font-size: 13px;
       }
 
+      /* Mobile Order Modal */
+
       .modal {
-        padding: 8px;
+        padding: 0;
+        align-items: flex-end !important;
       }
 
       .modal-content {
-        border-radius: 10px;
+        width: 100%;
+        max-width: none;
+        max-height: 94vh;
+        border-radius: 15px 15px 0 0;
+      }
+
+      .modal-header {
+        padding: 13px 15px;
+      }
+
+      .modal-title {
+        font-size: 19px;
       }
 
       .order-form {
-        padding: 15px;
+        padding: 14px;
+      }
+
+      .product-selection-box {
+        padding: 11px 12px;
+        margin-bottom: 15px;
+      }
+
+      .selection-row {
+        font-size: 13px;
+      }
+
+      .selection-value {
+        max-width: 60%;
+      }
+
+      .form-section-title {
+        font-size: 14px;
+        margin-top: 2px;
+      }
+
+      .form-group {
+        margin-bottom: 12px;
+      }
+
+      .form-label {
+        font-size: 13px;
+      }
+
+      .form-input,
+      .form-textarea {
+        font-size: 14px;
+        padding: 10px;
+      }
+
+      .location-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .quantity-row {
+        align-items: center;
+      }
+
+      .quantity-control {
+        width: 120px;
+      }
+
+      .order-total-box {
+        margin-top: 15px;
+        padding: 13px;
+      }
+
+      .order-total {
+        font-size: 21px;
+      }
+
+      .place-order-btn {
+        padding: 12px;
+        margin-top: 10px;
       }
 
       .mobile-bottom-nav {
@@ -886,6 +1124,22 @@
         color: #f4511e;
       }
     }
+
+    @media (max-width: 380px) {
+
+      .location-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+
+      .quantity-row {
+        display: block;
+      }
+
+      .quantity-control {
+        margin-top: 7px;
+      }
+    }
   </style>
 </head>
 
@@ -896,19 +1150,25 @@
     সহজে পছন্দের পণ্য বেছে নিন এবং সরাসরি অর্ডার করুন
   </div>
 
+
   <!-- HEADER -->
   <header class="main-header">
+
     <div class="header-inner">
 
-      <a href="#" class="logo">My Shop</a>
+      <a href="#" class="logo">
+        My Shop
+      </a>
 
       <div class="search-area">
+
         <input
           type="text"
           id="searchInput"
           placeholder="পণ্য খুঁজুন..."
           autocomplete="off"
         >
+
         <button
           type="button"
           id="searchButton"
@@ -917,9 +1177,11 @@
         >
           🔍
         </button>
+
       </div>
 
       <div class="header-action">
+
         <button
           type="button"
           class="header-home-btn"
@@ -927,13 +1189,17 @@
         >
           🏠 হোম
         </button>
+
       </div>
 
     </div>
+
   </header>
+
 
   <!-- CATEGORY STRIP -->
   <nav class="category-strip">
+
     <div class="category-inner">
 
       <button
@@ -947,7 +1213,9 @@
       <div id="categoryList"></div>
 
     </div>
+
   </nav>
+
 
   <!-- HERO -->
   <section class="hero">
@@ -983,12 +1251,18 @@
 
     </div>
 
-    <!-- Kept for JavaScript compatibility -->
-    <div id="heroCategories" class="hero-categories">
-      <div id="heroCategoryList" class="hero-category-list"></div>
+    <div
+      id="heroCategories"
+      class="hero-categories"
+    >
+      <div
+        id="heroCategoryList"
+        class="hero-category-list"
+      ></div>
     </div>
 
   </section>
+
 
   <!-- PRODUCTS -->
   <main
@@ -997,11 +1271,13 @@
   >
 
     <div class="section-header">
+
       <h2 class="section-title">
         সব পণ্য
       </h2>
 
       <div class="section-line"></div>
+
     </div>
 
     <div id="searchResultInfo"></div>
@@ -1010,21 +1286,35 @@
       id="products"
       class="products-grid"
     >
-      <!-- Products will be loaded by app.js -->
+      <!-- Products loaded by app.js -->
     </div>
 
     <div
       id="noProducts"
       class="no-products"
     >
-      <div class="no-products-icon">📦</div>
-      <h3>কোনো পণ্য পাওয়া যায়নি</h3>
-      <p>অন্য কোনো পণ্য বা শব্দ দিয়ে আবার চেষ্টা করুন।</p>
+
+      <div class="no-products-icon">
+        📦
+      </div>
+
+      <h3>
+        কোনো পণ্য পাওয়া যায়নি
+      </h3>
+
+      <p>
+        অন্য কোনো পণ্য বা শব্দ দিয়ে আবার চেষ্টা করুন।
+      </p>
+
     </div>
 
   </main>
 
-  <!-- ORDER MODAL -->
+
+  <!-- =====================================================
+       ORDER MODAL
+  ====================================================== -->
+
   <div
     id="orderModal"
     class="modal"
@@ -1033,11 +1323,21 @@
 
     <div class="modal-content">
 
+      <!-- MODAL HEADER -->
+
       <div class="modal-header">
 
-        <h2 class="modal-title">
-          অর্ডার করুন
-        </h2>
+        <div class="modal-title-wrap">
+
+          <h2 class="modal-title">
+            অর্ডার করুন
+          </h2>
+
+          <div class="modal-subtitle">
+            নিচের তথ্যগুলো পূরণ করুন
+          </div>
+
+        </div>
 
         <button
           type="button"
@@ -1050,57 +1350,89 @@
 
       </div>
 
+
+      <!-- ORDER FORM -->
+
       <form
         id="orderForm"
         class="order-form"
       >
 
-        <!-- Selected Product -->
+        <!-- =========================
+             PRODUCT SUMMARY
+        ========================== -->
+
         <div class="product-selection-box">
 
+          <div class="summary-heading">
+            📦 অর্ডারের তথ্য
+          </div>
+
           <div class="selection-row">
-            <span class="selection-label">পণ্য</span>
+
+            <span class="selection-label">
+              পণ্য
+            </span>
+
             <span
               class="selection-value"
               id="displayProductName"
             >
               -
             </span>
+
           </div>
 
           <div class="selection-row">
-            <span class="selection-label">ভ্যারিয়েন্ট</span>
+
+            <span class="selection-label">
+              ভ্যারিয়েন্ট
+            </span>
+
             <span
               class="selection-value"
               id="displayVariantName"
             >
               -
             </span>
+
           </div>
 
           <div class="selection-row">
-            <span class="selection-label">সাইজ</span>
+
+            <span class="selection-label">
+              সাইজ
+            </span>
+
             <span
               class="selection-value"
               id="displaySizeName"
             >
               -
             </span>
+
           </div>
 
           <div class="selection-row">
-            <span class="selection-label">প্রতি পিস</span>
+
+            <span class="selection-label">
+              প্রতি পিস
+            </span>
+
             <span
               class="selection-value"
               id="displayUnitPrice"
             >
               ৳0
             </span>
+
           </div>
 
         </div>
 
+
         <!-- Hidden values used by app.js -->
+
         <input
           type="hidden"
           id="productName"
@@ -1126,25 +1458,39 @@
           id="variantSizeId"
         >
 
-        <!-- Variant -->
+
+        <!-- VARIANT -->
+
         <div
           id="variantArea"
           class="variant-area"
         ></div>
 
-        <!-- Size -->
+
+        <!-- SIZE -->
+
         <div
           id="sizeArea"
           class="size-area"
         ></div>
 
-        <!-- Customer Name -->
+
+        <!-- CUSTOMER INFORMATION -->
+
+        <div class="form-section-title">
+          আপনার তথ্য
+        </div>
+
+
+        <!-- NAME -->
+
         <div class="form-group">
+
           <label
             class="form-label"
             for="customerName"
           >
-            আপনার নাম
+            আপনার নাম <span class="required-mark">*</span>
           </label>
 
           <input
@@ -1152,17 +1498,22 @@
             id="customerName"
             class="form-input"
             placeholder="আপনার নাম লিখুন"
+            autocomplete="name"
             required
           >
+
         </div>
 
-        <!-- Phone -->
+
+        <!-- PHONE -->
+
         <div class="form-group">
+
           <label
             class="form-label"
             for="phone"
           >
-            মোবাইল নম্বর
+            মোবাইল নম্বর <span class="required-mark">*</span>
           </label>
 
           <input
@@ -1170,102 +1521,146 @@
             id="phone"
             class="form-input"
             placeholder="01XXXXXXXXX"
+            inputmode="tel"
+            autocomplete="tel"
             required
           >
+
         </div>
 
-        <!-- District -->
-        <div class="form-group">
-          <label
-            class="form-label"
-            for="district"
-          >
-            জেলা
-          </label>
 
-          <input
-            type="text"
-            id="district"
-            class="form-input"
-            placeholder="আপনার জেলা"
-            required
-          >
+        <!-- LOCATION -->
+
+        <div class="form-section-title">
+          ডেলিভারি ঠিকানা
         </div>
 
-        <!-- Upazila -->
-        <div class="form-group">
-          <label
-            class="form-label"
-            for="upazila"
-          >
-            উপজেলা
-          </label>
 
-          <input
-            type="text"
-            id="upazila"
-            class="form-input"
-            placeholder="আপনার উপজেলা"
-            required
-          >
+        <!-- DISTRICT + UPAZILA -->
+
+        <div class="location-grid">
+
+          <div class="form-group">
+
+            <label
+              class="form-label"
+              for="district"
+            >
+              জেলা <span class="required-mark">*</span>
+            </label>
+
+            <input
+              type="text"
+              id="district"
+              class="form-input"
+              placeholder="জেলা"
+              autocomplete="address-level1"
+              required
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label
+              class="form-label"
+              for="upazila"
+            >
+              উপজেলা <span class="required-mark">*</span>
+            </label>
+
+            <input
+              type="text"
+              id="upazila"
+              class="form-input"
+              placeholder="উপজেলা"
+              autocomplete="address-level2"
+              required
+            >
+
+          </div>
+
         </div>
 
-        <!-- Address -->
+
+        <!-- ADDRESS -->
+
         <div class="form-group">
+
           <label
             class="form-label"
             for="address"
           >
-            বিস্তারিত ঠিকানা
+            বিস্তারিত ঠিকানা <span class="required-mark">*</span>
           </label>
 
           <textarea
             id="address"
             class="form-textarea"
-            placeholder="বাড়ি/গ্রাম/রোড ইত্যাদি লিখুন"
+            placeholder="বাড়ি, গ্রাম, রোড, বাজার ইত্যাদি লিখুন"
+            autocomplete="street-address"
             required
           ></textarea>
+
         </div>
 
-        <!-- Quantity -->
+
+        <!-- QUANTITY -->
+
+        <div class="form-section-title">
+          পণ্যের পরিমাণ
+        </div>
+
         <div class="form-group">
 
-          <label
-            class="form-label"
-            for="quantity"
-          >
-            পরিমাণ
-          </label>
+          <div class="quantity-row">
 
-          <div class="quantity-control">
+            <div>
+              <div class="form-label">
+                কতটি নিতে চান?
+              </div>
 
-            <button
-              type="button"
-              id="quantityMinus"
-              class="quantity-btn"
-            >
-              −
-            </button>
+              <div class="quantity-help">
+                সর্বোচ্চ available stock অনুযায়ী
+              </div>
+            </div>
 
-            <input
-              type="number"
-              id="quantity"
-              class="quantity-input"
-              value="1"
-              min="1"
-              inputmode="numeric"
-              required
-            >
 
-            <button
-              type="button"
-              id="quantityPlus"
-              class="quantity-btn"
-            >
-              +
-            </button>
+            <div class="quantity-control">
+
+              <button
+                type="button"
+                id="quantityMinus"
+                class="quantity-btn"
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+
+              <input
+                type="number"
+                id="quantity"
+                class="quantity-input"
+                value="1"
+                min="1"
+                inputmode="numeric"
+                required
+              >
+
+              <button
+                type="button"
+                id="quantityPlus"
+                class="quantity-btn"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+
+            </div>
 
           </div>
+
 
           <div
             id="displayQuantity"
@@ -1276,7 +1671,9 @@
 
         </div>
 
-        <!-- Total -->
+
+        <!-- TOTAL -->
+
         <div class="order-total-box">
 
           <span class="order-total-label">
@@ -1292,13 +1689,17 @@
 
         </div>
 
-        <!-- Message -->
+
+        <!-- MESSAGE -->
+
         <div
           id="orderMessage"
           class="order-message"
         ></div>
 
-        <!-- Submit -->
+
+        <!-- SUBMIT -->
+
         <button
           type="submit"
           class="place-order-btn"
@@ -1312,14 +1713,9 @@
 
   </div>
 
-  <!-- Hidden compatibility elements -->
-  <div id="cartSidebar"></div>
-  <div id="cartOverlay"></div>
-  <div id="cartItems"></div>
-  <div id="cartTotal"></div>
-  <button id="checkoutButton" type="button"></button>
 
   <!-- FOOTER -->
+
   <footer class="footer">
 
     <div class="footer-inner">
@@ -1343,7 +1739,9 @@
 
   </footer>
 
+
   <!-- MOBILE NAV -->
+
   <nav class="mobile-bottom-nav">
 
     <button
@@ -1365,23 +1763,17 @@
       পণ্য
     </button>
 
-    <button
-      type="button"
-      id="mobileCartButton"
-      class="mobile-nav-btn"
-      style="display:none !important;"
-    >
-      <span>🛒</span>
-      Cart
-      <small id="mobileCartCount">0</small>
-    </button>
-
   </nav>
 
-  <!-- SUPABASE + APP -->
+
+  <!-- SUPABASE -->
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script src="config.js"></script>
-  <script src="app.js"></script>
+
+  <!-- Version changed to prevent old cached app.js -->
+  <script src="app.js?v=4"></script>
 
 </body>
 </html>
