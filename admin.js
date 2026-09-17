@@ -1,6 +1,6 @@
 /* =========================================================
    MY SHOP — ADMIN PANEL
-   Supabase Auth + Admin Check + Products + Orders
+   Corrected Version
    ========================================================= */
 
 const { createClient } = supabase;
@@ -20,34 +20,22 @@ let adminProducts = [];
 let adminOrders = [];
 
 let currentOrderFilter = "all";
-
 let variantCounter = 0;
 
 
 // =========================================================
-// DOM — LOGIN
+// DOM
 // =========================================================
 
-const adminLogin =
-  document.getElementById("adminLogin");
+// Login
+const adminLogin = document.getElementById("adminLogin");
+const adminDashboard = document.getElementById("adminDashboard");
 
-const adminDashboard =
-  document.getElementById("adminDashboard");
-
-const loginForm =
-  document.getElementById("loginForm");
-
-const loginEmail =
-  document.getElementById("loginEmail");
-
-const loginPassword =
-  document.getElementById("loginPassword");
-
-const loginButton =
-  document.getElementById("loginButton");
-
-const loginMessage =
-  document.getElementById("loginMessage");
+const loginForm = document.getElementById("loginForm");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const loginButton = document.getElementById("loginButton");
+const loginMessage = document.getElementById("loginMessage");
 
 const adminUserEmail =
   document.getElementById("adminUserEmail");
@@ -56,10 +44,7 @@ const logoutButton =
   document.getElementById("logoutButton");
 
 
-// =========================================================
-// DOM — PRODUCT FORM
-// =========================================================
-
+// Product form
 const productForm =
   document.getElementById("productForm");
 
@@ -97,26 +82,17 @@ const productFormAlert =
   document.getElementById("productFormAlert");
 
 
-// =========================================================
-// DOM — ADMIN PRODUCTS
-// =========================================================
-
+// Admin product list
 const adminProductsList =
   document.getElementById("adminProductsList");
 
 
-// =========================================================
-// DOM — ORDERS
-// =========================================================
-
+// Orders
 const adminOrdersList =
   document.getElementById("adminOrdersList");
 
 
-// =========================================================
-// DOM — STATS
-// =========================================================
-
+// Stats
 const statProducts =
   document.getElementById("statProducts");
 
@@ -154,8 +130,7 @@ function escapeHTML(value) {
 
 function money(value) {
 
-  const number =
-    Number(value || 0);
+  const number = Number(value || 0);
 
   return number.toLocaleString(
     "en-BD",
@@ -167,7 +142,46 @@ function money(value) {
 }
 
 
-function showAlert(
+function formatDate(date) {
+
+  if (!date) return "";
+
+  try {
+
+    return new Date(date).toLocaleString(
+      "en-BD",
+      {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }
+    );
+
+  } catch {
+
+    return String(date);
+
+  }
+
+}
+
+
+function showLoginMessage(
+  message,
+  isError = true
+) {
+
+  if (!loginMessage) return;
+
+  loginMessage.textContent =
+    message || "";
+
+  loginMessage.style.color =
+    isError ? "#d00000" : "#16843a";
+
+}
+
+
+function showProductAlert(
   message,
   type = "success"
 ) {
@@ -186,7 +200,7 @@ function showAlert(
 }
 
 
-function hideAlert() {
+function hideProductAlert() {
 
   if (!productFormAlert) return;
 
@@ -196,100 +210,44 @@ function hideAlert() {
 }
 
 
-function formatDate(date) {
-
-  if (!date) return "";
-
-  try {
-
-    return new Date(date)
-      .toLocaleString(
-        "en-BD",
-        {
-          dateStyle: "medium",
-          timeStyle: "short"
-        }
-      );
-
-  } catch {
-
-    return date;
-
-  }
-
-}
-
-
 // =========================================================
-// AUTH — CHECK CURRENT SESSION
-// =========================================================
-
-async function checkSession() {
-
-  const {
-    data,
-    error
-  } = await sb.auth.getSession();
-
-  if (error) {
-
-    console.error(error);
-
-    showLogin();
-
-    return;
-
-  }
-
-  const session =
-    data?.session;
-
-  if (!session) {
-
-    showLogin();
-
-    return;
-
-  }
-
-  currentUser =
-    session.user;
-
-  await verifyAdmin();
-
-}
-
-
-// =========================================================
-// SHOW LOGIN
+// LOGIN / LOGOUT UI
 // =========================================================
 
 function showLogin() {
 
-  if (adminLogin)
+  if (adminLogin) {
+
     adminLogin.style.display =
       "flex";
 
-  if (adminDashboard)
+  }
+
+  if (adminDashboard) {
+
     adminDashboard.style.display =
       "none";
+
+  }
 
 }
 
 
-// =========================================================
-// SHOW DASHBOARD
-// =========================================================
-
 function showDashboard() {
 
-  if (adminLogin)
+  if (adminLogin) {
+
     adminLogin.style.display =
       "none";
 
-  if (adminDashboard)
+  }
+
+  if (adminDashboard) {
+
     adminDashboard.style.display =
       "block";
+
+  }
 
   if (adminUserEmail) {
 
@@ -305,13 +263,13 @@ function showDashboard() {
 // VERIFY ADMIN
 // =========================================================
 
-async function verifyAdmin() {
+async function verifyAdmin(user) {
 
-  if (!currentUser) {
+  if (!user) {
 
     showLogin();
 
-    return;
+    return false;
 
   }
 
@@ -323,9 +281,10 @@ async function verifyAdmin() {
     .select("user_id")
     .eq(
       "user_id",
-      currentUser.id
+      user.id
     )
     .maybeSingle();
+
 
   if (error) {
 
@@ -334,43 +293,102 @@ async function verifyAdmin() {
       error
     );
 
-    await sb.auth.signOut();
-
-    showLogin();
-
-    if (loginMessage) {
-
-      loginMessage.textContent =
-        "Admin verification করতে সমস্যা হয়েছে।";
-
-    }
-
-    return;
+    return false;
 
   }
 
-  if (!data) {
 
-    await sb.auth.signOut();
+  return !!data;
 
-    currentUser = null;
+}
 
-    showLogin();
 
-    if (loginMessage) {
+// =========================================================
+// INITIAL SESSION CHECK
+// =========================================================
 
-      loginMessage.textContent =
-        "এই account-এর Admin access নেই।";
+async function checkInitialSession() {
+
+  showLogin();
+
+  try {
+
+    const {
+      data,
+      error
+    } = await sb.auth.getSession();
+
+
+    if (error) {
+
+      console.error(
+        "Session error:",
+        error
+      );
+
+      showLogin();
+
+      return;
 
     }
 
-    return;
+
+    const session =
+      data?.session;
+
+
+    if (!session?.user) {
+
+      showLogin();
+
+      return;
+
+    }
+
+
+    const user =
+      session.user;
+
+
+    const isAdmin =
+      await verifyAdmin(user);
+
+
+    if (!isAdmin) {
+
+      await sb.auth.signOut();
+
+      currentUser = null;
+
+      showLogin();
+
+      showLoginMessage(
+        "এই account-এর Admin access নেই।"
+      );
+
+      return;
+
+    }
+
+
+    currentUser =
+      user;
+
+    showDashboard();
+
+    await refreshAdminData();
+
+
+  } catch (error) {
+
+    console.error(
+      "Initial session error:",
+      error
+    );
+
+    showLogin();
 
   }
-
-  showDashboard();
-
-  await refreshAdminData();
 
 }
 
@@ -383,66 +401,168 @@ async function handleLogin(event) {
 
   event.preventDefault();
 
+
   const email =
-    loginEmail.value.trim();
+    loginEmail?.value.trim();
 
   const password =
-    loginPassword.value;
+    loginPassword?.value || "";
+
 
   if (!email || !password) {
 
-    loginMessage.textContent =
-      "Email এবং password দিন।";
+    showLoginMessage(
+      "Email এবং password দিন।"
+    );
 
     return;
 
   }
 
-  loginButton.disabled =
-    true;
 
-  loginButton.textContent =
-    "Logging in...";
-
-  loginMessage.textContent =
-    "";
-
-  const {
-    data,
-    error
-  } = await sb.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (error) {
-
-    console.error(error);
-
-    loginMessage.textContent =
-      error.message ||
-      "Login failed.";
+  if (loginButton) {
 
     loginButton.disabled =
-      false;
+      true;
 
     loginButton.textContent =
-      "Login";
-
-    return;
+      "Checking...";
 
   }
 
-  currentUser =
-    data.user;
 
-  await verifyAdmin();
+  showLoginMessage(
+    "Login হচ্ছে...",
+    false
+  );
 
-  loginButton.disabled =
-    false;
 
-  loginButton.textContent =
-    "Login";
+  try {
+
+    /*
+      Login only.
+      এখানে onAuthStateChange-এর উপর
+      নির্ভর করা হচ্ছে না।
+    */
+
+    const {
+      data,
+      error
+    } = await sb.auth.signInWithPassword({
+      email,
+      password
+    });
+
+
+    if (error) {
+
+      console.error(
+        "Login error:",
+        error
+      );
+
+      showLoginMessage(
+        error.message ||
+        "Login failed."
+      );
+
+      return;
+
+    }
+
+
+    const user =
+      data?.user;
+
+
+    if (!user) {
+
+      showLoginMessage(
+        "Login হয়েছে, কিন্তু user পাওয়া যায়নি।"
+      );
+
+      return;
+
+    }
+
+
+    /*
+      Login সফল হওয়ার পর সরাসরি admin check
+    */
+
+    showLoginMessage(
+      "Admin access check হচ্ছে...",
+      false
+    );
+
+
+    const isAdmin =
+      await verifyAdmin(user);
+
+
+    if (!isAdmin) {
+
+      await sb.auth.signOut();
+
+      currentUser = null;
+
+      showLogin();
+
+      showLoginMessage(
+        "এই account-এর Admin access নেই।"
+      );
+
+      return;
+
+    }
+
+
+    /*
+      সব ঠিক থাকলে dashboard
+    */
+
+    currentUser =
+      user;
+
+    showDashboard();
+
+    showLoginMessage(
+      ""
+    );
+
+
+    /*
+      Dashboard data load
+    */
+
+    await refreshAdminData();
+
+
+  } catch (error) {
+
+    console.error(
+      "Login exception:",
+      error
+    );
+
+    showLoginMessage(
+      error?.message ||
+      "Login করতে সমস্যা হয়েছে।"
+    );
+
+  } finally {
+
+    if (loginButton) {
+
+      loginButton.disabled =
+        false;
+
+      loginButton.textContent =
+        "Login";
+
+    }
+
+  }
 
 }
 
@@ -453,26 +573,102 @@ async function handleLogin(event) {
 
 async function handleLogout() {
 
-  await sb.auth.signOut();
+  if (logoutButton) {
 
-  currentUser = null;
+    logoutButton.disabled =
+      true;
 
-  showLogin();
+    logoutButton.textContent =
+      "Logging out...";
 
-  if (loginForm)
-    loginForm.reset();
+  }
+
+
+  try {
+
+    await sb.auth.signOut();
+
+  } catch (error) {
+
+    console.error(
+      "Logout error:",
+      error
+    );
+
+  } finally {
+
+    currentUser = null;
+
+    showLogin();
+
+    if (loginForm) {
+
+      loginForm.reset();
+
+    }
+
+    if (loginButton) {
+
+      loginButton.disabled =
+        false;
+
+      loginButton.textContent =
+        "Login";
+
+    }
+
+    if (logoutButton) {
+
+      logoutButton.disabled =
+        false;
+
+      logoutButton.textContent =
+        "Logout";
+
+    }
+
+  }
 
 }
 
 
 // =========================================================
-// NAVIGATION
+// AUTH STATE LISTENER
 // =========================================================
 
-function openAdminSection(sectionId) {
+/*
+  গুরুত্বপূর্ণ:
+  এখানে Supabase query / verifyAdmin() চালানো হচ্ছে না।
+  এতে login flow আটকে যাওয়ার সম্ভাবনা কমে।
+*/
+
+sb.auth.onAuthStateChange(
+  (event, session) => {
+
+    if (event === "SIGNED_OUT") {
+
+      currentUser = null;
+
+      showLogin();
+
+    }
+
+  }
+);
+
+
+// =========================================================
+// ADMIN NAVIGATION
+// =========================================================
+
+function openAdminSection(
+  sectionId
+) {
 
   document
-    .querySelectorAll(".admin-section")
+    .querySelectorAll(
+      ".admin-section"
+    )
     .forEach(section => {
 
       section.classList.remove(
@@ -481,8 +677,11 @@ function openAdminSection(sectionId) {
 
     });
 
+
   document
-    .querySelectorAll(".admin-nav-btn")
+    .querySelectorAll(
+      ".admin-nav-btn"
+    )
     .forEach(button => {
 
       button.classList.remove(
@@ -491,19 +690,27 @@ function openAdminSection(sectionId) {
 
     });
 
+
   const section =
-    document.getElementById(sectionId);
+    document.getElementById(
+      sectionId
+    );
+
 
   if (section) {
 
-    section.classList.add("active");
+    section.classList.add(
+      "active"
+    );
 
   }
+
 
   const navButton =
     document.querySelector(
       `.admin-nav-btn[data-section="${sectionId}"]`
     );
+
 
   if (navButton) {
 
@@ -513,6 +720,7 @@ function openAdminSection(sectionId) {
 
   }
 
+
   if (
     sectionId ===
     "productsSectionAdmin"
@@ -521,6 +729,7 @@ function openAdminSection(sectionId) {
     loadAdminProducts();
 
   }
+
 
   if (
     sectionId ===
@@ -535,7 +744,9 @@ function openAdminSection(sectionId) {
 
 
 document
-  .querySelectorAll(".admin-nav-btn")
+  .querySelectorAll(
+    ".admin-nav-btn"
+  )
   .forEach(button => {
 
     button.addEventListener(
@@ -573,7 +784,7 @@ document
 
 
 // =========================================================
-// IMAGE PREVIEW
+// MAIN IMAGE PREVIEW
 // =========================================================
 
 if (mainImageAdmin) {
@@ -585,23 +796,39 @@ if (mainImageAdmin) {
       const file =
         mainImageAdmin.files?.[0];
 
+
       if (!file) {
 
-        mainImagePreview.style.display =
-          "none";
+        if (mainImagePreview) {
+
+          mainImagePreview.style.display =
+            "none";
+
+        }
 
         return;
 
       }
 
+
       const url =
         URL.createObjectURL(file);
 
-      mainImagePreviewImg.src =
-        url;
 
-      mainImagePreview.style.display =
-        "block";
+      if (mainImagePreviewImg) {
+
+        mainImagePreviewImg.src =
+          url;
+
+      }
+
+
+      if (mainImagePreview) {
+
+        mainImagePreview.style.display =
+          "block";
+
+      }
 
     }
   );
@@ -617,24 +844,29 @@ function addVariant() {
 
   variantCounter++;
 
-  const variantId =
+
+  const variantNumber =
     variantCounter;
+
 
   const box =
     document.createElement("div");
 
+
   box.className =
     "variant-box";
 
+
   box.dataset.variantId =
-    variantId;
+    variantNumber;
+
 
   box.innerHTML = `
 
     <div class="variant-top">
 
       <div class="variant-title">
-        Variant ${variantId}
+        Variant ${variantNumber}
       </div>
 
       <button
@@ -689,6 +921,7 @@ function addVariant() {
           display:flex;
           justify-content:space-between;
           align-items:center;
+          gap:10px;
           margin-bottom:10px;
         "
       >
@@ -712,43 +945,55 @@ function addVariant() {
 
   `;
 
+
   variantsContainer.appendChild(
     box
   );
 
-  const addSizeBtn =
+
+  const addSizeButton =
     box.querySelector(
       ".add-size-btn"
     );
 
-  addSizeBtn.addEventListener(
-    "click",
-    () => {
 
-      addSizeRow(box);
+  if (addSizeButton) {
 
-    }
-  );
+    addSizeButton.addEventListener(
+      "click",
+      () => {
+
+        addSizeRow(box);
+
+      }
+    );
+
+  }
 
 
-  const removeVariantBtn =
+  const removeButton =
     box.querySelector(
       ".remove-variant-btn"
     );
 
-  removeVariantBtn.addEventListener(
-    "click",
-    () => {
 
-      box.remove();
+  if (removeButton) {
 
-      renumberVariants();
+    removeButton.addEventListener(
+      "click",
+      () => {
 
-    }
-  );
+        box.remove();
+
+        renumberVariants();
+
+      }
+    );
+
+  }
 
 
-  // Automatically create first size
+  // প্রথম size automatically
   addSizeRow(box);
 
 }
@@ -765,6 +1010,7 @@ function renumberVariants() {
       ".variant-box"
     );
 
+
   boxes.forEach(
     (box, index) => {
 
@@ -772,6 +1018,7 @@ function renumberVariants() {
         box.querySelector(
           ".variant-title"
         );
+
 
       if (title) {
 
@@ -787,21 +1034,29 @@ function renumberVariants() {
 
 
 // =========================================================
-// ADD SIZE ROW
+// ADD SIZE
 // =========================================================
 
-function addSizeRow(variantBox) {
+function addSizeRow(
+  variantBox
+) {
 
   const container =
     variantBox.querySelector(
       ".sizes-container"
     );
 
+
+  if (!container) return;
+
+
   const row =
     document.createElement("div");
 
+
   row.className =
     "size-row";
+
 
   row.innerHTML = `
 
@@ -839,16 +1094,21 @@ function addSizeRow(variantBox) {
 
   `;
 
+
   container.appendChild(
     row
   );
 
 
-  row
-    .querySelector(
+  const removeButton =
+    row.querySelector(
       ".remove-size-btn"
-    )
-    .addEventListener(
+    );
+
+
+  if (removeButton) {
+
+    removeButton.addEventListener(
       "click",
       () => {
 
@@ -857,11 +1117,13 @@ function addSizeRow(variantBox) {
       }
     );
 
+  }
+
 }
 
 
 // =========================================================
-// IMAGE UPLOAD
+// UPLOAD IMAGE
 // =========================================================
 
 async function uploadImage(
@@ -869,28 +1131,54 @@ async function uploadImage(
   folder
 ) {
 
-  if (!file) return null;
+  if (!file) {
+
+    return null;
+
+  }
+
 
   const originalName =
     file.name || "image";
 
-  const extension =
-    originalName
-      .split(".")
-      .pop()
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
 
-  const safeExtension =
-    extension || "jpg";
+  const parts =
+    originalName.split(".");
+
+
+  let extension =
+    parts.length > 1
+      ? parts.pop()
+      : "jpg";
+
+
+  extension =
+    extension
+      .toLowerCase()
+      .replace(
+        /[^a-z0-9]/g,
+        ""
+      );
+
+
+  if (!extension) {
+
+    extension = "jpg";
+
+  }
+
 
   const randomPart =
     Math.random()
       .toString(36)
-      .substring(2, 9);
+      .substring(
+        2,
+        10
+      );
+
 
   const path =
-    `${folder}/${Date.now()}-${randomPart}.${safeExtension}`;
+    `${folder}/${Date.now()}-${randomPart}.${extension}`;
 
 
   const {
@@ -902,8 +1190,10 @@ async function uploadImage(
       path,
       file,
       {
-        cacheControl: "3600",
-        upsert: false
+        cacheControl:
+          "3600",
+        upsert:
+          false
       }
     );
 
@@ -920,7 +1210,18 @@ async function uploadImage(
   } = sb
     .storage
     .from("product-images")
-    .getPublicUrl(path);
+    .getPublicUrl(
+      path
+    );
+
+
+  if (!data?.publicUrl) {
+
+    throw new Error(
+      "Image public URL তৈরি করা যায়নি।"
+    );
+
+  }
 
 
   return data.publicUrl;
@@ -929,7 +1230,7 @@ async function uploadImage(
 
 
 // =========================================================
-// COLLECT VARIANT DATA
+// COLLECT VARIANTS
 // =========================================================
 
 function collectVariantData() {
@@ -939,77 +1240,99 @@ function collectVariantData() {
       ".variant-box"
     );
 
+
   const variants = [];
 
-  boxes.forEach(box => {
 
-    const name =
-      box.querySelector(
-        ".variant-name"
-      )?.value.trim();
+  boxes.forEach(
+    box => {
 
-    const imageInput =
-      box.querySelector(
-        ".variant-image"
-      );
-
-    const sizes =
-      [];
-
-    box
-      .querySelectorAll(
-        ".size-row"
-      )
-      .forEach(row => {
-
-        const size =
-          row.querySelector(
-            ".size-name"
-          )?.value.trim();
-
-        const price =
-          Number(
-            row.querySelector(
-              ".size-price"
-            )?.value
-          );
-
-        const stock =
-          Number(
-            row.querySelector(
-              ".size-stock"
-            )?.value
-          );
+      const name =
+        box
+          .querySelector(
+            ".variant-name"
+          )
+          ?.value
+          .trim() || "";
 
 
-        if (size) {
+      const imageInput =
+        box.querySelector(
+          ".variant-image"
+        );
 
-          sizes.push({
 
-            size,
-            price,
-            stock,
+      const sizes = [];
 
-          });
 
-        }
+      box
+        .querySelectorAll(
+          ".size-row"
+        )
+        .forEach(
+          row => {
+
+            const size =
+              row
+                .querySelector(
+                  ".size-name"
+                )
+                ?.value
+                .trim() || "";
+
+
+            const price =
+              Number(
+                row
+                  .querySelector(
+                    ".size-price"
+                  )
+                  ?.value
+              );
+
+
+            const stock =
+              Number(
+                row
+                  .querySelector(
+                    ".size-stock"
+                  )
+                  ?.value
+              );
+
+
+            if (size) {
+
+              sizes.push({
+
+                size,
+
+                price,
+
+                stock
+
+              });
+
+            }
+
+          }
+        );
+
+
+      variants.push({
+
+        name,
+
+        imageFile:
+          imageInput?.files?.[0] ||
+          null,
+
+        sizes
 
       });
 
-
-    variants.push({
-
-      name,
-
-      imageFile:
-        imageInput?.files?.[0] ||
-        null,
-
-      sizes
-
-    });
-
-  });
+    }
+  );
 
 
   return variants;
@@ -1018,7 +1341,7 @@ function collectVariantData() {
 
 
 // =========================================================
-// VALIDATE PRODUCT FORM
+// VALIDATE PRODUCT
 // =========================================================
 
 function validateProductForm() {
@@ -1026,8 +1349,6 @@ function validateProductForm() {
   const name =
     productNameAdmin.value.trim();
 
-  const image =
-    mainImageAdmin.files?.[0];
 
   if (!name) {
 
@@ -1035,7 +1356,12 @@ function validateProductForm() {
 
   }
 
-  if (!image) {
+
+  const mainImage =
+    mainImageAdmin.files?.[0];
+
+
+  if (!mainImage) {
 
     return "Main product image নির্বাচন করুন।";
 
@@ -1094,7 +1420,7 @@ function validateProductForm() {
         size.price < 0
       ) {
 
-        return `Variant ${i + 1}-এর price ঠিক করুন।`;
+        return `Variant ${i + 1}, Size ${j + 1}-এর price ঠিক করুন।`;
 
       }
 
@@ -1106,7 +1432,7 @@ function validateProductForm() {
         size.stock < 0
       ) {
 
-        return `Variant ${i + 1}-এর stock ঠিক করুন।`;
+        return `Variant ${i + 1}, Size ${j + 1}-এর stock ঠিক করুন।`;
 
       }
 
@@ -1130,15 +1456,16 @@ async function handleSaveProduct(
 
   event.preventDefault();
 
-  hideAlert();
+  hideProductAlert();
 
 
   const validation =
     validateProductForm();
 
+
   if (validation) {
 
-    showAlert(
+    showProductAlert(
       validation,
       "error"
     );
@@ -1160,23 +1487,26 @@ async function handleSaveProduct(
     const name =
       productNameAdmin.value.trim();
 
+
     const description =
       descriptionAdmin.value.trim();
 
-    const basePriceValue =
+
+    const basePriceText =
       basePriceAdmin.value.trim();
 
+
     const basePrice =
-      basePriceValue === ""
+      basePriceText === ""
         ? null
-        : Number(basePriceValue);
+        : Number(basePriceText);
 
 
     // -----------------------------------------------------
-    // 1. Upload main image
+    // MAIN IMAGE
     // -----------------------------------------------------
 
-    showAlert(
+    showProductAlert(
       "Main image upload হচ্ছে...",
       "success"
     );
@@ -1190,10 +1520,10 @@ async function handleSaveProduct(
 
 
     // -----------------------------------------------------
-    // 2. Insert product
+    // PRODUCT
     // -----------------------------------------------------
 
-    showAlert(
+    showProductAlert(
       "Product database-এ save হচ্ছে...",
       "success"
     );
@@ -1205,14 +1535,21 @@ async function handleSaveProduct(
     } = await sb
       .from("products")
       .insert({
+
         name,
+
         description:
           description || null,
+
         main_image_url:
           mainImageUrl,
+
         base_price:
           basePrice,
-        active: true
+
+        active:
+          true
+
       })
       .select()
       .single();
@@ -1226,7 +1563,7 @@ async function handleSaveProduct(
 
 
     // -----------------------------------------------------
-    // 3. Variants
+    // VARIANTS
     // -----------------------------------------------------
 
     const variants =
@@ -1243,7 +1580,7 @@ async function handleSaveProduct(
         variants[i];
 
 
-      showAlert(
+      showProductAlert(
         `Variant ${i + 1} save হচ্ছে...`,
         "success"
       );
@@ -1296,7 +1633,7 @@ async function handleSaveProduct(
 
 
       // ---------------------------------------------------
-      // 4. Sizes
+      // SIZES
       // ---------------------------------------------------
 
       const sizeRows =
@@ -1344,7 +1681,7 @@ async function handleSaveProduct(
     // SUCCESS
     // -----------------------------------------------------
 
-    showAlert(
+    showProductAlert(
       "✅ Product সফলভাবে add হয়েছে!",
       "success"
     );
@@ -1356,12 +1693,17 @@ async function handleSaveProduct(
     variantsContainer.innerHTML =
       "";
 
+
     variantCounter =
       0;
 
 
-    mainImagePreview.style.display =
-      "none";
+    if (mainImagePreview) {
+
+      mainImagePreview.style.display =
+        "none";
+
+    }
 
 
     await refreshAdminData();
@@ -1387,9 +1729,12 @@ async function handleSaveProduct(
     );
 
 
-    showAlert(
+    showProductAlert(
       "Product save করতে সমস্যা হয়েছে: " +
-      (error.message || "Unknown error"),
+      (
+        error?.message ||
+        "Unknown error"
+      ),
       "error"
     );
 
@@ -1432,10 +1777,16 @@ function resetProductForm() {
   variantCounter =
     0;
 
-  mainImagePreview.style.display =
-    "none";
 
-  hideAlert();
+  if (mainImagePreview) {
+
+    mainImagePreview.style.display =
+      "none";
+
+  }
+
+
+  hideProductAlert();
 
 }
 
@@ -1494,11 +1845,17 @@ async function loadAdminProducts() {
 
   if (error) {
 
-    console.error(error);
+    console.error(
+      "Products load error:",
+      error
+    );
+
 
     adminProductsList.innerHTML = `
       <div class="admin-empty">
         Product load করতে সমস্যা হয়েছে।
+        <br><br>
+        ${escapeHTML(error.message)}
       </div>
     `;
 
@@ -1541,8 +1898,11 @@ function renderAdminProducts() {
     adminProducts.map(
       product => {
 
-        let totalStock = 0;
-        let totalSizes = 0;
+        let totalStock =
+          0;
+
+        let totalSizes =
+          0;
 
 
         (
@@ -1577,10 +1937,8 @@ function renderAdminProducts() {
         );
 
 
-        const status =
-          product.active !== false
-            ? "Active"
-            : "Inactive";
+        const active =
+          product.active !== false;
 
 
         return `
@@ -1613,7 +1971,11 @@ function renderAdminProducts() {
 
                 Status:
                 <strong>
-                  ${status}
+                  ${
+                    active
+                      ? "Active"
+                      : "Inactive"
+                  }
                 </strong>
 
                 <br>
@@ -1647,13 +2009,18 @@ function renderAdminProducts() {
             </div>
 
 
-            <div class="admin-product-actions">
+            <div
+              class="admin-product-actions"
+            >
 
               ${
-                product.active !== false
+                active
                   ? `
                     <button
-                      class="admin-btn admin-btn-danger"
+                      class="
+                        admin-btn
+                        admin-btn-danger
+                      "
                       onclick="
                         deactivateProduct(${product.id})
                       "
@@ -1663,7 +2030,10 @@ function renderAdminProducts() {
                   `
                   : `
                     <button
-                      class="admin-btn admin-btn-success"
+                      class="
+                        admin-btn
+                        admin-btn-success
+                      "
                       onclick="
                         activateProduct(${product.id})
                       "
@@ -1685,7 +2055,7 @@ function renderAdminProducts() {
 
 
 // =========================================================
-// DEACTIVATE PRODUCT
+// DEACTIVATE
 // =========================================================
 
 async function deactivateProduct(
@@ -1721,7 +2091,7 @@ async function deactivateProduct(
     console.error(error);
 
     alert(
-      "Product deactivate করা যায়নি: " +
+      "Product deactivate করা যায়নি:\n" +
       error.message
     );
 
@@ -1736,7 +2106,7 @@ async function deactivateProduct(
 
 
 // =========================================================
-// ACTIVATE PRODUCT
+// ACTIVATE
 // =========================================================
 
 async function activateProduct(
@@ -1761,7 +2131,7 @@ async function activateProduct(
     console.error(error);
 
     alert(
-      "Product activate করা যায়নি: " +
+      "Product activate করা যায়নি:\n" +
       error.message
     );
 
@@ -1808,12 +2178,16 @@ async function loadAdminOrders() {
 
   if (error) {
 
-    console.error(error);
+    console.error(
+      "Orders load error:",
+      error
+    );
+
 
     adminOrdersList.innerHTML = `
       <div class="admin-empty">
         Orders load করতে সমস্যা হয়েছে।
-        <br>
+        <br><br>
         ${escapeHTML(error.message)}
       </div>
     `;
@@ -1876,7 +2250,7 @@ function renderOrders() {
     orders.map(
       order => {
 
-        const isPending =
+        const pending =
           order.status ===
           "pending";
 
@@ -1910,13 +2284,15 @@ function renderOrders() {
               <span
                 class="
                   order-status
-                  ${isPending
-                    ? "pending"
-                    : "completed"}
+                  ${
+                    pending
+                      ? "pending"
+                      : "completed"
+                  }
                 "
               >
                 ${
-                  isPending
+                  pending
                     ? "⏳ Pending"
                     : "✅ Completed"
                 }
@@ -1929,98 +2305,70 @@ function renderOrders() {
               class="order-grid"
             >
 
-              <div
-                class="order-field"
-              >
-                <strong>
-                  Customer:
-                </strong>
+              <div class="order-field">
+                <strong>Customer:</strong>
                 ${escapeHTML(
                   order.customer_name
                 )}
               </div>
 
 
-              <div
-                class="order-field"
-              >
-                <strong>
-                  Phone:
-                </strong>
+              <div class="order-field">
+                <strong>Phone:</strong>
                 ${escapeHTML(
                   order.phone
                 )}
               </div>
 
 
-              <div
-                class="order-field"
-              >
-                <strong>
-                  Product:
-                </strong>
+              <div class="order-field">
+                <strong>Product:</strong>
                 ${escapeHTML(
                   order.product_name
                 )}
               </div>
 
 
-              <div
-                class="order-field"
-              >
-                <strong>
-                  Variant:
-                </strong>
+              <div class="order-field">
+                <strong>Variant:</strong>
                 ${escapeHTML(
-                  order.variety || "—"
+                  order.variety ||
+                  "—"
                 )}
               </div>
 
 
-              <div
-                class="order-field"
-              >
-                <strong>
-                  Size:
-                </strong>
+              <div class="order-field">
+                <strong>Size:</strong>
                 ${escapeHTML(
-                  order.size || "—"
+                  order.size ||
+                  "—"
                 )}
               </div>
 
 
-              <div
-                class="order-field"
-              >
-                <strong>
-                  Quantity:
-                </strong>
+              <div class="order-field">
+                <strong>Quantity:</strong>
                 ${escapeHTML(
                   order.quantity
                 )}
               </div>
 
 
-              <div
-                class="order-field"
-              >
-                <strong>
-                  District:
-                </strong>
+              <div class="order-field">
+                <strong>District:</strong>
                 ${escapeHTML(
-                  order.district || "—"
+                  order.district ||
+                  "—"
                 )}
               </div>
 
 
-              <div
-                class="order-field"
-              >
-                <strong>
-                  Upazila:
-                </strong>
+              <div class="order-field">
+                <strong>Upazila:</strong>
                 ${escapeHTML(
-                  order.upazila || "—"
+                  order.upazila ||
+                  "—"
                 )}
               </div>
 
@@ -2029,11 +2377,10 @@ function renderOrders() {
                 class="order-field"
                 style="grid-column:1/-1;"
               >
-                <strong>
-                  Address:
-                </strong>
+                <strong>Address:</strong>
                 ${escapeHTML(
-                  order.address || "—"
+                  order.address ||
+                  "—"
                 )}
               </div>
 
@@ -2053,7 +2400,7 @@ function renderOrders() {
 
 
               ${
-                isPending
+                pending
                   ? `
                     <button
                       class="
@@ -2127,7 +2474,7 @@ async function completeOrder(
     console.error(error);
 
     alert(
-      "Order complete করা যায়নি: " +
+      "Order complete করা যায়নি:\n" +
       error.message
     );
 
@@ -2200,7 +2547,8 @@ function updateStats() {
   }
 
 
-  let totalStock = 0;
+  let totalStock =
+    0;
 
 
   adminProducts.forEach(
@@ -2282,7 +2630,7 @@ function updateStats() {
 
 
 // =========================================================
-// REFRESH ALL ADMIN DATA
+// REFRESH ADMIN DATA
 // =========================================================
 
 async function refreshAdminData() {
@@ -2293,43 +2641,6 @@ async function refreshAdminData() {
   ]);
 
 }
-
-
-// =========================================================
-// AUTH STATE LISTENER
-// =========================================================
-
-sb.auth.onAuthStateChange(
-  async (
-    event,
-    session
-  ) => {
-
-    if (
-      event ===
-      "SIGNED_OUT"
-    ) {
-
-      currentUser = null;
-
-      showLogin();
-
-      return;
-
-    }
-
-
-    if (
-      session?.user
-    ) {
-
-      currentUser =
-        session.user;
-
-    }
-
-  }
-);
 
 
 // =========================================================
@@ -2387,7 +2698,7 @@ if (resetProductButton) {
 
 
 // =========================================================
-// INITIALIZE
+// START
 // =========================================================
 
-checkSession();
+checkInitialSession();
